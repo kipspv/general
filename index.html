@@ -17,21 +17,10 @@
           fontFamily: {
             display: ["Lexend", "system-ui", "sans-serif"]
           },
-          colors: {
-            primary: "#3b82f6",
-            secondary: "#10b981",
-            dark: "#020617",
-            panel: "#0f172a"
-          },
           borderRadius: {
-            xl: "1rem",
-            "2xl": "1.25rem",
-            "3xl": "1.75rem",
-            "4xl": "2.25rem"
-          },
-          boxShadow: {
-            glow: "0 0 60px rgba(59, 130, 246, 0.22)",
-            soft: "0 24px 80px rgba(0, 0, 0, 0.45)"
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            "4xl": "2rem"
           }
         }
       }
@@ -39,373 +28,1325 @@
   </script>
 
   <style>
+    :root { --dock-bottom: max(18px, env(safe-area-inset-bottom)); }
     * {
       -webkit-tap-highlight-color: transparent;
+      transition: background-color 420ms ease, color 420ms ease, border-color 420ms ease, box-shadow 420ms ease, opacity 260ms ease, transform 260ms ease;
     }
+    body { font-family: "Lexend", system-ui, sans-serif; }
+    input, select, textarea { color-scheme: light; }
+    .dark input, .dark select, .dark textarea { color-scheme: dark; }
 
-    html,
-    body {
-      min-height: 100%;
-    }
+    .fade-in { animation: fadeIn .45s ease both; }
+    .slide-up { animation: slideUp .5s ease both; }
+    .dock-pop { animation: dockPop .45s cubic-bezier(.2,.9,.2,1.2) both; }
+    .modal-pop { animation: modalPop .28s cubic-bezier(.2,.9,.2,1.1) both; }
+    .toast-in { animation: toastIn .32s ease both; }
+    .theme-switching { pointer-events: none; }
 
-    body {
-      font-family: "Lexend", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #020617;
-    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes dockPop { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes modalPop { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .glass-light { background: rgba(255,255,255,.78); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+    .glass-dark { background: rgba(15,23,42,.78); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+    .dock-glass-light { background: rgba(255,255,255,.82); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4); }
+    .dock-glass-dark { background: rgba(15,23,42,.84); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4); }
+
+    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .45); border-radius: 999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, .7); }
 
     .material-symbols-outlined {
-      font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
-    }
-
-    .fade-in {
-      animation: fadeIn 0.65s ease both;
-    }
-
-    .slide-up {
-      animation: slideUp 0.7s ease both;
-    }
-
-    .float-soft {
-      animation: floatSoft 5.5s ease-in-out infinite;
-    }
-
-    .grid-glow {
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: radial-gradient(circle at center, black 0%, transparent 72%);
-      -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 72%);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(22px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes floatSoft {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
+      font-variation-settings: "FILL" 0, "wght" 600, "GRAD" 0, "opsz" 24;
+      line-height: 1;
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .fade-in,
-      .slide-up,
-      .float-soft {
+      *, .fade-in, .slide-up, .dock-pop, .modal-pop, .toast-in {
+        transition: none !important;
         animation: none !important;
       }
     }
   </style>
 </head>
 
-<body class="min-h-screen overflow-hidden bg-dark text-slate-100 selection:bg-primary/30">
-  <div id="app" class="relative min-h-screen">
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute inset-0 grid-glow opacity-70"></div>
-      <div class="absolute -top-48 -left-40 h-[32rem] w-[32rem] rounded-full bg-primary/25 blur-[130px] mix-blend-screen float-soft"></div>
-      <div class="absolute -bottom-48 -right-40 h-[34rem] w-[34rem] rounded-full bg-secondary/15 blur-[130px] mix-blend-screen float-soft" style="animation-delay:-2s"></div>
-      <div class="absolute left-[42%] top-[18%] h-[22rem] w-[22rem] rounded-full bg-purple-600/15 blur-[115px] mix-blend-screen float-soft" style="animation-delay:-4s"></div>
-    </div>
-
-    <section id="sessionLoader" class="relative z-10 flex min-h-screen items-center justify-center p-6">
-      <div class="fade-in text-center">
-        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl border border-white/10 bg-white/5 shadow-glow backdrop-blur-xl">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-white/15 border-t-white"></div>
-        </div>
-        <p class="text-sm font-medium text-white/60">Checking session...</p>
-      </div>
-    </section>
-
-    <main id="loginScreen" class="relative z-10 hidden min-h-screen items-center justify-center px-5 py-10 sm:px-8">
-      <div class="grid w-full max-w-6xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
-        <section class="hidden lg:block slide-up" style="animation-delay:0.05s">
-          <div class="mb-10 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-xl">
-            <span class="material-symbols-outlined text-[20px] text-secondary">verified</span>
-            <span class="text-sm font-semibold text-white/70">Kampung Inggris Pontianak</span>
-          </div>
-
-          <div class="mb-8 flex h-16 w-16 items-center justify-center rounded-[1.7rem] bg-white text-slate-950 shadow-2xl shadow-white/10">
-            <span class="material-symbols-outlined text-[34px]">auto_awesome</span>
-          </div>
-
-          <h1 class="max-w-2xl text-5xl font-black leading-[1.02] tracking-[-0.06em] text-white xl:text-6xl">
-            Manager Workspace<br/>
-            <span class="bg-gradient-to-r from-blue-300 via-cyan-200 to-emerald-300 bg-clip-text text-transparent">
-              System Hub.
-            </span>
-          </h1>
-
-          <p class="mt-6 max-w-xl text-base leading-8 text-white/55 xl:text-lg">
-            Centralized platform untuk mengelola absensi kelas, tracking supply inventory, dan memonitor aktivitas Team Leader secara real-time.
-          </p>
-
-          <div class="mt-9 flex flex-wrap gap-3">
-            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur-xl">Admin</div>
-            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur-xl">Team Leader</div>
-            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur-xl">Management</div>
-          </div>
-        </section>
-
-        <section class="mx-auto w-full max-w-md slide-up" style="animation-delay:0.15s">
-          <div class="relative group">
-            <div class="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-r from-primary/30 via-cyan-500/15 to-secondary/25 blur-2xl opacity-70 transition duration-500 group-hover:opacity-90"></div>
-
-            <div class="relative overflow-hidden rounded-[2.4rem] border border-white/10 bg-slate-950/75 p-7 shadow-soft backdrop-blur-2xl sm:p-9">
-              <div class="absolute right-0 top-0 h-28 w-28 rounded-bl-full bg-white/[0.035]"></div>
-
-              <div class="mb-8 flex flex-col items-center text-center lg:hidden">
-                <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-950 shadow-2xl shadow-white/10">
-                  <span class="material-symbols-outlined text-[30px]">auto_awesome</span>
-                </div>
-                <h2 class="text-2xl font-black tracking-[-0.04em] text-white">System Hub</h2>
-                <p class="mt-2 text-xs font-medium text-white/45">Kampung Inggris Pontianak</p>
-              </div>
-
-              <div class="mb-8">
-                <p class="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/55">
-                  <span class="material-symbols-outlined text-[16px] text-secondary">lock</span>
-                  Secure login
-                </p>
-                <h2 class="text-3xl font-black tracking-[-0.05em] text-white">Welcome back</h2>
-                <p class="mt-2 text-sm leading-6 text-white/50">Silakan login untuk mengakses dashboard kamu.</p>
-              </div>
-
-              <div id="errorBox" class="mb-6 hidden rounded-2xl border border-red-500/20 bg-red-500/10 p-4 fade-in">
-                <div class="flex items-start gap-3">
-                  <span class="material-symbols-outlined mt-0.5 shrink-0 text-[21px] text-red-400">error</span>
-                  <p id="errorText" class="text-sm font-medium leading-6 text-red-300"></p>
-                </div>
-              </div>
-
-              <form id="loginForm" class="space-y-5" autocomplete="on">
-                <div>
-                  <label for="username" class="mb-2 block pl-1 text-sm font-semibold text-white/70">Username</label>
-                  <div class="relative">
-                    <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[21px] text-white/35">person</span>
-                    <input
-                      id="username"
-                      name="username"
-                      type="text"
-                      autocomplete="username"
-                      class="h-13 w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-12 pr-4 text-white placeholder:text-white/25 outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      placeholder="Enter your username"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label for="password" class="mb-2 block pl-1 text-sm font-semibold text-white/70">Password</label>
-                  <div class="relative">
-                    <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[21px] text-white/35">key</span>
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      autocomplete="current-password"
-                      class="h-13 w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-12 pr-12 text-white placeholder:text-white/25 outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      placeholder="••••••••"
-                    />
-                    <button id="togglePassword" type="button" class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-white/45 transition hover:bg-white/10 hover:text-white" aria-label="Show password">
-                      <span id="togglePasswordIcon" class="material-symbols-outlined text-[21px]">visibility</span>
-                    </button>
-                  </div>
-                </div>
-
-                <button id="loginButton" type="submit" class="mt-3 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-black tracking-wide text-slate-950 shadow-2xl shadow-white/10 transition hover:bg-slate-200 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70">
-                  <span id="loginButtonText">Login</span>
-                  <span id="loginButtonIcon" class="material-symbols-outlined text-[21px]">arrow_forward</span>
-                  <span id="loginSpinner" class="hidden h-5 w-5 animate-spin rounded-full border-2 border-slate-950/20 border-t-slate-950"></span>
-                </button>
-              </form>
-
-              <p class="mt-7 text-center text-xs leading-5 text-white/35">
-                GitHub static frontend connected to Google Apps Script backend API.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  </div>
+<body class="bg-slate-100 text-slate-950 dark:bg-[#020617] dark:text-white overflow-x-hidden">
+  <div id="app"></div>
 
   <script>
     "use strict";
 
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyn-nmRA_GFjwK36-gz3Va7JezQaG-Pe22WnBcL52_3g9QSwNeIk6ys1s5roovrOB0A4A/exec";
     const SESSION_KEY = "gas_auth_token";
+    const THEME_KEY = "management_dashboard_theme";
 
-    const sessionLoader = document.getElementById("sessionLoader");
-    const loginScreen = document.getElementById("loginScreen");
-    const loginForm = document.getElementById("loginForm");
-    const usernameInput = document.getElementById("username");
-    const passwordInput = document.getElementById("password");
-    const loginButton = document.getElementById("loginButton");
-    const loginButtonText = document.getElementById("loginButtonText");
-    const loginButtonIcon = document.getElementById("loginButtonIcon");
-    const loginSpinner = document.getElementById("loginSpinner");
-    const errorBox = document.getElementById("errorBox");
-    const errorText = document.getElementById("errorText");
-    const togglePassword = document.getElementById("togglePassword");
-    const togglePasswordIcon = document.getElementById("togglePasswordIcon");
+    const MONTH_NAMES = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const DEFAULT_ATTENDANCE_SETTINGS = { lowMax: 3, mediumMin: 4, mediumMax: 7, highMin: 8 };
+    const DEFAULT_SUPPLY_SETTINGS = { lowMax: 50, mediumMin: 51, mediumMax: 100, highMin: 101 };
+    const today = new Date();
+    const todayString = today.toISOString().slice(0, 10);
+
+    const state = {
+      theme: localStorage.getItem(THEME_KEY) || "dark",
+      activeMenu: "dashboard",
+      user: null,
+      loading: true,
+      saving: false,
+      accessError: "",
+      toast: null,
+      confirmDialog: null,
+
+      branches: [],
+      classes: [],
+      inventory: [],
+
+      dashboardMonth: today.getMonth() + 1,
+      dashboardYear: today.getFullYear(),
+      dashboardStudents: [],
+      dashboardSupplies: [],
+
+      trackerDate: todayString,
+      trackerData: [],
+      trackerLoading: false,
+
+      users: [],
+      tasks: [],
+
+      dashboardTab: "attendance",
+      taskTab: "tracker",
+
+      taskModalOpen: false,
+      taskEditItem: null,
+      taskForm: emptyTaskForm(),
+
+      userModalOpen: false,
+      userEditItem: null,
+      userForm: emptyUserForm()
+    };
+
+    const app = document.getElementById("app");
+
+    function isDark() { return state.theme === "dark"; }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+    function safeNumber(value) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : 0;
+    }
+    function normalizeDate(value) {
+      const dateObj = new Date(value);
+      if (Number.isNaN(dateObj.getTime())) return "";
+      return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+    }
+    function getToken() { return localStorage.getItem(SESSION_KEY); }
 
     async function fetchAPI(action, payload = {}) {
-      try {
-        const response = await fetch(GAS_WEB_APP_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify({ action, payload })
-        });
+      const response = await fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
 
-        if (!response.ok) {
-          throw new Error("Network response was not ok: " + response.status);
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    }
+
+    function setState(patch, shouldRender = true) {
+      Object.assign(state, patch);
+      applyTheme();
+      if (shouldRender) render();
+    }
+
+    function applyTheme() {
+      document.documentElement.classList.toggle("dark", isDark());
+      localStorage.setItem(THEME_KEY, state.theme);
+    }
+
+    function redirectToLogin() {
+      window.location.href = "index.html";
+    }
+
+    function showToast(type, text) {
+      state.toast = { type, text };
+      render();
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        state.toast = null;
+        render();
+      }, 3400);
+    }
+
+    function showSuccess(text) { showToast("success", text || "Success."); }
+    function showError(text) { showToast("error", text || "Something went wrong."); }
+
+    function openConfirm(config) {
+      state.confirmDialog = {
+        title: config.title || "Are you sure?",
+        message: config.message || "This action needs confirmation.",
+        confirmText: config.confirmText || "Confirm",
+        cancelText: config.cancelText || "Cancel",
+        tone: config.tone || "danger",
+        actionName: config.actionName || ""
+      };
+      render();
+    }
+
+    function closeConfirm() {
+      state.confirmDialog = null;
+      render();
+    }
+
+    function toggleTheme() {
+      document.body.classList.add("theme-switching");
+      state.theme = isDark() ? "light" : "dark";
+      applyTheme();
+      render();
+      setTimeout(() => document.body.classList.remove("theme-switching"), 450);
+    }
+
+    async function boot() {
+      setState({ loading: true, accessError: "" }, false);
+      applyTheme();
+
+      try {
+        const token = getToken();
+        if (!token) return redirectToLogin();
+
+        const sessionResponse = await fetchAPI("getUserSession", { token });
+        if (!sessionResponse.success) {
+          localStorage.removeItem(SESSION_KEY);
+          return redirectToLogin();
         }
 
-        const result = await response.json();
-        return result;
+        if (!sessionResponse.user || sessionResponse.user.role !== "Management") {
+          setState({
+            accessError: "Akses ditolak. Halaman ini hanya untuk Management.",
+            loading: false
+          });
+          return;
+        }
+
+        state.user = sessionResponse.user;
+
+        const [branchRes, classRes, invRes] = await Promise.all([
+          fetchAPI("getManagementBranches", { token }),
+          fetchAPI("getClassDetails", { token }),
+          fetchAPI("getInventoryDetails", { token })
+        ]);
+
+        state.branches = branchRes.success ? (branchRes.data || []) : [];
+        state.classes = classRes.success ? (classRes.data || []) : [];
+        state.inventory = invRes.success ? (invRes.data || []) : [];
+
+        await loadDashboardMatrices(token, state.dashboardMonth, state.dashboardYear, false);
+
       } catch (error) {
-        console.error("API Error (" + action + "):", error);
-        throw error;
+        console.error(error);
+        state.accessError = "Gagal memuat Management Dashboard.";
+      } finally {
+        state.loading = false;
+        render();
       }
     }
 
-    function showLoginScreen() {
-      sessionLoader.classList.add("hidden");
-      loginScreen.classList.remove("hidden");
-      loginScreen.classList.add("flex");
-      setTimeout(function () {
-        usernameInput.focus();
-      }, 80);
+    async function handleLogout() {
+      closeConfirm();
+      try {
+        const token = getToken();
+        if (token) await fetchAPI("logoutUser", { token });
+      } catch (error) {
+        console.error(error);
+      }
+      localStorage.removeItem(SESSION_KEY);
+      redirectToLogin();
     }
 
-    function showError(message) {
-      errorText.textContent = message || "Terjadi kesalahan.";
-      errorBox.classList.remove("hidden");
-    }
+    async function loadDashboardMatrices(tokenParam, month, year, shouldRender = true) {
+      const token = tokenParam || getToken();
+      const filters = { month: Number(month), year: Number(year) };
 
-    function clearError() {
-      errorText.textContent = "";
-      errorBox.classList.add("hidden");
-    }
+      try {
+        const [studentsRes, suppliesRes] = await Promise.all([
+          fetchAPI("getManagementStudents", { token, filters }),
+          fetchAPI("getManagementSupplies", { token, filters })
+        ]);
 
-    function setLoading(isLoading) {
-      usernameInput.disabled = isLoading;
-      passwordInput.disabled = isLoading;
-      loginButton.disabled = isLoading;
-      togglePassword.disabled = isLoading;
+        state.dashboardStudents = studentsRes.success ? (studentsRes.data || []) : [];
+        state.dashboardSupplies = suppliesRes.success ? (suppliesRes.data || []) : [];
 
-      if (isLoading) {
-        loginButtonText.textContent = "Logging in...";
-        loginButtonIcon.classList.add("hidden");
-        loginSpinner.classList.remove("hidden");
-      } else {
-        loginButtonText.textContent = "Login";
-        loginButtonIcon.classList.remove("hidden");
-        loginSpinner.classList.add("hidden");
+        if (!studentsRes.success) showError(studentsRes.message || "Gagal memuat data students.");
+        if (!suppliesRes.success) showError(suppliesRes.message || "Gagal memuat data supplies.");
+      } catch (error) {
+        console.error(error);
+        showError("Gagal memuat data matriks dashboard.");
+      } finally {
+        if (shouldRender) render();
       }
     }
 
-    function redirectToDashboard(pageName) {
-      if (!pageName || typeof pageName !== "string") {
-        showError("Terjadi kesalahan routing. Hubungi admin.");
-        setLoading(false);
+    async function loadTrackerData(date) {
+      state.trackerLoading = true;
+      render();
+
+      try {
+        const response = await fetchAPI("getManagementActivityTracker", { token: getToken(), date });
+        if (response.success) {
+          state.trackerData = response.data || [];
+        } else {
+          state.trackerData = [];
+          showError(response.message || "Gagal memuat data tracker.");
+        }
+      } catch (error) {
+        console.error(error);
+        showError("Error saat menghubungi tracker.");
+      } finally {
+        state.trackerLoading = false;
+        render();
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const response = await fetchAPI("getAuthUsers", { token: getToken() });
+        if (response.success) state.users = response.data || [];
+        else showError(response.message || "Gagal memuat users.");
+      } catch (error) {
+        console.error(error);
+        showError("Gagal memuat users.");
+      } finally {
+        render();
+      }
+    }
+
+    async function loadTasks() {
+      try {
+        const response = await fetchAPI("getTeamLeaderActivityTasks", {
+          token: getToken(),
+          filters: { includeInactive: true }
+        });
+        if (response.success) state.tasks = response.data || [];
+        else showError(response.message || "Gagal memuat tasks.");
+      } catch (error) {
+        console.error(error);
+        showError("Gagal memuat tasks.");
+      } finally {
+        render();
+      }
+    }
+
+    function changeMenu(menu) {
+      state.activeMenu = menu;
+      render();
+
+      if (menu === "dashboard") {
+        loadDashboardMatrices(null, state.dashboardMonth, state.dashboardYear);
+      }
+      if (menu === "users") loadUsers();
+      if (menu === "tasks") loadTasks();
+    }
+
+    function emptyTaskForm() {
+      return { shift: "General", taskName: "", description: "", sortOrder: "0", status: "Active" };
+    }
+
+    function openTaskModal(item) {
+      state.taskEditItem = item || null;
+      state.taskForm = item ? {
+        shift: item.Shift || "General",
+        taskName: item["Task Name"] || "",
+        description: item.Description || "",
+        sortOrder: item["Sort Order"] || "0",
+        status: item.Status || "Active"
+      } : emptyTaskForm();
+      state.taskModalOpen = true;
+      render();
+    }
+
+    function closeTaskModal() {
+      state.taskModalOpen = false;
+      state.taskEditItem = null;
+      state.taskForm = emptyTaskForm();
+      render();
+    }
+
+    async function saveTask() {
+      const payload = { ...state.taskForm };
+      if (!payload.taskName.trim()) return showError("Task Name wajib diisi.");
+
+      state.saving = true;
+      render();
+
+      try {
+        const response = state.taskEditItem
+          ? await fetchAPI("updateTeamLeaderActivityTask", { token: getToken(), id: state.taskEditItem.ID, payload })
+          : await fetchAPI("createTeamLeaderActivityTask", { token: getToken(), payload });
+
+        if (response.success) {
+          showSuccess(response.message || "Task berhasil disimpan.");
+          closeTaskModal();
+          await loadTasks();
+        } else {
+          showError(response.message || "Gagal menyimpan task.");
+        }
+      } catch (error) {
+        console.error(error);
+        showError("Terjadi error saat menyimpan task.");
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    async function disableTask(id) {
+      closeConfirm();
+      state.saving = true;
+      render();
+
+      try {
+        const response = await fetchAPI("deleteTeamLeaderActivityTask", { token: getToken(), id });
+        if (response.success) {
+          showSuccess(response.message || "Task berhasil dinonaktifkan.");
+          await loadTasks();
+        } else {
+          showError(response.message || "Gagal menonaktifkan task.");
+        }
+      } catch (error) {
+        console.error(error);
+        showError("Terjadi error saat menonaktifkan task.");
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    function emptyUserForm(branches = []) {
+      return { username: "", password: "", role: "Team Leader", branch: branches[0] || "Pontianak", status: "Active" };
+    }
+
+    function openUserModal(item) {
+      state.userEditItem = item || null;
+      state.userForm = item ? {
+        username: item.Username || "",
+        password: item.Password || "",
+        role: item.Role || "Team Leader",
+        branch: item.Branch || "",
+        status: item.Status || "Active"
+      } : emptyUserForm(state.branches);
+      state.userModalOpen = true;
+      render();
+    }
+
+    function closeUserModal() {
+      state.userModalOpen = false;
+      state.userEditItem = null;
+      state.userForm = emptyUserForm(state.branches);
+      render();
+    }
+
+    async function saveUser() {
+      const payload = { ...state.userForm };
+      if (!payload.username.trim()) return showError("Username wajib diisi.");
+      if (!state.userEditItem && !payload.password.trim()) return showError("Password wajib diisi untuk user baru.");
+
+      state.saving = true;
+      render();
+
+      try {
+        const response = state.userEditItem
+          ? await fetchAPI("updateAuthUser", { token: getToken(), username: state.userEditItem.Username, payload })
+          : await fetchAPI("createAuthUser", { token: getToken(), payload });
+
+        if (response.success) {
+          showSuccess(response.message || "User berhasil disimpan.");
+          closeUserModal();
+          await loadUsers();
+        } else {
+          showError(response.message || "Gagal menyimpan user.");
+        }
+      } catch (error) {
+        console.error(error);
+        showError("Terjadi error saat menyimpan user.");
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    async function deleteUser(username) {
+      closeConfirm();
+      state.saving = true;
+      render();
+
+      try {
+        const response = await fetchAPI("deleteAuthUser", { token: getToken(), username });
+        if (response.success) {
+          showSuccess(response.message || "User berhasil dihapus.");
+          await loadUsers();
+        } else {
+          showError(response.message || "Gagal menghapus user.");
+        }
+      } catch (error) {
+        console.error(error);
+        showError("Terjadi error saat menghapus user.");
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    function render() {
+      applyTheme();
+
+      if (state.loading) {
+        app.innerHTML = pageShell(`
+          <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="text-center fade-in">
+              <div class="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4 ${isDark() ? "border-white/20 border-t-white" : "border-slate-300 border-t-slate-950"}"></div>
+              <p class="${isDark() ? "text-white/70" : "text-slate-500"} text-sm">Loading Management Dashboard...</p>
+            </div>
+          </div>
+        `, false);
         return;
       }
 
-      window.location.href = pageName + ".html";
-    }
-
-    async function checkActiveSession() {
-      try {
-        const token = localStorage.getItem(SESSION_KEY);
-
-        if (!token) {
-          showLoginScreen();
-          return;
-        }
-
-        const response = await fetchAPI("checkSession", { token: token });
-
-        if (response && response.success && response.redirectPage) {
-          redirectToDashboard(response.redirectPage);
-          return;
-        }
-
-        localStorage.removeItem(SESSION_KEY);
-        showLoginScreen();
-      } catch (error) {
-        console.warn("Session check failed", error);
-        localStorage.removeItem(SESSION_KEY);
-        showLoginScreen();
-      }
-    }
-
-    async function handleLogin(event) {
-      event.preventDefault();
-
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!username || !password) {
-        showError("Username dan password wajib diisi.");
+      if (state.accessError && !state.user) {
+        app.innerHTML = pageShell(`
+          <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="${cardClass()} max-w-md w-full rounded-3xl p-6 text-center">
+              <h1 class="text-xl font-black mb-2">Access Error</h1>
+              <p class="text-red-500 text-sm mb-5">${escapeHtml(state.accessError)}</p>
+              <button data-action="login" class="${primaryButtonClass()}">Back to Login</button>
+            </div>
+          </div>
+        `, false);
         return;
       }
 
-      clearError();
-      setLoading(true);
+      const content = `
+        ${backgroundGlow()}
+        <div class="relative min-h-screen pb-32">
+          ${header()}
+          <main class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            ${state.activeMenu === "dashboard" ? dashboardMatrixView() : ""}
+            ${state.activeMenu === "tasks" ? tasksView() : ""}
+            ${state.activeMenu === "users" ? usersView() : ""}
+            ${state.activeMenu === "profile" ? profileView() : ""}
+          </main>
+          ${macDock()}
+          ${toastHtml()}
+          ${confirmDialogHtml()}
+          ${state.taskModalOpen ? taskModalHtml() : ""}
+          ${state.userModalOpen ? userModalHtml() : ""}
+        </div>
+      `;
 
-      try {
-        const response = await fetchAPI("loginUser", {
-          username: username,
-          password: password
+      app.innerHTML = pageShell(content, false);
+    }
+
+    function pageShell(content) {
+      return `<div class="${isDark() ? "dark min-h-screen bg-[#020617] text-white" : "min-h-screen bg-slate-100 text-slate-950"}">${content}</div>`;
+    }
+
+    function header() {
+      return `
+        <header class="${isDark() ? "sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10" : "sticky top-0 z-30 bg-slate-100/80 backdrop-blur-xl border-b border-slate-200"}">
+          <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-9 h-9 rounded-2xl flex items-center justify-center ${isDark() ? "bg-white text-slate-950" : "bg-slate-950 text-white"}">
+                  ${icon("auto_awesome", "text-xl")}
+                </div>
+                <h1 class="text-xl sm:text-2xl font-black tracking-tight">Management System</h1>
+              </div>
+              <p class="${mutedClass()}">${escapeHtml(state.user?.username || "-")} • ${escapeHtml(state.user?.role || "-")} • Global Access</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button data-action="toggle-theme" class="${iconButtonClass()}" title="Toggle theme">
+                ${icon(isDark() ? "light_mode" : "dark_mode", "text-xl")}
+              </button>
+              <button data-action="logout-confirm" class="${iconButtonClass()}" title="Logout">
+                ${icon("logout", "text-xl")}
+              </button>
+            </div>
+          </div>
+        </header>
+      `;
+    }
+
+    function dashboardMatrixView() {
+      const daysInMonth = new Date(Number(state.dashboardYear), Number(state.dashboardMonth), 0).getDate();
+      const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+      const attendanceMatrix = buildAttendanceMatrix(daysArray);
+      const suppliesMatrix = buildSuppliesMatrix(daysArray);
+      const currentMatrix = state.dashboardTab === "attendance" ? attendanceMatrix : suppliesMatrix;
+
+      const branchCards = state.branches.map(branch => {
+        const data = currentMatrix[branch] || [];
+        if (!data.length) return "";
+
+        return `
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+              <h3 class="text-lg font-black tracking-wide uppercase">${escapeHtml(branch)}</h3>
+              <span class="${badgeClass()} ml-auto">${data.length} rows</span>
+            </div>
+            <div class="max-h-[56vh] overflow-auto custom-scroll border ${isDark() ? "border-white/5" : "border-slate-200"} rounded-2xl">
+              <table class="w-full min-w-[1200px] text-xs">
+                <thead class="${isDark() ? "sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl border-b border-white/10" : "sticky top-0 z-10 bg-white/95 backdrop-blur-xl border-b border-slate-200"}">
+                  <tr>
+                    <th class="sticky left-0 z-20 py-3 px-4 text-left min-w-[220px] bg-inherit">Class / Item Info</th>
+                    ${daysArray.map(day => `<th class="py-3 px-2 text-center min-w-[45px] ${isWeekend(day) ? "text-red-400" : ""}">${day}</th>`).join("")}
+                    <th class="py-3 px-3 text-center font-black min-w-[90px]">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.map(row => `
+                    <tr class="${isDark() ? "border-b border-white/5 hover:bg-white/5" : "border-b border-slate-100 hover:bg-slate-50"}">
+                      <td class="sticky left-0 z-10 py-3 px-4 ${isDark() ? "bg-[#0b1120]" : "bg-white"}">
+                        <p class="font-black">${escapeHtml(row["Trainer Name"] || row.trainerName || "-")}</p>
+                        <p class="opacity-60 text-[10px]">${escapeHtml(row["Jam/Section"] || "")} • ${escapeHtml(row.Level || "")}</p>
+                      </td>
+                      ${row.rowDays.map(day => `
+                        <td class="py-2 px-1 text-center border-l ${isDark() ? "border-white/5" : "border-slate-100"}">
+                          ${state.dashboardTab === "attendance"
+                            ? `<span class="${getAttendanceColor(day.val)}">${escapeHtml(day.val)}</span>`
+                            : `<span class="${getSupplyColor(day.total, day.label)}">${escapeHtml(day.label)}</span>`}
+                        </td>
+                      `).join("")}
+                      <td class="py-3 px-3 text-center font-black bg-blue-500/10 text-blue-500">
+                        ${state.dashboardTab === "attendance" ? escapeHtml(row.total) : `${escapeHtml(row.totalP)}/${escapeHtml(row.totalPr)}`}
+                      </td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <section class="space-y-6 slide-up">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-3xl flex items-center justify-center ${softBoxClass()}">${icon("monitoring", "text-2xl")}</div>
+                <div>
+                  <h2 class="text-xl font-black">Global Data Matrix</h2>
+                  <p class="${mutedClass()}">1-${daysInMonth} day view tracking across all active branches.</p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-end gap-3">
+                <div class="flex rounded-xl overflow-hidden border ${isDark() ? "border-white/10" : "border-slate-200"}">
+                  <button data-tab="attendance" class="matrix-tab px-4 py-2 text-sm font-black ${state.dashboardTab === "attendance" ? "bg-blue-500 text-white" : isDark() ? "bg-white/5 text-white/50" : "bg-slate-200 text-slate-500"}">Attendance</button>
+                  <button data-tab="supplies" class="matrix-tab px-4 py-2 text-sm font-black ${state.dashboardTab === "supplies" ? "bg-blue-500 text-white" : isDark() ? "bg-white/5 text-white/50" : "bg-slate-200 text-slate-500"}">Supplies</button>
+                </div>
+                <div class="w-36">${selectHtml("dashboard-month", "", state.dashboardMonth, MONTH_NAMES.map((m, i) => ({ value: i + 1, label: m })))}</div>
+                <div class="w-28">${inputHtml("dashboard-year", "", state.dashboardYear, "number")}</div>
+              </div>
+            </div>
+          </div>
+
+          <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            ${statCard("Branches", state.branches.length, "account_tree")}
+            ${statCard("Active Classes", state.classes.filter(c => c.Status === "Active").length, "school")}
+            ${statCard("Inventory Items", state.inventory.filter(i => i.Status === "Active").length, "inventory_2")}
+            ${statCard("Records", state.dashboardStudents.length + state.dashboardSupplies.length, "database")}
+          </section>
+
+          ${branchCards || emptyState("Belum ada data aktif untuk ditampilkan di bulan ini.")}
+        </section>
+      `;
+    }
+
+    function buildAttendanceMatrix(daysArray) {
+      const dict = {};
+      state.dashboardStudents.forEach(item => {
+        const dt = normalizeDate(item.Date);
+        const key = `${item.Branch}|${dt}|${item["Jam/Section"]}|${item.Level}|${item["Trainer Name"]}`;
+        dict[key] = item["Murid Hadir"];
+      });
+
+      const grouped = {};
+      state.branches.forEach(branch => { grouped[branch] = []; });
+
+      state.classes.filter(item => item.Status === "Active").forEach(item => {
+        if (!grouped[item.Branch]) grouped[item.Branch] = [];
+
+        const rowDays = daysArray.map(day => {
+          const dateStr = `${state.dashboardYear}-${String(state.dashboardMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const key = `${item.Branch}|${dateStr}|${item["Jam/Section"]}|${item.Level}|${item["Trainer Name"]}`;
+          return { day, val: dict[key] !== undefined && dict[key] !== "" ? dict[key] : "-" };
         });
 
-        if (response && response.success) {
-          if (response.token) {
-            localStorage.setItem(SESSION_KEY, response.token);
-          }
+        const total = rowDays.reduce((sum, day) => sum + (day.val !== "-" ? safeNumber(day.val) : 0), 0);
+        grouped[item.Branch].push({ ...item, rowDays, total });
+      });
 
-          if (response.redirectPage) {
-            redirectToDashboard(response.redirectPage);
-            return;
-          }
+      return grouped;
+    }
 
-          showError("Login berhasil, tapi halaman dashboard tidak ditemukan. Hubungi admin.");
-          setLoading(false);
-          return;
-        }
+    function buildSuppliesMatrix(daysArray) {
+      const dict = {};
+      state.dashboardSupplies.forEach(item => {
+        const dt = normalizeDate(item.Date);
+        const key = `${item.Branch}|${dt}|${item["Jam/Section"]}|${item.Level}|${item["Trainer Name"]}`;
+        dict[key] = { p: item["Paper Used"], pr: item["Printing Used"] };
+      });
 
-        showError((response && response.message) ? response.message : "Login gagal.");
-        setLoading(false);
-      } catch (error) {
-        showError("Terjadi error saat menghubungi server.");
-        setLoading(false);
+      const grouped = {};
+      state.branches.forEach(branch => { grouped[branch] = []; });
+
+      state.inventory.filter(item => item.Status === "Active").forEach(item => {
+        if (!grouped[item.Branch]) grouped[item.Branch] = [];
+
+        const rowDays = daysArray.map(day => {
+          const dateStr = `${state.dashboardYear}-${String(state.dashboardMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const key = `${item.Branch}|${dateStr}|${item["Jam/Section"]}|${item.Level}|${item["Trainer Name"]}`;
+          const val = dict[key];
+          const paper = val ? safeNumber(val.p) : 0;
+          const printing = val ? safeNumber(val.pr) : 0;
+          return {
+            day,
+            label: val ? `${paper}/${printing}` : "-",
+            total: paper + printing
+          };
+        });
+
+        const totalP = rowDays.reduce((sum, day) => sum + (day.label !== "-" ? safeNumber(day.label.split("/")[0]) : 0), 0);
+        const totalPr = rowDays.reduce((sum, day) => sum + (day.label !== "-" ? safeNumber(day.label.split("/")[1]) : 0), 0);
+        grouped[item.Branch].push({ ...item, rowDays, totalP, totalPr });
+      });
+
+      return grouped;
+    }
+
+    function isWeekend(day) {
+      const d = new Date(Number(state.dashboardYear), Number(state.dashboardMonth) - 1, day).getDay();
+      return d === 0 || d === 6;
+    }
+
+    function tasksView() {
+      return `
+        <section class="space-y-6 slide-up">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-3xl flex items-center justify-center ${softBoxClass()}">${icon("fact_check", "text-2xl")}</div>
+                <div>
+                  <h2 class="text-xl font-black">Team Leader Tasks & Tracker</h2>
+                  <p class="${mutedClass()}">Manage master checklists or track daily shift progress.</p>
+                </div>
+              </div>
+              <div class="flex rounded-xl overflow-hidden border ${isDark() ? "border-white/10" : "border-slate-200"}">
+                <button data-task-tab="tracker" class="task-tab px-4 py-2 text-sm font-black ${state.taskTab === "tracker" ? "bg-blue-500 text-white" : isDark() ? "bg-white/5 text-white/50" : "bg-slate-200 text-slate-500"}">TL Progress Tracker</button>
+                <button data-task-tab="master" class="task-tab px-4 py-2 text-sm font-black ${state.taskTab === "master" ? "bg-blue-500 text-white" : isDark() ? "bg-white/5 text-white/50" : "bg-slate-200 text-slate-500"}">Master Tasks</button>
+              </div>
+            </div>
+          </div>
+
+          ${state.taskTab === "tracker" ? trackerPanel() : masterTasksPanel()}
+        </section>
+      `;
+    }
+
+    function trackerPanel() {
+      const cards = state.trackerData.map(item => {
+        const totalTasks = safeNumber(item.totalTasks);
+        const doneTasks = safeNumber(item.doneTasks);
+        const percentage = totalTasks ? Math.min(100, (doneTasks / totalTasks) * 100) : 0;
+
+        return `
+          <div class="${cardClass()} rounded-3xl p-5 flex flex-col relative overflow-hidden">
+            <div class="flex justify-between items-start mb-3 gap-3">
+              <div>
+                <h3 class="font-black text-lg">${escapeHtml(item.username || "-")}</h3>
+                <p class="${mutedClass()}">${escapeHtml(item.branch || "-")} • ${escapeHtml(item.shift || "-")}</p>
+              </div>
+              ${trackerBadge(item.status)}
+            </div>
+
+            ${item.status === "Active" ? `
+              <div class="mb-4">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                  <span>Task Progress</span>
+                  <span>${doneTasks} / ${totalTasks}</span>
+                </div>
+                <div class="h-2 rounded-full overflow-hidden ${isDark() ? "bg-white/10" : "bg-slate-200"}">
+                  <div class="h-full bg-emerald-500 rounded-full" style="width:${percentage}%"></div>
+                </div>
+              </div>
+            ` : ""}
+
+            <div class="flex-1 rounded-2xl p-3 text-sm italic ${isDark() ? "bg-white/5 text-white/70" : "bg-slate-100 text-slate-600"}">
+              “${escapeHtml(item.notes || "No notes provided.")}”
+            </div>
+            ${item.updatedAt ? `<p class="text-[10px] opacity-50 mt-2 text-right">Updated: ${escapeHtml(item.updatedAt)}</p>` : ""}
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="space-y-6">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-wrap items-end gap-3">
+              <div class="w-48">${inputHtml("tracker-date", "Track Date", state.trackerDate, "date")}</div>
+              <button data-action="load-tracker" ${state.trackerLoading ? "disabled" : ""} class="${primaryButtonClass()} !w-auto px-6">
+                ${state.trackerLoading ? "Scanning Sheets..." : "Load Progress"}
+              </button>
+            </div>
+          </div>
+
+          ${state.trackerData.length === 0 && !state.trackerLoading
+            ? emptyState("Select a date and click Load Progress to scan TL Sheets.")
+            : `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">${cards}</div>`}
+        </div>
+      `;
+    }
+
+    function masterTasksPanel() {
+      const rows = state.tasks.map(task => `
+        <tr class="${isDark() ? "border-b border-white/5" : "border-b border-slate-100"}">
+          <td class="py-3 px-4">${escapeHtml(task.Shift || "-")}</td>
+          <td class="py-3 px-4 font-bold">${escapeHtml(task["Task Name"] || "-")}</td>
+          <td class="py-3 px-4"><span class="block max-w-[300px] truncate" title="${escapeHtml(task.Description || "")}">${escapeHtml(task.Description || "-")}</span></td>
+          <td class="py-3 px-4">${escapeHtml(task["Sort Order"] || "0")}</td>
+          <td class="py-3 px-4"><span class="${task.Status === "Active" ? "text-emerald-500" : "text-red-500"} font-bold">${escapeHtml(task.Status || "-")}</span></td>
+          <td class="py-3 px-4">
+            <div class="flex gap-2">
+              <button data-task-edit="${escapeHtml(task.ID)}" class="px-3 py-1 bg-blue-500/20 text-blue-500 rounded-xl text-xs font-bold">Edit</button>
+              ${task.Status === "Active" ? `<button data-task-disable="${escapeHtml(task.ID)}" class="px-3 py-1 bg-red-500/20 text-red-500 rounded-xl text-xs font-bold">Disable</button>` : ""}
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      return `
+        <div class="${cardClass()} rounded-3xl p-5 overflow-hidden">
+          <div class="flex justify-end mb-4">
+            <button data-action="add-task" class="${primaryButtonClass()} !w-auto px-6">+ Add New Task</button>
+          </div>
+          ${state.tasks.length ? `
+            <div class="overflow-x-auto custom-scroll border ${isDark() ? "border-white/5" : "border-slate-200"} rounded-2xl">
+              <table class="w-full min-w-[780px] text-sm text-left">
+                <thead class="${isDark() ? "bg-white/5 border-b border-white/10" : "bg-slate-50 border-b border-slate-200"}">
+                  <tr>
+                    ${["Shift", "Task Name", "Description", "Sort", "Status", "Action"].map(h => `<th class="py-3 px-4 font-bold">${h}</th>`).join("")}
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          ` : emptyState("No master tasks defined.")}
+        </div>
+      `;
+    }
+
+    function usersView() {
+      const rows = state.users.map(user => `
+        <tr class="${isDark() ? "border-b border-white/5" : "border-b border-slate-100"}">
+          <td class="py-3 px-4 font-bold">${escapeHtml(user.Username || "-")}</td>
+          <td class="py-3 px-4">${escapeHtml(user.Role || "-")}</td>
+          <td class="py-3 px-4">${escapeHtml(user.Branch || "All")}</td>
+          <td class="py-3 px-4"><span class="${user.Status === "Active" ? "text-emerald-500" : "text-red-500"} font-bold">${escapeHtml(user.Status || "-")}</span></td>
+          <td class="py-3 px-4">
+            <div class="flex gap-2">
+              <button data-user-edit="${escapeHtml(user.Username)}" class="px-3 py-1 bg-blue-500/20 text-blue-500 rounded-xl text-xs font-bold">Edit</button>
+              <button data-user-delete="${escapeHtml(user.Username)}" class="px-3 py-1 bg-red-500/20 text-red-500 rounded-xl text-xs font-bold">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      return `
+        <section class="${cardClass()} rounded-3xl p-5 sm:p-6 slide-up">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-3xl flex items-center justify-center ${softBoxClass()}">${icon("group", "text-2xl")}</div>
+              <div>
+                <h2 class="text-xl font-black">User Management</h2>
+                <p class="${mutedClass()}">Manage access for Admins, Team Leaders, and Management.</p>
+              </div>
+            </div>
+            <button data-action="add-user" class="${primaryButtonClass()} !w-auto px-6">+ Add User</button>
+          </div>
+
+          ${state.users.length ? `
+            <div class="overflow-x-auto custom-scroll border ${isDark() ? "border-white/5" : "border-slate-200"} rounded-2xl">
+              <table class="w-full min-w-[720px] text-sm text-left">
+                <thead class="${isDark() ? "bg-white/5 border-b border-white/10" : "bg-slate-50 border-b border-slate-200"}">
+                  <tr>
+                    ${["Username", "Role", "Branch", "Status", "Action"].map(h => `<th class="py-3 px-4 font-bold">${h}</th>`).join("")}
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          ` : emptyState("No users found.")}
+        </section>
+      `;
+    }
+
+    function profileView() {
+      return `
+        <section class="${cardClass()} rounded-3xl p-6 slide-up max-w-2xl mx-auto mt-10">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 rounded-3xl flex items-center justify-center ${isDark() ? "bg-white text-slate-950" : "bg-slate-950 text-white"}">
+              ${icon("person", "text-3xl")}
+            </div>
+            <div>
+              <h2 class="text-xl font-black">${escapeHtml(state.user?.username || "-")}</h2>
+              <p class="${mutedClass()}">${escapeHtml(state.user?.role || "-")} • Global Access</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            ${infoBox("Username", state.user?.username)}
+            ${infoBox("Role", state.user?.role)}
+            ${infoBox("Access", "Global")}
+            ${infoBox("Login Time", state.user?.loginTime)}
+          </div>
+        </section>
+      `;
+    }
+
+    function taskModalHtml() {
+      const form = state.taskForm;
+      return `
+        <div class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
+          <div class="${cardClass()} w-full max-w-lg rounded-3xl p-6 modal-pop">
+            <h3 class="text-xl font-black mb-5">${state.taskEditItem ? "Edit Task" : "New Task"}</h3>
+            <div class="space-y-4">
+              ${selectHtml("task-shift", "Shift Target", form.shift, [
+                { value: "General", label: "General / All" },
+                { value: "Shift 1", label: "Shift 1" },
+                { value: "Shift 2", label: "Shift 2" },
+                { value: "Shift 3", label: "Shift 3" }
+              ])}
+              ${inputHtml("task-name", "Task Name", form.taskName)}
+              ${textareaHtml("task-description", "Description", form.description)}
+              <div class="grid grid-cols-2 gap-4">
+                ${inputHtml("task-sort", "Sort Order", form.sortOrder, "number")}
+                ${selectHtml("task-status", "Status", form.status, [
+                  { value: "Active", label: "Active" },
+                  { value: "Inactive", label: "Inactive" }
+                ])}
+              </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button data-action="close-task-modal" class="${secondaryButtonClass()} flex-1">Cancel</button>
+              <button data-action="save-task" ${state.saving ? "disabled" : ""} class="${primaryButtonClass()} flex-1">${state.saving ? "Saving..." : "Save"}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function userModalHtml() {
+      const form = state.userForm;
+      const branchOptions = (state.branches.length ? state.branches : ["Pontianak"]).map(branch => ({ value: branch, label: branch }));
+
+      return `
+        <div class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
+          <div class="${cardClass()} w-full max-w-lg rounded-3xl p-6 modal-pop">
+            <h3 class="text-xl font-black mb-5">${state.userEditItem ? "Edit User" : "New User"}</h3>
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                ${inputHtml("user-username", "Username", form.username, "text", !!state.userEditItem)}
+                ${inputHtml("user-password", "Password", form.password, "text")}
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                ${selectHtml("user-role", "Role", form.role, [
+                  { value: "Admin", label: "Admin" },
+                  { value: "Team Leader", label: "Team Leader" },
+                  { value: "Management", label: "Management" }
+                ])}
+                ${selectHtml("user-status", "Status", form.status, [
+                  { value: "Active", label: "Active" },
+                  { value: "Inactive", label: "Inactive" }
+                ])}
+              </div>
+              ${form.role !== "Management" ? selectHtml("user-branch", "Branch", form.branch, branchOptions) : ""}
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button data-action="close-user-modal" class="${secondaryButtonClass()} flex-1">Cancel</button>
+              <button data-action="save-user" ${state.saving ? "disabled" : ""} class="${primaryButtonClass()} flex-1">${state.saving ? "Saving..." : "Save"}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function confirmDialogHtml() {
+      if (!state.confirmDialog) return "";
+      const dialog = state.confirmDialog;
+      const confirmClass = dialog.tone === "danger"
+        ? "bg-red-500 text-white hover:bg-red-600"
+        : "bg-emerald-500 text-white hover:bg-emerald-600";
+
+      return `
+        <div class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
+          <div class="${cardClass()} w-full max-w-sm rounded-3xl p-6 modal-pop text-center">
+            <h3 class="text-xl font-black mb-2">${escapeHtml(dialog.title)}</h3>
+            <p class="opacity-70 mb-6 text-sm">${escapeHtml(dialog.message)}</p>
+            <div class="flex gap-3">
+              <button data-action="close-confirm" class="${secondaryButtonClass()} flex-1">${escapeHtml(dialog.cancelText)}</button>
+              <button data-action="confirm-action" class="h-11 px-5 rounded-2xl font-black flex-1 ${confirmClass}">${escapeHtml(dialog.confirmText)}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toastHtml() {
+      if (!state.toast) return "";
+      return `
+        <div class="fixed top-6 right-6 left-6 sm:left-auto z-50 toast-in">
+          <div class="px-5 py-3 rounded-2xl font-bold shadow-xl text-white ${state.toast.type === "success" ? "bg-emerald-500" : "bg-red-500"}">
+            ${escapeHtml(state.toast.text)}
+          </div>
+        </div>
+      `;
+    }
+
+    function macDock() {
+      const menus = [
+        { key: "dashboard", label: "Matrices", icon: "monitoring" },
+        { key: "tasks", label: "Tasks", icon: "fact_check" },
+        { key: "users", label: "Users", icon: "group" },
+        { key: "profile", label: "Profile", icon: "settings" }
+      ];
+
+      return `
+        <nav class="fixed left-0 right-0 z-40 flex justify-center px-4 dock-pop" style="bottom: var(--dock-bottom)">
+          <div class="${isDark() ? "dock-glass-dark border-white/15" : "dock-glass-light border-white"} border shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 overflow-x-auto custom-scroll max-w-full">
+            ${menus.map(menu => {
+              const active = state.activeMenu === menu.key;
+              const cls = active
+                ? (isDark() ? "w-20 h-20 bg-white text-slate-950 -translate-y-3 shadow-xl" : "w-20 h-20 bg-slate-950 text-white -translate-y-3 shadow-xl")
+                : (isDark() ? "w-16 h-16 bg-white/10 text-white/70 hover:bg-white/15 hover:-translate-y-2" : "w-16 h-16 bg-slate-950/5 text-slate-600 hover:bg-slate-950/10 hover:-translate-y-2");
+              return `
+                <button data-menu="${menu.key}" class="group relative flex flex-col items-center justify-center rounded-3xl transition-all duration-300 shrink-0 ${cls}">
+                  ${icon(menu.icon, active ? "text-3xl" : "text-2xl")}
+                  <span class="text-[10px] font-black mt-1 ${active ? "opacity-100" : "opacity-70"}">${menu.label}</span>
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </nav>
+      `;
+    }
+
+    function trackerBadge(status) {
+      const map = {
+        "Active": "bg-emerald-500/20 text-emerald-500 border-emerald-500/30",
+        "No Sheet": "bg-red-500/20 text-red-500 border-red-500/30",
+        "Error": "bg-red-500/20 text-red-500 border-red-500/30",
+        "No Activity": "bg-amber-500/20 text-amber-500 border-amber-500/30"
+      };
+      return `<span class="px-3 py-1 rounded-full text-xs font-black border ${map[status] || map["No Activity"]}">${escapeHtml(status || "No Activity")}</span>`;
+    }
+
+    function inputHtml(id, label, value, type = "text", disabled = false) {
+      return `
+        <div>
+          ${label ? `<label class="block text-xs font-bold mb-1.5 ${isDark() ? "text-white/60" : "text-slate-500"}">${escapeHtml(label)}</label>` : ""}
+          <input id="${id}" type="${type}" value="${escapeHtml(value)}" ${disabled ? "disabled" : ""} class="${inputClass(disabled)}"/>
+        </div>
+      `;
+    }
+
+    function textareaHtml(id, label, value) {
+      return `
+        <div>
+          ${label ? `<label class="block text-xs font-bold mb-1.5 ${isDark() ? "text-white/60" : "text-slate-500"}">${escapeHtml(label)}</label>` : ""}
+          <textarea id="${id}" rows="3" class="${isDark() ? "w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 outline-none focus:ring-2 focus:ring-white/30 resize-none" : "w-full rounded-2xl bg-white border border-slate-200 text-slate-950 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-300 resize-none"}">${escapeHtml(value)}</textarea>
+        </div>
+      `;
+    }
+
+    function selectHtml(id, label, value, options) {
+      return `
+        <div>
+          ${label ? `<label class="block text-xs font-bold mb-1.5 ${isDark() ? "text-white/60" : "text-slate-500"}">${escapeHtml(label)}</label>` : ""}
+          <select id="${id}" class="${inputClass()}">
+            ${options.map(option => `<option value="${escapeHtml(option.value)}" ${String(option.value) === String(value) ? "selected" : ""} class="${isDark() ? "bg-slate-900" : "bg-white"}">${escapeHtml(option.label)}</option>`).join("")}
+          </select>
+        </div>
+      `;
+    }
+
+    function statCard(label, value, iconName) {
+      return `
+        <div class="${cardClass()} rounded-3xl p-4 sm:p-5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="${mutedClass()}">${escapeHtml(label)}</p>
+              <h3 class="text-2xl sm:text-3xl font-black mt-1">${escapeHtml(value)}</h3>
+            </div>
+            <div class="w-11 h-11 rounded-2xl flex items-center justify-center ${softBoxClass()}">
+              ${icon(iconName, "text-xl")}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function emptyState(text) {
+      return `
+        <div class="${softBoxClass()} rounded-3xl p-8 text-center">
+          <div class="mx-auto w-14 h-14 rounded-3xl flex items-center justify-center mb-4 bg-slate-500/10">
+            ${icon("inbox", "text-3xl opacity-60")}
+          </div>
+          <p class="${mutedClass()}">${escapeHtml(text)}</p>
+        </div>
+      `;
+    }
+
+    function infoBox(label, value) {
+      return `
+        <div class="${softBoxClass()} rounded-2xl p-4">
+          <p class="${mutedClass()}">${escapeHtml(label)}</p>
+          <p class="font-black mt-1">${escapeHtml(value || "-")}</p>
+        </div>
+      `;
+    }
+
+    function backgroundGlow() {
+      return `
+        <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+          <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl ${isDark() ? "bg-blue-500/10" : "bg-blue-300/20"}"></div>
+          <div class="absolute top-1/3 -right-24 w-96 h-96 rounded-full blur-3xl ${isDark() ? "bg-purple-500/10" : "bg-purple-300/20"}"></div>
+          <div class="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full blur-3xl ${isDark() ? "bg-emerald-500/10" : "bg-emerald-300/20"}"></div>
+        </div>
+      `;
+    }
+
+    function getAttendanceColor(val) {
+      if (val === "-" || val === "") return "inline-flex min-w-7 h-7 items-center justify-center rounded bg-slate-500/10 text-slate-400 text-[10px] font-black";
+      const num = safeNumber(val);
+      if (num <= DEFAULT_ATTENDANCE_SETTINGS.lowMax) return "inline-flex min-w-7 h-7 items-center justify-center rounded bg-red-500/20 text-red-500 text-[10px] font-black";
+      if (num >= DEFAULT_ATTENDANCE_SETTINGS.highMin) return "inline-flex min-w-7 h-7 items-center justify-center rounded bg-emerald-500/20 text-emerald-500 text-[10px] font-black";
+      return "inline-flex min-w-7 h-7 items-center justify-center rounded bg-amber-500/20 text-amber-500 text-[10px] font-black";
+    }
+
+    function getSupplyColor(total, label) {
+      if (label === "-" || label === "") return "inline-flex min-w-9 h-7 items-center justify-center rounded bg-slate-500/10 text-slate-400 text-[10px] font-black px-1";
+      const num = safeNumber(total);
+      if (num <= DEFAULT_SUPPLY_SETTINGS.lowMax) return "inline-flex min-w-9 h-7 items-center justify-center rounded bg-red-500/20 text-red-500 text-[10px] font-black px-1";
+      if (num >= DEFAULT_SUPPLY_SETTINGS.highMin) return "inline-flex min-w-9 h-7 items-center justify-center rounded bg-emerald-500/20 text-emerald-500 text-[10px] font-black px-1";
+      return "inline-flex min-w-9 h-7 items-center justify-center rounded bg-amber-500/20 text-amber-500 text-[10px] font-black px-1";
+    }
+
+    function icon(name, className = "text-xl") {
+      return `<span class="material-symbols-outlined ${className}">${name}</span>`;
+    }
+
+    function cardClass() {
+      return isDark() ? "glass-dark border border-white/10 shadow-2xl" : "glass-light border border-white shadow-xl";
+    }
+    function softBoxClass() {
+      return isDark() ? "bg-white/10 border border-white/10" : "bg-slate-950/5 border border-slate-200";
+    }
+    function mutedClass() {
+      return isDark() ? "text-sm text-white/50" : "text-sm text-slate-500";
+    }
+    function badgeClass() {
+      return isDark()
+        ? "inline-flex items-center h-8 px-3 rounded-full bg-white/10 border border-white/10 text-xs font-black"
+        : "inline-flex items-center h-8 px-3 rounded-full bg-slate-950/5 border border-slate-200 text-xs font-black";
+    }
+    function inputClass(disabled = false) {
+      if (disabled) return isDark()
+        ? "w-full h-10 rounded-xl bg-white/5 border border-white/10 px-3 outline-none opacity-50"
+        : "w-full h-10 rounded-xl bg-slate-100 border border-slate-200 px-3 outline-none opacity-50";
+      return isDark()
+        ? "w-full h-10 rounded-xl bg-white/10 border border-white/10 text-white px-3 outline-none focus:border-white/30"
+        : "w-full h-10 rounded-xl bg-white border border-slate-200 text-slate-900 px-3 outline-none focus:border-slate-400";
+    }
+    function primaryButtonClass() {
+      return isDark()
+        ? "w-full h-10 rounded-xl bg-white text-slate-900 font-black hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        : "w-full h-10 rounded-xl bg-slate-950 text-white font-black hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed";
+    }
+    function secondaryButtonClass() {
+      return isDark()
+        ? "h-10 px-4 rounded-xl bg-white/10 border border-white/10 text-white font-black hover:bg-white/20"
+        : "h-10 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 font-black hover:bg-slate-50";
+    }
+    function iconButtonClass() {
+      return isDark()
+        ? "w-10 h-10 rounded-xl bg-white/10 border border-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+        : "w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 flex items-center justify-center";
+    }
+
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+
+      const action = button.dataset.action;
+      const menu = button.dataset.menu;
+      const matrixTab = button.dataset.tab;
+      const taskTab = button.dataset.taskTab;
+      const taskEditId = button.dataset.taskEdit;
+      const taskDisableId = button.dataset.taskDisable;
+      const userEditUsername = button.dataset.userEdit;
+      const userDeleteUsername = button.dataset.userDelete;
+
+      if (menu) return changeMenu(menu);
+
+      if (matrixTab) {
+        state.dashboardTab = matrixTab;
+        render();
+        return;
       }
-    }
 
-    function handleTogglePassword() {
-      const isPassword = passwordInput.type === "password";
-      passwordInput.type = isPassword ? "text" : "password";
-      togglePasswordIcon.textContent = isPassword ? "visibility_off" : "visibility";
-      togglePassword.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
-    }
+      if (taskTab) {
+        state.taskTab = taskTab;
+        render();
+        if (taskTab === "master") loadTasks();
+        return;
+      }
 
-    loginForm.addEventListener("submit", handleLogin);
-    togglePassword.addEventListener("click", handleTogglePassword);
+      if (taskEditId) {
+        const item = state.tasks.find(task => String(task.ID) === String(taskEditId));
+        return openTaskModal(item);
+      }
 
-    document.addEventListener("DOMContentLoaded", checkActiveSession);
+      if (taskDisableId) {
+        return openConfirm({
+          title: "Disable Task?",
+          message: "Task ini akan dinonaktifkan dari master checklist.",
+          confirmText: "Disable",
+          tone: "danger",
+          actionName: `disable-task:${taskDisableId}`
+        });
+      }
+
+      if (userEditUsername) {
+        const item = state.users.find(user => String(user.Username) === String(userEditUsername));
+        return openUserModal(item);
+      }
+
+      if (userDeleteUsername) {
+        return openConfirm({
+          title: "Delete User?",
+          message: `User ${userDeleteUsername} akan dihapus dari akses sistem.`,
+          confirmText: "Delete",
+          tone: "danger",
+          actionName: `delete-user:${userDeleteUsername}`
+        });
+      }
+
+      switch (action) {
+        case "login":
+          redirectToLogin();
+          break;
+        case "toggle-theme":
+          toggleTheme();
+          break;
+        case "logout-confirm":
+          openConfirm({
+            title: "Logout?",
+            message: "Session kamu akan diakhiri dan kamu akan kembali ke halaman login.",
+            confirmText: "Logout",
+            tone: "neutral",
+            actionName: "logout"
+          });
+          break;
+        case "close-confirm":
+          closeConfirm();
+          break;
+        case "confirm-action":
+          if (!state.confirmDialog) return;
+          if (state.confirmDialog.actionName === "logout") return handleLogout();
+          if (state.confirmDialog.actionName.startsWith("disable-task:")) return disableTask(state.confirmDialog.actionName.split(":")[1]);
+          if (state.confirmDialog.actionName.startsWith("delete-user:")) return deleteUser(state.confirmDialog.actionName.split(":")[1]);
+          break;
+        case "load-tracker":
+          loadTrackerData(state.trackerDate);
+          break;
+        case "add-task":
+          openTaskModal(null);
+          break;
+        case "close-task-modal":
+          closeTaskModal();
+          break;
+        case "save-task":
+          saveTask();
+          break;
+        case "add-user":
+          openUserModal(null);
+          break;
+        case "close-user-modal":
+          closeUserModal();
+          break;
+        case "save-user":
+          saveUser();
+          break;
+      }
+    });
+
+    document.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!target || !target.id) return;
+
+      if (target.id === "dashboard-month") {
+        state.dashboardMonth = Number(target.value);
+        render();
+        loadDashboardMatrices(null, state.dashboardMonth, state.dashboardYear);
+      }
+      if (target.id === "dashboard-year") {
+        state.dashboardYear = Number(target.value);
+        render();
+        loadDashboardMatrices(null, state.dashboardMonth, state.dashboardYear);
+      }
+      if (target.id === "tracker-date") {
+        state.trackerDate = target.value;
+      }
+
+      if (target.id === "task-shift") state.taskForm.shift = target.value;
+      if (target.id === "task-status") state.taskForm.status = target.value;
+      if (target.id === "user-role") {
+        state.userForm.role = target.value;
+        if (target.value === "Management") state.userForm.branch = "";
+        render();
+      }
+      if (target.id === "user-status") state.userForm.status = target.value;
+      if (target.id === "user-branch") state.userForm.branch = target.value;
+    });
+
+    document.addEventListener("input", (event) => {
+      const target = event.target;
+      if (!target || !target.id) return;
+
+      if (target.id === "task-name") state.taskForm.taskName = target.value;
+      if (target.id === "task-description") state.taskForm.description = target.value;
+      if (target.id === "task-sort") state.taskForm.sortOrder = target.value;
+
+      if (target.id === "user-username") state.userForm.username = target.value;
+      if (target.id === "user-password") state.userForm.password = target.value;
+    });
+
+    applyTheme();
+    render();
+    boot();
   </script>
 </body>
 </html>
