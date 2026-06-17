@@ -154,15 +154,15 @@
     }
     function getToken() { return localStorage.getItem(SESSION_KEY); }
 
-    async function fetchAPI(action, payload = {}) {
-      const response = await fetch(GAS_WEB_APP_URL, {
+    function fetchAPI(action, payload = {}) {
+      return fetch(GAS_WEB_APP_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action, payload })
+      }).then((response) => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
       });
-
-      if (!response.ok) throw new Error("Network response was not ok");
-      return response.json();
     }
 
     function setState(patch, shouldRender = true) {
@@ -218,134 +218,140 @@
       setTimeout(() => document.body.classList.remove("theme-switching"), 450);
     }
 
-    async function boot() {
+    function boot() {
       setState({ loading: true, accessError: "" }, false);
       applyTheme();
 
-      try {
-        const token = getToken();
-        if (!token) return redirectToLogin();
-
-        const sessionResponse = await fetchAPI("getUserSession", { token });
-        if (!sessionResponse.success) {
-          localStorage.removeItem(SESSION_KEY);
-          return redirectToLogin();
-        }
-
-        if (!sessionResponse.user || sessionResponse.user.role !== "Management") {
-          setState({
-            accessError: "Akses ditolak. Halaman ini hanya untuk Management.",
-            loading: false
-          });
-          return;
-        }
-
-        state.user = sessionResponse.user;
-
-        const [branchRes, classRes, invRes] = await Promise.all([
-          fetchAPI("getManagementBranches", { token }),
-          fetchAPI("getClassDetails", { token }),
-          fetchAPI("getInventoryDetails", { token })
-        ]);
-
-        state.branches = branchRes.success ? (branchRes.data || []) : [];
-        state.classes = classRes.success ? (classRes.data || []) : [];
-        state.inventory = invRes.success ? (invRes.data || []) : [];
-
-        await loadDashboardMatrices(token, state.dashboardMonth, state.dashboardYear, false);
-
-      } catch (error) {
-        console.error(error);
-        state.accessError = "Gagal memuat Management Dashboard.";
-      } finally {
-        state.loading = false;
-        render();
+      const token = getToken();
+      if (!token) {
+        redirectToLogin();
+        return Promise.resolve();
       }
+
+      return fetchAPI("getUserSession", { token })
+        .then((sessionResponse) => {
+          if (!sessionResponse.success) {
+            localStorage.removeItem(SESSION_KEY);
+            redirectToLogin();
+            return Promise.reject(new Error("SESSION_REDIRECT"));
+          }
+
+          if (!sessionResponse.user || sessionResponse.user.role !== "Management") {
+            state.accessError = "Akses ditolak. Halaman ini hanya untuk Management.";
+            state.loading = false;
+            render();
+            return Promise.reject(new Error("ACCESS_DENIED"));
+          }
+
+          state.user = sessionResponse.user;
+
+          return Promise.all([
+            fetchAPI("getManagementBranches", { token }),
+            fetchAPI("getClassDetails", { token }),
+            fetchAPI("getInventoryDetails", { token })
+          ]);
+        })
+        .then(([branchRes, classRes, invRes]) => {
+          state.branches = branchRes.success ? (branchRes.data || []) : [];
+          state.classes = classRes.success ? (classRes.data || []) : [];
+          state.inventory = invRes.success ? (invRes.data || []) : [];
+          return loadDashboardMatrices(token, state.dashboardMonth, state.dashboardYear, false);
+        })
+        .catch((error) => {
+          if (error && (error.message === "SESSION_REDIRECT" || error.message === "ACCESS_DENIED")) return;
+          console.error(error);
+          state.accessError = "Gagal memuat Management Dashboard.";
+        })
+        .finally(() => {
+          state.loading = false;
+          render();
+        });
     }
 
-    async function handleLogout() {
+    function handleLogout() {
       closeConfirm();
-      try {
-        const token = getToken();
-        if (token) await fetchAPI("logoutUser", { token });
-      } catch (error) {
-        console.error(error);
-      }
-      localStorage.removeItem(SESSION_KEY);
-      redirectToLogin();
+      const token = getToken();
+      const logoutRequest = token ? fetchAPI("logoutUser", { token }).catch((error) => console.error(error)) : Promise.resolve();
+      return logoutRequest.finally(() => {
+        localStorage.removeItem(SESSION_KEY);
+        redirectToLogin();
+      });
     }
 
-    async function loadDashboardMatrices(tokenParam, month, year, shouldRender = true) {
+    function loadDashboardMatrices(tokenParam, month, year, shouldRender = true) {
       const token = tokenParam || getToken();
       const filters = { month: Number(month), year: Number(year) };
 
-      try {
-        const [studentsRes, suppliesRes] = await Promise.all([
-          fetchAPI("getManagementStudents", { token, filters }),
-          fetchAPI("getManagementSupplies", { token, filters })
-        ]);
+      return Promise.all([
+        fetchAPI("getManagementStudents", { token, filters }),
+        fetchAPI("getManagementSupplies", { token, filters })
+      ])
+        .then(([studentsRes, suppliesRes]) => {
+          state.dashboardStudents = studentsRes.success ? (studentsRes.data || []) : [];
+          state.dashboardSupplies = suppliesRes.success ? (suppliesRes.data || []) : [];
 
-        state.dashboardStudents = studentsRes.success ? (studentsRes.data || []) : [];
-        state.dashboardSupplies = suppliesRes.success ? (suppliesRes.data || []) : [];
-
-        if (!studentsRes.success) showError(studentsRes.message || "Gagal memuat data students.");
-        if (!suppliesRes.success) showError(suppliesRes.message || "Gagal memuat data supplies.");
-      } catch (error) {
-        console.error(error);
-        showError("Gagal memuat data matriks dashboard.");
-      } finally {
-        if (shouldRender) render();
-      }
+          if (!studentsRes.success) showError(studentsRes.message || "Gagal memuat data students.");
+          if (!suppliesRes.success) showError(suppliesRes.message || "Gagal memuat data supplies.");
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Gagal memuat data matriks dashboard.");
+        })
+        .finally(() => {
+          if (shouldRender) render();
+        });
     }
 
-    async function loadTrackerData(date) {
+    function loadTrackerData(date) {
       state.trackerLoading = true;
       render();
 
-      try {
-        const response = await fetchAPI("getManagementActivityTracker", { token: getToken(), date });
-        if (response.success) {
-          state.trackerData = response.data || [];
-        } else {
-          state.trackerData = [];
-          showError(response.message || "Gagal memuat data tracker.");
-        }
-      } catch (error) {
-        console.error(error);
-        showError("Error saat menghubungi tracker.");
-      } finally {
-        state.trackerLoading = false;
-        render();
-      }
-    }
-
-    async function loadUsers() {
-      try {
-        const response = await fetchAPI("getAuthUsers", { token: getToken() });
-        if (response.success) state.users = response.data || [];
-        else showError(response.message || "Gagal memuat users.");
-      } catch (error) {
-        console.error(error);
-        showError("Gagal memuat users.");
-      } finally {
-        render();
-      }
-    }
-
-    async function loadTasks() {
-      try {
-        const response = await fetchAPI("getTeamLeaderActivityTasks", {
-          token: getToken(),
-          filters: { includeInactive: true }
+      return fetchAPI("getManagementActivityTracker", { token: getToken(), date })
+        .then((response) => {
+          if (response.success) {
+            state.trackerData = response.data || [];
+          } else {
+            state.trackerData = [];
+            showError(response.message || "Gagal memuat data tracker.");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Error saat menghubungi tracker.");
+        })
+        .finally(() => {
+          state.trackerLoading = false;
+          render();
         });
-        if (response.success) state.tasks = response.data || [];
-        else showError(response.message || "Gagal memuat tasks.");
-      } catch (error) {
-        console.error(error);
-        showError("Gagal memuat tasks.");
-      } finally {
-        render();
-      }
+    }
+
+    function loadUsers() {
+      return fetchAPI("getAuthUsers", { token: getToken() })
+        .then((response) => {
+          if (response.success) state.users = response.data || [];
+          else showError(response.message || "Gagal memuat users.");
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Gagal memuat users.");
+        })
+        .finally(() => render());
+    }
+
+    function loadTasks() {
+      return fetchAPI("getTeamLeaderActivityTasks", {
+        token: getToken(),
+        filters: { includeInactive: true }
+      })
+        .then((response) => {
+          if (response.success) state.tasks = response.data || [];
+          else showError(response.message || "Gagal memuat tasks.");
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Gagal memuat tasks.");
+        })
+        .finally(() => render());
     }
 
     function changeMenu(menu) {
@@ -383,54 +389,57 @@
       render();
     }
 
-    async function saveTask() {
+    function saveTask() {
       const payload = { ...state.taskForm };
       if (!payload.taskName.trim()) return showError("Task Name wajib diisi.");
 
       state.saving = true;
       render();
 
-      try {
-        const response = state.taskEditItem
-          ? await fetchAPI("updateTeamLeaderActivityTask", { token: getToken(), id: state.taskEditItem.ID, payload })
-          : await fetchAPI("createTeamLeaderActivityTask", { token: getToken(), payload });
+      const request = state.taskEditItem
+        ? fetchAPI("updateTeamLeaderActivityTask", { token: getToken(), id: state.taskEditItem.ID, payload })
+        : fetchAPI("createTeamLeaderActivityTask", { token: getToken(), payload });
 
-        if (response.success) {
-          showSuccess(response.message || "Task berhasil disimpan.");
-          closeTaskModal();
-          await loadTasks();
-        } else {
+      return request
+        .then((response) => {
+          if (response.success) {
+            showSuccess(response.message || "Task berhasil disimpan.");
+            closeTaskModal();
+            return loadTasks();
+          }
           showError(response.message || "Gagal menyimpan task.");
-        }
-      } catch (error) {
-        console.error(error);
-        showError("Terjadi error saat menyimpan task.");
-      } finally {
-        state.saving = false;
-        render();
-      }
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Terjadi error saat menyimpan task.");
+        })
+        .finally(() => {
+          state.saving = false;
+          render();
+        });
     }
 
-    async function disableTask(id) {
+    function disableTask(id) {
       closeConfirm();
       state.saving = true;
       render();
 
-      try {
-        const response = await fetchAPI("deleteTeamLeaderActivityTask", { token: getToken(), id });
-        if (response.success) {
-          showSuccess(response.message || "Task berhasil dinonaktifkan.");
-          await loadTasks();
-        } else {
+      return fetchAPI("deleteTeamLeaderActivityTask", { token: getToken(), id })
+        .then((response) => {
+          if (response.success) {
+            showSuccess(response.message || "Task berhasil dinonaktifkan.");
+            return loadTasks();
+          }
           showError(response.message || "Gagal menonaktifkan task.");
-        }
-      } catch (error) {
-        console.error(error);
-        showError("Terjadi error saat menonaktifkan task.");
-      } finally {
-        state.saving = false;
-        render();
-      }
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Terjadi error saat menonaktifkan task.");
+        })
+        .finally(() => {
+          state.saving = false;
+          render();
+        });
     }
 
     function emptyUserForm(branches = []) {
@@ -457,7 +466,7 @@
       render();
     }
 
-    async function saveUser() {
+    function saveUser() {
       const payload = { ...state.userForm };
       if (!payload.username.trim()) return showError("Username wajib diisi.");
       if (!state.userEditItem && !payload.password.trim()) return showError("Password wajib diisi untuk user baru.");
@@ -465,47 +474,50 @@
       state.saving = true;
       render();
 
-      try {
-        const response = state.userEditItem
-          ? await fetchAPI("updateAuthUser", { token: getToken(), username: state.userEditItem.Username, payload })
-          : await fetchAPI("createAuthUser", { token: getToken(), payload });
+      const request = state.userEditItem
+        ? fetchAPI("updateAuthUser", { token: getToken(), username: state.userEditItem.Username, payload })
+        : fetchAPI("createAuthUser", { token: getToken(), payload });
 
-        if (response.success) {
-          showSuccess(response.message || "User berhasil disimpan.");
-          closeUserModal();
-          await loadUsers();
-        } else {
+      return request
+        .then((response) => {
+          if (response.success) {
+            showSuccess(response.message || "User berhasil disimpan.");
+            closeUserModal();
+            return loadUsers();
+          }
           showError(response.message || "Gagal menyimpan user.");
-        }
-      } catch (error) {
-        console.error(error);
-        showError("Terjadi error saat menyimpan user.");
-      } finally {
-        state.saving = false;
-        render();
-      }
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Terjadi error saat menyimpan user.");
+        })
+        .finally(() => {
+          state.saving = false;
+          render();
+        });
     }
 
-    async function deleteUser(username) {
+    function deleteUser(username) {
       closeConfirm();
       state.saving = true;
       render();
 
-      try {
-        const response = await fetchAPI("deleteAuthUser", { token: getToken(), username });
-        if (response.success) {
-          showSuccess(response.message || "User berhasil dihapus.");
-          await loadUsers();
-        } else {
+      return fetchAPI("deleteAuthUser", { token: getToken(), username })
+        .then((response) => {
+          if (response.success) {
+            showSuccess(response.message || "User berhasil dihapus.");
+            return loadUsers();
+          }
           showError(response.message || "Gagal menghapus user.");
-        }
-      } catch (error) {
-        console.error(error);
-        showError("Terjadi error saat menghapus user.");
-      } finally {
-        state.saving = false;
-        render();
-      }
+        })
+        .catch((error) => {
+          console.error(error);
+          showError("Terjadi error saat menghapus user.");
+        })
+        .finally(() => {
+          state.saving = false;
+          render();
+        });
     }
 
     function render() {
