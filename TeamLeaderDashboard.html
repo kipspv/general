@@ -1,1822 +1,479 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Team Leader Dashboard</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+  <title>Team Leader Dashboard - Kampung Inggris Pontianak</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { display: ['Lexend', 'system-ui', 'sans-serif'] },
+          borderRadius: {
+            DEFAULT: '1rem',
+            lg: '1.25rem',
+            xl: '1.5rem',
+            '2xl': '1.75rem',
+            '3xl': '2rem'
+          }
+        }
+      }
+    };
+  </script>
   <style>
     :root { --dock-bottom: max(18px, env(safe-area-inset-bottom)); }
-
-    body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .fade-in { animation: fadeIn 0.35s ease both; }
-    .slide-up { animation: slideUp 0.42s ease both; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
+    * { -webkit-tap-highlight-color: transparent; transition: background-color 420ms ease, color 420ms ease, border-color 420ms ease, box-shadow 420ms ease, opacity 260ms ease; }
+    body { font-family: Lexend, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .fade-in { animation: fadeIn .45s ease both; }
+    .slide-up { animation: slideUp .5s ease both; }
+    .dock-pop { animation: dockPop .45s cubic-bezier(.2,.9,.2,1.2) both; }
+    .modal-pop { animation: modalPop .28s cubic-bezier(.2,.9,.2,1.1) both; }
+    .toast-in { animation: toastIn .32s ease both; }
+    .theme-switching { pointer-events: none; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes dockPop { from { opacity:0; transform:translateY(20px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes modalPop { from { opacity:0; transform:translateY(18px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes toastIn { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+    input, select, textarea { color-scheme: light; }
+    .dark input, .dark select, .dark textarea { color-scheme: dark; }
+    .glass-light { background: rgba(255,255,255,.74); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+    .glass-dark { background: rgba(15,23,42,.74); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+    .dock-glass-light { background: rgba(255,255,255,.78); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4); }
+    .dock-glass-dark { background: rgba(15,23,42,.80); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4); }
     .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, .45);
-      border-radius: 999px;
-    }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .45); border-radius: 999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, .7); }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24; }
+    @media (prefers-reduced-motion: reduce) { *, .fade-in, .slide-up, .dock-pop, .modal-pop, .toast-in { transition: none !important; animation: none !important; } }
   </style>
 </head>
-
 <body class="bg-[#020617] text-white">
-  <div id="root"></div>
+  <div id="app"></div>
 
   <script>
-    var h = React.createElement;
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyn-nmRA_GFjwK36-gz3Va7JezQaG-Pe22WnBcL52_3g9QSwNeIk6ys1s5roovrOB0A4A/exec';
+    const SESSION_KEY = 'gas_auth_token';
+    const THEME_KEY = 'team_leader_dashboard_theme';
+    const SUPPLY_SETTINGS_KEY = 'team_leader_supply_color_settings';
 
-    var GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtUEZTa_Wgonc8Hx3u3omxG9zY-0m5z7i0PhNt4hnIeS_qHivMmFp5Yq4LWFaj8GwWCQ/exec';
-
-    var SESSION_KEY = 'gas_auth_token';
-    var THEME_KEY = 'team_leader_dashboard_theme_safe';
-
-    var MONTH_NAMES = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const SHIFT_OPTIONS = [
+      { value: 'General', label: 'General / All Shifts' },
+      { value: 'Shift 1', label: 'Shift 1' },
+      { value: 'Shift 2', label: 'Shift 2' },
+      { value: 'Shift 3', label: 'Shift 3' }
     ];
+    const DEFAULT_SUPPLY_SETTINGS = { lowMax: 50, mediumMin: 51, mediumMax: 100, highMin: 101 };
 
-    var SHIFT_OPTIONS = ['Shift 1', 'Shift 2', 'Shift 3', 'General'];
+    const today = new Date();
+    const todayString = new Date().toISOString().slice(0, 10);
 
-    function safeGetStorage(key) {
-      try { return localStorage.getItem(key); }
-      catch (error) { console.warn('Storage get blocked', error); return null; }
+    const state = {
+      theme: localStorage.getItem(THEME_KEY) || 'dark',
+      activeMenu: 'dashboard',
+      user: null,
+      loading: true,
+      saving: false,
+      accessError: '',
+      toast: null,
+      confirmDialog: null,
+      inputDate: todayString,
+      supplyRows: [],
+      records: [],
+      editingRecord: null,
+      editRecordForm: { paperUsed: '', printingUsed: '' },
+      recapMonth: today.getMonth() + 1,
+      recapYear: today.getFullYear(),
+      monthlyRecap: null,
+      supplySettings: loadJson(SUPPLY_SETTINGS_KEY, DEFAULT_SUPPLY_SETTINGS),
+      filters: { date: '', month: '', year: '' },
+      activitySettings: null,
+      activitySheetId: '',
+      activitySubMenu: 'daily',
+      activityBooted: false,
+      activityLoading: false,
+      activitySyncing: false,
+      activityDate: todayString,
+      activityShift: 'Shift 1',
+      activityRows: [],
+      activityNotes: '',
+      notesFilters: { date: '', dateFrom: '', dateTo: '', shift: '', limit: 50 },
+      loadedNotes: [],
+      notesLoaded: false,
+      notesLoading: false
+    };
+
+    function loadJson(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (_) { return fallback; }
     }
 
-    function safeSetStorage(key, value) {
-      try { localStorage.setItem(key, value); return true; }
-      catch (error) { console.warn('Storage set blocked', error); return false; }
-    }
-
-    function safeRemoveStorage(key) {
-      try { localStorage.removeItem(key); return true; }
-      catch (error) { console.warn('Storage remove blocked', error); return false; }
-    }
-
-    function getErrorMessage(error) {
-      if (!error) return 'Unknown error';
-      if (typeof error === 'string') return error;
-      return error.message || String(error);
-    }
-
-    function trimText(text, limit) {
-      var value = String(text || '');
-      if (value.length <= limit) return value;
-      return value.slice(0, limit) + '...';
-    }
-
-    function todayString() {
-      return new Date().toISOString().slice(0, 10);
-    }
-
-    function getMonthNow() {
-      return new Date().getMonth() + 1;
-    }
-
-    function getYearNow() {
-      return new Date().getFullYear();
-    }
-
-    function App() {
-      var themeState = React.useState(safeGetStorage(THEME_KEY) || 'dark');
-      var theme = themeState[0];
-      var setTheme = themeState[1];
-
-      var activeMenuState = React.useState('dashboard');
-      var activeMenu = activeMenuState[0];
-      var setActiveMenu = activeMenuState[1];
-
-      var userState = React.useState(null);
-      var user = userState[0];
-      var setUser = userState[1];
-
-      var loadingState = React.useState(true);
-      var loading = loadingState[0];
-      var setLoading = loadingState[1];
-
-      var savingState = React.useState(false);
-      var saving = savingState[0];
-      var setSaving = savingState[1];
-
-      var accessErrorState = React.useState('');
-      var accessError = accessErrorState[0];
-      var setAccessError = accessErrorState[1];
-
-      var toastState = React.useState(null);
-      var toast = toastState[0];
-      var setToast = toastState[1];
-
-      var debugOpenState = React.useState(false);
-      var debugOpen = debugOpenState[0];
-      var setDebugOpen = debugOpenState[1];
-
-      var debugRowsState = React.useState([]);
-      var debugRows = debugRowsState[0];
-      var setDebugRows = debugRowsState[1];
-
-      var rawResponseState = React.useState('');
-      var rawResponse = rawResponseState[0];
-      var setRawResponse = rawResponseState[1];
-
-      var parsedResponseState = React.useState(null);
-      var parsedResponse = parsedResponseState[0];
-      var setParsedResponse = parsedResponseState[1];
-
-      var statusState = React.useState('');
-      var status = statusState[0];
-      var setStatus = statusState[1];
-
-      var inputDateState = React.useState(todayString());
-      var inputDate = inputDateState[0];
-      var setInputDate = inputDateState[1];
-
-      var supplyRowsState = React.useState([]);
-      var supplyRows = supplyRowsState[0];
-      var setSupplyRows = supplyRowsState[1];
-
-      var recordsState = React.useState([]);
-      var records = recordsState[0];
-      var setRecords = recordsState[1];
-
-      var monthState = React.useState(getMonthNow());
-      var recapMonth = monthState[0];
-      var setRecapMonth = monthState[1];
-
-      var yearState = React.useState(getYearNow());
-      var recapYear = yearState[0];
-      var setRecapYear = yearState[1];
-
-      var monthlyRecapState = React.useState(null);
-      var monthlyRecap = monthlyRecapState[0];
-      var setMonthlyRecap = monthlyRecapState[1];
-
-      var activitySettingsState = React.useState(null);
-      var activitySettings = activitySettingsState[0];
-      var setActivitySettings = activitySettingsState[1];
-
-      var activitySheetIdState = React.useState('');
-      var activitySheetId = activitySheetIdState[0];
-      var setActivitySheetId = activitySheetIdState[1];
-
-      var activityDateState = React.useState(todayString());
-      var activityDate = activityDateState[0];
-      var setActivityDate = activityDateState[1];
-
-      var activityShiftState = React.useState('Shift 1');
-      var activityShift = activityShiftState[0];
-      var setActivityShift = activityShiftState[1];
-
-      var activityRowsState = React.useState([]);
-      var activityRows = activityRowsState[0];
-      var setActivityRows = activityRowsState[1];
-
-      var activityNotesState = React.useState('');
-      var activityNotes = activityNotesState[0];
-      var setActivityNotes = activityNotesState[1];
-
-      var notesState = React.useState([]);
-      var loadedNotes = notesState[0];
-      var setLoadedNotes = notesState[1];
-
-      var notesLoadedState = React.useState(false);
-      var notesLoaded = notesLoadedState[0];
-      var setNotesLoaded = notesLoadedState[1];
-
-      var noteLimitState = React.useState(50);
-      var noteLimit = noteLimitState[0];
-      var setNoteLimit = noteLimitState[1];
-
-      function addDebug(label, data) {
-        var item = {
-          time: new Date().toLocaleTimeString(),
-          label: label,
-          data: data || {}
-        };
-
-        console.log('[TL DEBUG]', label, data || {});
-
-        setDebugRows(function (prev) {
-          return [item].concat(prev).slice(0, 60);
+    async function fetchAPI(action, payload = {}) {
+      try {
+        const response = await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action, payload })
         });
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+      } catch (error) {
+        console.error(`API Error (${action}):`, error);
+        throw error;
       }
+    }
 
-      function showToast(type, text) {
-        setToast({ type: type, text: text });
-        setTimeout(function () { setToast(null); }, 3500);
+    const $ = (id) => document.getElementById(id);
+    const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+    const num = (value) => Number(value || 0);
+    const isDark = () => state.theme === 'dark';
+    const token = () => localStorage.getItem(SESSION_KEY);
+
+    function applyTheme() {
+      document.documentElement.classList.toggle('dark', isDark());
+      document.body.className = isDark() ? 'bg-[#020617] text-white' : 'bg-slate-100 text-slate-950';
+      localStorage.setItem(THEME_KEY, state.theme);
+    }
+
+    function icon(name, extra = '') {
+      const map = {
+        dashboard: 'monitoring', chart: 'bar_chart_4_bars', paper: 'description', printer: 'print', check: 'check_circle',
+        activity: 'checklist', edit: 'edit_square', database: 'database', settings: 'tune', user: 'person', logout: 'logout',
+        sun: 'light_mode', moon: 'dark_mode', layers: 'layers', trash: 'delete', alert: 'warning', spark: 'auto_awesome',
+        note: 'notes', sheet: 'table_chart', checklist: 'checklist_rtl', calendar: 'calendar_month', empty: 'inbox', refresh: 'refresh', close: 'close'
+      };
+      return `<span class="material-symbols-outlined ${extra}">${map[name] || name}</span>`;
+    }
+
+    function cardClass() { return isDark() ? 'glass-dark border border-white/10 shadow-2xl shadow-black/20' : 'glass-light border border-white shadow-xl shadow-slate-300/40'; }
+    function softBoxClass() { return isDark() ? 'bg-white/5 border border-white/10' : 'bg-slate-950/5 border border-slate-200'; }
+    function mutedClass() { return isDark() ? 'text-white/55 text-sm' : 'text-slate-500 text-sm'; }
+    function badgeClass() { return isDark() ? 'inline-flex items-center rounded-full bg-white/10 border border-white/10 px-3 py-2 text-xs font-black text-white/80' : 'inline-flex items-center rounded-full bg-slate-950/5 border border-slate-200 px-3 py-2 text-xs font-black text-slate-600'; }
+    function inputClass(disabled = false) { return `${isDark() ? 'bg-black/30 border-white/10 text-white placeholder:text-white/25 focus:border-white/40 focus:ring-white/20' : 'bg-white border-slate-200 text-slate-950 placeholder:text-slate-400 focus:border-slate-950/30 focus:ring-slate-950/10'} w-full h-11 rounded-2xl px-4 text-sm outline-none disabled:opacity-60 ${disabled ? 'cursor-not-allowed' : ''}`; }
+    function textareaClass() { return `${isDark() ? 'bg-black/30 border-white/10 text-white placeholder:text-white/25 focus:border-white/40 focus:ring-white/20' : 'bg-white border-slate-200 text-slate-950 placeholder:text-slate-400 focus:border-slate-950/30 focus:ring-slate-950/10'} w-full rounded-2xl px-4 py-3 text-sm outline-none`; }
+    function primaryButtonClass() { return `${isDark() ? 'bg-white text-slate-950 hover:bg-slate-200' : 'bg-slate-950 text-white hover:bg-slate-800'} h-11 px-5 rounded-2xl font-black text-sm transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`; }
+    function secondaryButtonClass() { return `${isDark() ? 'bg-white/10 text-white border-white/10 hover:bg-white/15' : 'bg-white text-slate-950 border-slate-200 hover:bg-slate-50'} h-11 px-5 rounded-2xl border font-black text-sm transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`; }
+    function smallButtonClass(active = false) { return active ? primaryButtonClass() : secondaryButtonClass(); }
+    function iconButtonClass() { return `${isDark() ? 'bg-white/10 text-white border-white/10 hover:bg-white/15' : 'bg-white text-slate-950 border-slate-200 hover:bg-slate-50'} w-11 h-11 rounded-2xl border inline-flex items-center justify-center`; }
+
+    function field(label, id, value, type='text', placeholder='', disabled=false, oninput='') {
+      const handler = oninput ? `oninput="${oninput}"` : '';
+      return `<div><label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">${esc(label)}</label><input id="${esc(id)}" type="${esc(type)}" value="${esc(value)}" placeholder="${esc(placeholder)}" ${disabled ? 'disabled' : ''} ${handler} class="${inputClass(disabled)}"/></div>`;
+    }
+    function selectField(label, id, value, options, onchange='') {
+      const handler = onchange ? `onchange="${onchange}"` : '';
+      return `<div><label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">${esc(label)}</label><select id="${esc(id)}" ${handler} class="${inputClass()}">${options.map(o => `<option value="${esc(o.value)}" ${String(o.value)===String(value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select></div>`;
+    }
+
+    function showToast(type, text) {
+      state.toast = { type, text };
+      render();
+      setTimeout(() => { state.toast = null; render(); }, 3400);
+    }
+    const showSuccess = (text) => showToast('success', text);
+    const showError = (text) => showToast('error', text);
+
+    function openConfirm(config) {
+      state.confirmDialog = {
+        title: config.title || 'Are you sure?',
+        message: config.message || 'This action needs confirmation.',
+        confirmText: config.confirmText || 'Confirm',
+        cancelText: config.cancelText || 'Cancel',
+        tone: config.tone || 'danger',
+        action: config.action
+      };
+      render();
+    }
+    function closeConfirm() { state.confirmDialog = null; render(); }
+    function confirmAction() { const action = state.confirmDialog?.action; closeConfirm(); if (action && Actions[action]) Actions[action](); }
+
+    async function boot() {
+      state.loading = true; state.accessError = ''; render();
+      try {
+        if (!token()) return redirectToLogin();
+        const sessionResponse = await fetchAPI('getUserSession', { token: token() });
+        if (!sessionResponse.success) { localStorage.removeItem(SESSION_KEY); return redirectToLogin(); }
+        if (sessionResponse.user.role !== 'Team Leader') { state.accessError = 'Akses ditolak. Halaman ini hanya untuk Team Leader.'; state.loading = false; return render(); }
+        state.user = sessionResponse.user;
+        await Promise.all([loadSupplyMatrix(token(), state.inputDate, true), loadRecords(token(), null, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true), loadMasterActivityTasks(token())]);
+      } catch (err) { state.accessError = 'Gagal memuat Team Leader Dashboard.'; }
+      finally { state.loading = false; render(); }
+    }
+    function redirectToLogin() { window.location.href = 'index.html'; }
+
+    async function loadMasterActivityTasks(t) {
+      try {
+        const response = await fetchAPI('getTeamLeaderActivityTasks', { token: t, filters: { includeInactive: false } });
+        if (response.success) localStorage.setItem('gas_master_activity_tasks', JSON.stringify(response.data || []));
+      } catch (err) { console.warn('Failed to cache master tasks', err); }
+    }
+    async function loadSupplyMatrix(t = token(), dateParam = state.inputDate, silent=false) {
+      const response = await fetchAPI('getDailySupplyInputMatrix', { token: t, date: dateParam });
+      if (response.success) state.supplyRows = response.data || []; else showError(response.message || 'Gagal memuat matrix supplies.');
+      if (!silent) render();
+    }
+    async function loadRecords(t = token(), customFilters = null, silent=false) {
+      const response = await fetchAPI('getDailySupplies', { token: t, filters: customFilters || state.filters });
+      if (response.success) state.records = response.data || []; else showError(response.message || 'Gagal memuat records supplies.');
+      if (!silent) render();
+    }
+    async function loadMonthlyRecap(t = token(), month = state.recapMonth, year = state.recapYear, silent=false) {
+      const response = await fetchAPI('getMonthlySuppliesRecap', { token: t, month: Number(month), year: Number(year) });
+      if (response.success) state.monthlyRecap = response.data; else showError(response.message || 'Gagal memuat monthly supplies recap.');
+      if (!silent) render();
+    }
+
+    function setMenu(menu) {
+      state.activeMenu = menu;
+      render();
+      if (menu === 'activity' && state.user && !state.activityBooted) bootActivity();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function toggleTheme() { document.body.classList.add('theme-switching'); state.theme = isDark() ? 'light' : 'dark'; applyTheme(); render(); setTimeout(() => document.body.classList.remove('theme-switching'), 450); }
+
+    async function changeInputDate(value) { state.inputDate = value; render(); await loadSupplyMatrix(token(), value); }
+    function updateSupplyValue(index, field, value) {
+      const row = state.supplyRows[index]; if (!row) return;
+      row[field] = value;
+      row.isEdited = String(row.paperUsed || '') !== String(row.originalPaperUsed || '') || String(row.printingUsed || '') !== String(row.originalPrintingUsed || '');
+      const preview = $(`supply-preview-${index}`); if (preview) { preview.outerHTML = supplyPreviewSpan(row, index); }
+      const status = $(`supply-status-${index}`); if (status) status.outerHTML = statusPill(row.isSaved, row.isEdited, `supply-status-${index}`);
+    }
+    function confirmSaveSupply() {
+      const rowsToSave = state.supplyRows.filter(r => r.paperUsed !== '' && r.paperUsed != null || r.printingUsed !== '' && r.printingUsed != null);
+      if (!rowsToSave.length) return showError('Belum ada data paper/printing yang diisi.');
+      openConfirm({ title:'Save all supplies?', message:'Data supplies per inventory item akan disimpan. Jika item di tanggal yang sama sudah ada, sistem akan update tanpa duplicate.', confirmText:'Save All', tone:'success', action:'saveSupplyBulk' });
+    }
+    async function saveSupplyBulk() {
+      state.saving = true; render();
+      try {
+        const rowsToSave = state.supplyRows.filter(r => r.paperUsed !== '' && r.paperUsed != null || r.printingUsed !== '' && r.printingUsed != null);
+        const response = await fetchAPI('saveDailySuppliesBulk', { token: token(), date: state.inputDate, rows: rowsToSave });
+        if (!response.success) return showError(response.message || 'Gagal menyimpan supplies.');
+        await Promise.all([loadSupplyMatrix(token(), state.inputDate, true), loadRecords(token(), null, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true)]);
+        showSuccess(response.message || 'Supplies berhasil disimpan.');
+      } catch (err) { showError('Terjadi error saat menyimpan supplies.'); }
+      finally { state.saving = false; render(); }
+    }
+    function requestDeleteSupply(id) { state.pendingDeleteSupplyId = id; openConfirm({ title:'Delete supply record?', message:'Data paper dan printing inventory item ini akan dihapus. Aksi ini tidak bisa dibatalkan.', confirmText:'Delete', tone:'danger', action:'deleteSupply' }); }
+    async function deleteSupply() {
+      state.saving = true; render();
+      try {
+        const response = await fetchAPI('deleteDailySupply', { token: token(), id: state.pendingDeleteSupplyId });
+        if (!response.success) return showError(response.message || 'Gagal menghapus supplies.');
+        await Promise.all([loadSupplyMatrix(token(), state.inputDate, true), loadRecords(token(), null, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true)]);
+        showSuccess(response.message || 'Supplies berhasil dihapus.');
+      } catch (err) { showError('Terjadi error saat menghapus supplies.'); }
+      finally { state.saving = false; state.pendingDeleteSupplyId = null; render(); }
+    }
+    function openEditRecord(index) { const item = state.records[index]; state.editingRecord = item; state.editRecordForm = { paperUsed: item?.['Paper Used'] || 0, printingUsed: item?.['Printing Used'] || 0 }; render(); }
+    function closeEditRecord() { state.editingRecord = null; render(); }
+    async function submitEditRecord() {
+      state.editRecordForm.paperUsed = $('editPaperUsed')?.value || '';
+      state.editRecordForm.printingUsed = $('editPrintingUsed')?.value || '';
+      state.saving = true; render();
+      try {
+        const response = await fetchAPI('updateDailySupply', { token: token(), id: state.editingRecord.ID, payload: state.editRecordForm });
+        if (!response.success) return showError(response.message || 'Gagal update record.');
+        state.editingRecord = null;
+        await Promise.all([loadRecords(token(), null, true), loadSupplyMatrix(token(), state.inputDate, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true)]);
+        showSuccess(response.message || 'Record berhasil diupdate.');
+      } catch (err) { showError('Terjadi error saat update record.'); }
+      finally { state.saving = false; render(); }
+    }
+    async function applyFilters() { state.filters = { date: $('filterDate')?.value || '', month: $('filterMonth')?.value || '', year: $('filterYear')?.value || '' }; await loadRecords(token(), state.filters); }
+    async function clearFilters() { state.filters = { date:'', month:'', year:'' }; await loadRecords(token(), state.filters); }
+    async function changeRecapMonth(value) { state.recapMonth = Number(value); render(); await loadMonthlyRecap(token(), state.recapMonth, state.recapYear); }
+    async function changeRecapYear(value) { state.recapYear = Number(value); render(); await loadMonthlyRecap(token(), state.recapMonth, state.recapYear); }
+    function saveSettingsFromForm() {
+      const clean = { lowMax: Number($('lowMax')?.value), mediumMin: Number($('mediumMin')?.value), mediumMax: Number($('mediumMax')?.value), highMin: Number($('highMin')?.value) };
+      if (Object.values(clean).some(Number.isNaN)) return showError('Settings harus berupa angka.');
+      state.supplySettings = clean; localStorage.setItem(SUPPLY_SETTINGS_KEY, JSON.stringify(clean)); showSuccess('Settings warna supplies berhasil disimpan.'); render();
+    }
+    function resetSettings() { state.supplySettings = { ...DEFAULT_SUPPLY_SETTINGS }; localStorage.setItem(SUPPLY_SETTINGS_KEY, JSON.stringify(state.supplySettings)); showSuccess('Settings dikembalikan ke default.'); render(); }
+
+    async function bootActivity() {
+      state.activityLoading = true; render();
+      try {
+        const response = await fetchAPI('getTeamLeaderActivitySettings', { token: token() });
+        if (!response.success) return showError(response.message || 'Gagal memuat activity settings.');
+        state.activitySettings = response.data || null;
+        state.activitySheetId = response.data ? response.data['Activity Sheet ID'] || '' : '';
+        state.activityBooted = true;
+        if (state.activitySettings && state.activitySheetId) await loadActivityMatrix(token(), state.activityDate, state.activityShift, true);
+      } catch (err) { showError('Terjadi error saat memuat Activity Tracker.'); }
+      finally { state.activityLoading = false; render(); }
+    }
+    async function saveActivitySheet() {
+      state.activitySheetId = $('activitySheetId')?.value || state.activitySheetId;
+      if (!state.activitySheetId.trim()) return showError('Activity Sheet ID wajib diisi.');
+      state.saving = true; render();
+      try {
+        const response = await fetchAPI('saveTeamLeaderActivitySheetId', { token: token(), sheetId: state.activitySheetId });
+        if (!response.success) return showError(response.message || 'Gagal menyimpan Activity Sheet ID.');
+        state.activitySettings = response.data || null;
+        state.activitySheetId = response.data ? response.data['Activity Sheet ID'] || state.activitySheetId : state.activitySheetId;
+        state.activityBooted = true;
+        await loadActivityMatrix(token(), state.activityDate, state.activityShift, true);
+        showSuccess(response.message || 'Activity Sheet berhasil disiapkan.');
+      } catch (err) { showError('Terjadi error saat setup Activity Sheet.'); }
+      finally { state.saving = false; render(); }
+    }
+    async function loadActivityMatrix(t = token(), date = state.activityDate, shift = state.activityShift, silent=false) {
+      if (!shift) return showError('Shift wajib dipilih.');
+      const cacheKey = `activity_matrix_${date}_${shift}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      const masterTasksStr = localStorage.getItem('gas_master_activity_tasks');
+      let background = false;
+      if (cachedData) {
+        const parsed = loadRawJson(cachedData, {}); state.activityRows = parsed.rows || []; state.activityNotes = parsed.notes || ''; background = true;
+      } else if (masterTasksStr) {
+        const masterTasks = loadRawJson(masterTasksStr, []);
+        state.activityRows = masterTasks.filter(task => {
+          const taskShift = String(task.Shift || '').trim().toLowerCase(); const target = shift.trim().toLowerCase();
+          return !target || !taskShift || taskShift === target || taskShift.includes('all') || taskShift.includes('general');
+        }).map(task => ({ taskId: task.ID, existingCheckId:'', isSaved:false, isDone:false, originalIsDone:false, shift, taskName:task['Task Name'], description:task.Description, sortOrder:task['Sort Order'] }));
+        state.activityNotes = ''; background = true;
       }
-
-      function showSuccess(text) { showToast('success', text); }
-      function showError(text) { showToast('error', text); }
-
-      async function fetchAPI(action, payload) {
-        var rawText = '';
-
-        addDebug('POST started', {
-          action: action,
-          payloadKeys: Object.keys(payload || {})
-        });
-
-        try {
-          var response = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'text/plain;charset=utf-8'
-            },
-            body: JSON.stringify({
-              action: action,
-              payload: payload || {}
-            })
-          });
-
-          rawText = await response.text();
-
-          setStatus(String(response.status) + ' ' + String(response.statusText || ''));
-          setRawResponse(rawText);
-
-          addDebug('POST raw response', {
-            action: action,
-            status: response.status,
-            ok: response.ok,
-            preview: trimText(rawText, 350)
-          });
-
-          if (!response.ok) {
-            throw new Error('HTTP error: ' + response.status);
-          }
-
-          var parsed;
-
-          try {
-            parsed = JSON.parse(rawText);
-          } catch (jsonError) {
-            throw new Error('GAS returned non-JSON response: ' + trimText(rawText, 160));
-          }
-
-          setParsedResponse(parsed);
-
-          addDebug('POST parsed JSON', {
-            action: action,
-            success: parsed.success,
-            message: parsed.message
-          });
-
-          return parsed;
-
-        } catch (error) {
-          addDebug('POST failed', {
-            action: action,
-            error: getErrorMessage(error),
-            rawPreview: trimText(rawText, 350)
-          });
-
-          throw error;
-        }
-      }
-
-      async function boot() {
-        setLoading(true);
-        setAccessError('');
-
-        addDebug('Boot started', {
-          href: window.location.href,
-          hasToken: !!safeGetStorage(SESSION_KEY)
-        });
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-
-          if (!token) {
-            redirectToLogin();
-            return;
-          }
-
-          var sessionResponse = await fetchAPI('getUserSession', {
-            token: token
-          });
-
-          if (!sessionResponse || !sessionResponse.success) {
-            safeRemoveStorage(SESSION_KEY);
-            redirectToLogin();
-            return;
-          }
-
-          if (!sessionResponse.user || sessionResponse.user.role !== 'Team Leader') {
-            setAccessError('Akses ditolak. Halaman ini hanya untuk Team Leader.');
-            setLoading(false);
-            return;
-          }
-
-          setUser(sessionResponse.user);
-
-          await Promise.allSettled([
-            loadSupplyMatrix(token, inputDate),
-            loadRecords(token),
-            loadMonthlyRecap(token, recapMonth, recapYear),
-            loadMasterActivityTasks(token)
-          ]);
-
-          addDebug('Boot finished', {
-            user: sessionResponse.user
-          });
-
-        } catch (error) {
-          setAccessError('Gagal memuat Team Leader Dashboard: ' + getErrorMessage(error));
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      function redirectToLogin() {
-        window.location.href = './index.html';
-      }
-
-      async function handleLogout() {
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          if (token) {
-            await fetchAPI('logoutUser', { token: token });
-          }
-        } catch (error) {
-          addDebug('Logout API failed but local logout continues', {
-            error: getErrorMessage(error)
-          });
-        }
-
-        safeRemoveStorage(SESSION_KEY);
-        redirectToLogin();
-      }
-
-      async function testGasGet() {
-        try {
-          var response = await fetch(GAS_WEB_APP_URL, { method: 'GET' });
-          var rawText = await response.text();
-
-          setStatus(String(response.status) + ' ' + String(response.statusText || ''));
-          setRawResponse(rawText);
-
-          var parsed = null;
-          try { parsed = JSON.parse(rawText); } catch (error) { parsed = null; }
-          setParsedResponse(parsed);
-
-          addDebug('GET test finished', {
-            status: response.status,
-            ok: response.ok,
-            preview: trimText(rawText, 350),
-            parsed: parsed
-          });
-
-          showSuccess('GET test completed. Check Debug panel.');
-        } catch (error) {
-          showError('GET test failed: ' + getErrorMessage(error));
-        }
-      }
-
-      async function testSessionPost() {
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('getUserSession', { token: token });
-          showSuccess('Session test completed: ' + String(response.success));
-        } catch (error) {
-          showError('Session test failed: ' + getErrorMessage(error));
-        }
-      }
-
-      async function loadSupplyMatrix(tokenParam, dateParam) {
-        var token = tokenParam || safeGetStorage(SESSION_KEY);
-        var response = await fetchAPI('getDailySupplyInputMatrix', {
-          token: token,
-          date: dateParam || inputDate
-        });
-
+      state.activitySyncing = background; state.activityLoading = !background; if (!silent) render();
+      try {
+        const response = await fetchAPI('getTeamLeaderActivityMatrix', { token: t, date, shift });
         if (response.success) {
-          setSupplyRows(response.data || []);
-        } else {
-          showError(response.message || 'Gagal memuat supplies matrix.');
-        }
-      }
-
-      async function loadRecords(tokenParam) {
-        var token = tokenParam || safeGetStorage(SESSION_KEY);
-        var response = await fetchAPI('getDailySupplies', {
-          token: token,
-          filters: {}
-        });
-
-        if (response.success) {
-          setRecords(response.data || []);
-        } else {
-          showError(response.message || 'Gagal memuat records.');
-        }
-      }
-
-      async function loadMonthlyRecap(tokenParam, monthParam, yearParam) {
-        var token = tokenParam || safeGetStorage(SESSION_KEY);
-        var response = await fetchAPI('getMonthlySuppliesRecap', {
-          token: token,
-          month: Number(monthParam),
-          year: Number(yearParam)
-        });
-
-        if (response.success) {
-          setMonthlyRecap(response.data || null);
-        } else {
-          showError(response.message || 'Gagal memuat monthly recap.');
-        }
-      }
-
-      async function loadMasterActivityTasks(tokenParam) {
-        try {
-          var token = tokenParam || safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('getTeamLeaderActivityTasks', {
-            token: token,
-            filters: { includeInactive: false }
-          });
-
-          if (response.success) {
-            safeSetStorage('gas_master_activity_tasks', JSON.stringify(response.data || []));
-          }
-        } catch (error) {
-          addDebug('Master activity cache failed', {
-            error: getErrorMessage(error)
-          });
-        }
-      }
-
-      function updateSupplyValue(index, field, value) {
-        setSupplyRows(function (prev) {
-          var copy = prev.slice();
-          var oldRow = copy[index] || {};
-
-          copy[index] = Object.assign({}, oldRow, {
-            [field]: value,
-            isEdited: true
-          });
-
-          return copy;
-        });
-      }
-
-      async function saveSupplyBulk() {
-        var rowsToSave = supplyRows.filter(function (row) {
-          var hasPaper = row.paperUsed !== '' && row.paperUsed !== null && row.paperUsed !== undefined;
-          var hasPrinting = row.printingUsed !== '' && row.printingUsed !== null && row.printingUsed !== undefined;
-          return hasPaper || hasPrinting;
-        });
-
-        if (!rowsToSave.length) {
-          showError('Belum ada data paper/printing yang diisi.');
-          return;
-        }
-
-        setSaving(true);
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-
-          var response = await fetchAPI('saveDailySuppliesBulk', {
-            token: token,
-            date: inputDate,
-            rows: rowsToSave
-          });
-
-          if (!response.success) {
-            showError(response.message || 'Gagal menyimpan supplies.');
-            return;
-          }
-
-          await Promise.allSettled([
-            loadSupplyMatrix(token, inputDate),
-            loadRecords(token),
-            loadMonthlyRecap(token, recapMonth, recapYear)
-          ]);
-
-          showSuccess(response.message || 'Supplies berhasil disimpan.');
-
-        } catch (error) {
-          showError('Save supplies error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      async function deleteSupply(id) {
-        if (!id) return;
-
-        var ok = window.confirm('Delete supply record ini?');
-        if (!ok) return;
-
-        setSaving(true);
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('deleteDailySupply', {
-            token: token,
-            id: id
-          });
-
-          if (!response.success) {
-            showError(response.message || 'Gagal menghapus record.');
-            return;
-          }
-
-          await Promise.allSettled([
-            loadRecords(token),
-            loadSupplyMatrix(token, inputDate),
-            loadMonthlyRecap(token, recapMonth, recapYear)
-          ]);
-
-          showSuccess(response.message || 'Record berhasil dihapus.');
-
-        } catch (error) {
-          showError('Delete error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      async function loadActivitySettings() {
-        setSaving(true);
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('getTeamLeaderActivitySettings', {
-            token: token
-          });
-
-          if (!response.success) {
-            showError(response.message || 'Gagal memuat activity settings.');
-            return;
-          }
-
-          setActivitySettings(response.data || null);
-          setActivitySheetId(response.data ? (response.data['Activity Sheet ID'] || '') : '');
-
-          if (response.data && response.data['Activity Sheet ID']) {
-            await loadActivityMatrix(token, activityDate, activityShift);
-          }
-
-          showSuccess('Activity settings loaded.');
-
-        } catch (error) {
-          showError('Activity settings error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      async function saveActivitySheet() {
-        if (!activitySheetId.trim()) {
-          showError('Activity Sheet ID / URL wajib diisi.');
-          return;
-        }
-
-        setSaving(true);
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('saveTeamLeaderActivitySheetId', {
-            token: token,
-            sheetId: activitySheetId.trim()
-          });
-
-          if (!response.success) {
-            showError(response.message || 'Gagal menyimpan Activity Sheet.');
-            return;
-          }
-
-          setActivitySettings(response.data || null);
-          setActivitySheetId(response.data ? (response.data['Activity Sheet ID'] || activitySheetId) : activitySheetId);
-
-          await loadActivityMatrix(token, activityDate, activityShift);
-
-          showSuccess(response.message || 'Activity Sheet berhasil disiapkan.');
-
-        } catch (error) {
-          showError('Save Activity Sheet error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      async function loadActivityMatrix(tokenParam, dateParam, shiftParam) {
-        setSaving(true);
-
-        try {
-          var token = tokenParam || safeGetStorage(SESSION_KEY);
-          var dateValue = dateParam || activityDate;
-          var shiftValue = shiftParam || activityShift;
-
-          var response = await fetchAPI('getTeamLeaderActivityMatrix', {
-            token: token,
-            date: dateValue,
-            shift: shiftValue
-          });
-
-          if (response.success) {
-            setActivityRows(response.data || []);
-            setActivityNotes(response.notes || '');
-          } else {
-            setActivityRows([]);
-            setActivityNotes('');
-            showError(response.message || 'Gagal memuat activity matrix.');
-          }
-
-        } catch (error) {
-          showError('Load activity matrix error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      function updateActivityCheck(index, checked) {
-        setActivityRows(function (prev) {
-          var copy = prev.slice();
-          var oldRow = copy[index] || {};
-          copy[index] = Object.assign({}, oldRow, {
-            isDone: checked,
-            isEdited: true
-          });
-          return copy;
-        });
-      }
-
-      async function saveDailyActivity() {
-        if (!activityRows.length) {
-          showError('Belum ada checklist activity.');
-          return;
-        }
-
-        if (!activityNotes.trim()) {
-          showError('Daily notes wajib diisi.');
-          return;
-        }
-
-        setSaving(true);
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('saveTeamLeaderDailyActivity', {
-            token: token,
-            date: activityDate,
-            shift: activityShift,
-            rows: activityRows,
-            notes: activityNotes
-          });
-
-          if (!response.success) {
-            showError(response.message || 'Gagal menyimpan activity.');
-            return;
-          }
-
-          await loadActivityMatrix(token, activityDate, activityShift);
-
-          showSuccess(response.message || 'Daily activity berhasil disimpan.');
-
-        } catch (error) {
-          showError('Save activity error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      async function loadActivityNotes() {
-        setSaving(true);
-        setNotesLoaded(true);
-
-        try {
-          var token = safeGetStorage(SESSION_KEY);
-          var response = await fetchAPI('getTeamLeaderActivityNotes', {
-            token: token,
-            filters: {
-              limit: Number(noteLimit) || 50
-            }
-          });
-
-          if (response.success) {
-            setLoadedNotes(response.data || []);
-          } else {
-            setLoadedNotes([]);
-            showError(response.message || 'Gagal memuat notes.');
-          }
-
-        } catch (error) {
-          showError('Load notes error: ' + getErrorMessage(error));
-        } finally {
-          setSaving(false);
-        }
-      }
-
-      function toggleTheme() {
-        var next = theme === 'dark' ? 'light' : 'dark';
-        setTheme(next);
-        safeSetStorage(THEME_KEY, next);
-      }
-
-      function clearDebug() {
-        setDebugRows([]);
-        setRawResponse('');
-        setParsedResponse(null);
-        setStatus('');
-      }
-
-      function clearToken() {
-        safeRemoveStorage(SESSION_KEY);
-        showSuccess('Token cleared.');
-      }
-
-      React.useEffect(function () {
-        boot();
-      }, []);
-
-      var isDark = theme === 'dark';
-      var pageClass = isDark ? 'min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950';
-
-      var totalPaper = records.reduce(function (sum, item) {
-        return sum + Number(item['Paper Used'] || 0);
-      }, 0);
-
-      var totalPrinting = records.reduce(function (sum, item) {
-        return sum + Number(item['Printing Used'] || 0);
-      }, 0);
-
-      var savedToday = supplyRows.filter(function (row) {
-        return row.isSaved;
-      }).length;
-
-      var activityDone = activityRows.filter(function (row) {
-        return row.isDone;
-      }).length;
-
-      if (loading) {
-        return h(
-          'div',
-          { className: pageClass + ' flex items-center justify-center px-4' },
-          h(
-            'div',
-            { className: 'text-center fade-in' },
-            h('div', { className: 'w-12 h-12 border-4 rounded-full animate-spin border-white/20 border-t-white mx-auto mb-4' }),
-            h('p', { className: isDark ? 'text-white/60 text-sm' : 'text-slate-500 text-sm' }, 'Loading Team Leader Dashboard...'),
-            h(
-              'button',
-              {
-                onClick: function () {
-                  clearToken();
-                  redirectToLogin();
-                },
-                className: 'mt-5 h-10 px-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-bold'
-              },
-              'Clear Token & Login'
-            )
-          )
-        );
-      }
-
-      if (accessError && !user) {
-        return h(
-          'div',
-          { className: pageClass + ' flex items-center justify-center px-4' },
-          h(
-            'div',
-            { className: cardClass(isDark) + ' max-w-md w-full rounded-3xl p-6 text-center' },
-            h('h1', { className: 'text-xl font-black mb-2' }, 'Access Error'),
-            h('p', { className: 'text-red-500 text-sm mb-5' }, accessError),
-            h(
-              'button',
-              {
-                onClick: redirectToLogin,
-                className: primaryButtonClass(isDark)
-              },
-              'Back to Login'
-            )
-          )
-        );
-      }
-
-      return h(
-        'div',
-        { className: pageClass },
-        h(BackgroundGlow, { isDark: isDark }),
-
-        h(
-          'div',
-          { className: 'relative min-h-screen pb-32' },
-
-          h(Header, {
-            user: user,
-            isDark: isDark,
-            theme: theme,
-            onToggleTheme: toggleTheme,
-            onLogout: handleLogout,
-            onOpenDebug: function () { setDebugOpen(true); }
-          }),
-
-          h(
-            'main',
-            { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8' },
-
-            h(
-              'section',
-              { className: 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 slide-up' },
-              h(StatCard, { isDark: isDark, label: 'Paper Used', value: totalPaper, icon: '📄' }),
-              h(StatCard, { isDark: isDark, label: 'Printing Used', value: totalPrinting, icon: '🖨️' }),
-              h(StatCard, { isDark: isDark, label: 'Saved Today', value: savedToday, icon: '✅' }),
-              h(StatCard, { isDark: isDark, label: 'Activity Done', value: activityDone + '/' + activityRows.length, icon: '📋' })
-            ),
-
-            activeMenu === 'dashboard'
-              ? h(DashboardView, {
-                  isDark: isDark,
-                  monthlyRecap: monthlyRecap,
-                  recapMonth: recapMonth,
-                  recapYear: recapYear,
-                  setRecapMonth: setRecapMonth,
-                  setRecapYear: setRecapYear,
-                  onLoad: function () {
-                    loadMonthlyRecap(null, recapMonth, recapYear);
-                  }
-                })
-              : null,
-
-            activeMenu === 'input'
-              ? h(InputView, {
-                  isDark: isDark,
-                  inputDate: inputDate,
-                  setInputDate: setInputDate,
-                  supplyRows: supplyRows,
-                  updateSupplyValue: updateSupplyValue,
-                  onLoad: function () {
-                    loadSupplyMatrix(null, inputDate);
-                  },
-                  onSave: saveSupplyBulk,
-                  saving: saving
-                })
-              : null,
-
-            activeMenu === 'records'
-              ? h(RecordsView, {
-                  isDark: isDark,
-                  records: records,
-                  onLoad: function () { loadRecords(); },
-                  onDelete: deleteSupply
-                })
-              : null,
-
-            activeMenu === 'activity'
-              ? h(ActivityView, {
-                  isDark: isDark,
-                  saving: saving,
-                  activitySettings: activitySettings,
-                  activitySheetId: activitySheetId,
-                  setActivitySheetId: setActivitySheetId,
-                  onLoadSettings: loadActivitySettings,
-                  onSaveSheet: saveActivitySheet,
-                  activityDate: activityDate,
-                  setActivityDate: setActivityDate,
-                  activityShift: activityShift,
-                  setActivityShift: setActivityShift,
-                  activityRows: activityRows,
-                  updateActivityCheck: updateActivityCheck,
-                  activityNotes: activityNotes,
-                  setActivityNotes: setActivityNotes,
-                  onLoadMatrix: function () {
-                    loadActivityMatrix(null, activityDate, activityShift);
-                  },
-                  onSaveActivity: saveDailyActivity,
-                  loadedNotes: loadedNotes,
-                  notesLoaded: notesLoaded,
-                  noteLimit: noteLimit,
-                  setNoteLimit: setNoteLimit,
-                  onLoadNotes: loadActivityNotes
-                })
-              : null,
-
-            activeMenu === 'profile'
-              ? h(ProfileView, { isDark: isDark, user: user })
-              : null
-          ),
-
-          h(MacDock, {
-            isDark: isDark,
-            activeMenu: activeMenu,
-            setActiveMenu: setActiveMenu
-          }),
-
-          h(Toast, { toast: toast }),
-          h(DebugPanel, {
-            open: debugOpen,
-            setOpen: setDebugOpen,
-            debugRows: debugRows,
-            rawResponse: rawResponse,
-            parsedResponse: parsedResponse,
-            status: status,
-            onTestGet: testGasGet,
-            onTestSession: testSessionPost,
-            onClearToken: clearToken,
-            onClearDebug: clearDebug,
-            user: user
-          })
-        )
-      );
+          state.activityRows = response.data || []; state.activityNotes = response.notes || '';
+          localStorage.setItem(cacheKey, JSON.stringify({ rows: response.data || [], notes: response.notes || '' }));
+        } else if (!background) { state.activityRows = []; state.activityNotes = ''; showError(response.message || 'Gagal memuat activity checklist.'); }
+      } catch (err) { if (!background) showError('Terjadi error saat memuat checklist activity.'); }
+      finally { state.activityLoading = false; state.activitySyncing = false; render(); }
+    }
+    function loadRawJson(str, fallback) { try { return JSON.parse(str) || fallback; } catch (_) { return fallback; } }
+    async function changeActivityDate(value) { state.activityDate = value; render(); if (state.activitySettings) await loadActivityMatrix(token(), value, state.activityShift); }
+    async function changeActivityShift(value) { state.activityShift = value; render(); if (state.activitySettings) await loadActivityMatrix(token(), state.activityDate, value); }
+    function updateActivityCheck(index, checked) { const row = state.activityRows[index]; if (!row) return; row.isDone = checked; row.isEdited = checked !== row.originalIsDone; const status = $(`activity-status-${index}`); if (status) status.outerHTML = statusPill(row.isSaved, row.isEdited, `activity-status-${index}`); updateActivityProgress(); }
+    function updateActivityProgress() { const total = state.activityRows.length; const done = state.activityRows.filter(r => r.isDone).length; const text = $('activityProgressText'); const bar = $('activityProgressBar'); if (text) text.textContent = `${done} dari ${total} task selesai.`; if (bar) bar.style.width = total ? `${(done / total) * 100}%` : '0%'; }
+    function confirmSaveActivity() {
+      state.activityNotes = $('activityNotes')?.value || state.activityNotes;
+      if (!state.activitySettings) return showError('Setup Activity Sheet terlebih dahulu.');
+      if (!state.activityRows.length) return showError('Belum ada task activity untuk shift ini.');
+      if (!state.activityNotes.trim()) return showError('Daily notes wajib diisi.');
+      openConfirm({ title:'Save daily activity?', message:'Checklist dan notes untuk tanggal serta shift ini akan disimpan atau diupdate tanpa duplicate.', confirmText:'Save Activity', tone:'success', action:'saveDailyActivity' });
+    }
+    async function saveDailyActivity() {
+      state.saving = true; render();
+      try {
+        const response = await fetchAPI('saveTeamLeaderDailyActivity', { token: token(), date: state.activityDate, shift: state.activityShift, rows: state.activityRows, notes: state.activityNotes });
+        if (!response.success) return showError(response.message || 'Gagal menyimpan daily activity.');
+        localStorage.setItem(`activity_matrix_${state.activityDate}_${state.activityShift}`, JSON.stringify({ rows: state.activityRows.map(r => ({ ...r, isSaved:true, originalIsDone:r.isDone, isEdited:false })), notes: state.activityNotes }));
+        await loadActivityMatrix(token(), state.activityDate, state.activityShift, true);
+        showSuccess(response.message || 'Daily activity berhasil disimpan.');
+      } catch (err) { showError('Terjadi error saat menyimpan daily activity.'); }
+      finally { state.saving = false; render(); }
+    }
+    async function loadActivityNotes() {
+      if (!state.activitySettings) return showError('Setup Activity Sheet terlebih dahulu.');
+      state.notesFilters = { date: $('notesExactDate')?.value || '', dateFrom: $('notesDateFrom')?.value || '', dateTo: $('notesDateTo')?.value || '', shift: $('notesShift')?.value || '', limit: Number($('notesLimit')?.value || 50) };
+      state.notesLoading = true; state.notesLoaded = true; render();
+      try {
+        const response = await fetchAPI('getTeamLeaderActivityNotes', { token: token(), filters: state.notesFilters });
+        if (response.success) state.loadedNotes = response.data || []; else { state.loadedNotes = []; showError(response.message || 'Gagal memuat notes.'); }
+      } catch (err) { showError('Terjadi error saat memuat notes.'); }
+      finally { state.notesLoading = false; render(); }
+    }
+    function clearLoadedNotes() { state.loadedNotes = []; state.notesLoaded = false; render(); }
+    function requestLogout() { openConfirm({ title:'Logout from dashboard?', message:'Session kamu akan diakhiri dan kamu akan kembali ke halaman login.', confirmText:'Logout', tone:'neutral', action:'logout' }); }
+    async function logout() { try { await fetchAPI('logoutUser', { token: token() }); } catch (err) { console.error(err); } localStorage.removeItem(SESSION_KEY); redirectToLogin(); }
+
+    const Actions = { saveSupplyBulk, deleteSupply, saveDailyActivity, logout };
+
+    function getStats() {
+      const totalPaper = state.records.reduce((sum, item) => sum + num(item['Paper Used']), 0);
+      const totalPrinting = state.records.reduce((sum, item) => sum + num(item['Printing Used']), 0);
+      const savedToday = state.supplyRows.filter(row => row.isSaved).length;
+      const activityDone = state.activityRows.filter(row => row.isDone).length;
+      return { totalPaper, totalPrinting, totalRecords: state.records.length, savedToday, activityDone, activityTotal: state.activityRows.length };
     }
 
-    function Header(props) {
-      return h(
-        'header',
-        { className: props.isDark ? 'sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10' : 'sticky top-0 z-30 bg-slate-100/80 backdrop-blur-xl border-b border-slate-200' },
-        h(
-          'div',
-          { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4' },
-          h(
-            'div',
-            { className: 'flex items-center justify-between gap-4' },
-            h(
-              'div',
-              null,
-              h(
-                'div',
-                { className: 'flex items-center gap-2 mb-1' },
-                h('div', { className: props.isDark ? 'w-9 h-9 rounded-2xl bg-white text-slate-950 flex items-center justify-center font-black' : 'w-9 h-9 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-black' }, 'TL'),
-                h('h1', { className: 'text-xl sm:text-2xl font-black' }, 'Team Leader Dashboard')
-              ),
-              h('p', { className: mutedClass(props.isDark) }, (props.user && props.user.username ? props.user.username : '-') + ' • ' + (props.user && props.user.role ? props.user.role : '-') + ' • ' + (props.user && props.user.branch ? props.user.branch : '-'))
-            ),
-
-            h(
-              'div',
-              { className: 'flex items-center gap-2' },
-              h('button', { onClick: props.onOpenDebug, className: iconButtonClass(props.isDark), title: 'Debug' }, '🐞'),
-              h('button', { onClick: props.onToggleTheme, className: iconButtonClass(props.isDark), title: 'Theme' }, props.theme === 'dark' ? '☀️' : '🌙'),
-              h('button', { onClick: props.onLogout, className: iconButtonClass(props.isDark), title: 'Logout' }, '⎋')
-            )
-          )
-        )
-      );
+    function render() {
+      applyTheme();
+      const app = $('app');
+      if (!app) return;
+      if (state.loading) { app.innerHTML = renderLoading(); return; }
+      if (state.accessError && !state.user) { app.innerHTML = renderAccessError(); return; }
+      const stats = getStats();
+      app.innerHTML = `
+        <div class="${isDark() ? 'dark min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950'}">
+          ${backgroundGlow()}
+          <div class="relative min-h-screen pb-32">
+            ${header()}
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+              <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 slide-up">
+                ${statCard('Paper Used', stats.totalPaper, 'paper')}
+                ${statCard('Printing Used', stats.totalPrinting, 'printer')}
+                ${statCard('Saved Today', stats.savedToday, 'check')}
+                ${statCard('Activity Done', `${stats.activityDone}/${stats.activityTotal}`, 'activity')}
+              </section>
+              ${mainView()}
+            </main>
+            ${dock()}
+            ${toastView()}
+            ${confirmDialogView()}
+            ${recordEditModal()}
+          </div>
+        </div>`;
     }
 
-    function DashboardView(props) {
-      var summary = props.monthlyRecap && props.monthlyRecap.summary ? props.monthlyRecap.summary : {};
-      var dailyTotals = props.monthlyRecap && props.monthlyRecap.dailyTotals ? props.monthlyRecap.dailyTotals : [];
-      var classes = props.monthlyRecap && props.monthlyRecap.classes ? props.monthlyRecap.classes : [];
+    function renderLoading() { return `<div class="${isDark() ? 'dark min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950'}"><div class="min-h-screen flex items-center justify-center px-4"><div class="text-center fade-in"><div class="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4 ${isDark() ? 'border-white/20 border-t-white' : 'border-slate-300 border-t-slate-950'}"></div><p class="${isDark() ? 'text-white/70' : 'text-slate-500'} text-sm">Loading Team Leader Dashboard...</p></div></div></div>`; }
+    function renderAccessError() { return `<div class="${isDark() ? 'dark min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950'}"><div class="min-h-screen flex items-center justify-center px-4"><div class="${cardClass()} max-w-md w-full rounded-3xl p-6 text-center"><h1 class="text-xl font-black mb-2">Access Error</h1><p class="text-red-500 text-sm mb-5">${esc(state.accessError)}</p><button onclick="logout()" class="${primaryButtonClass()}">Back to Login</button></div></div></div>`; }
+    function backgroundGlow() { return `<div class="fixed inset-0 pointer-events-none overflow-hidden"><div class="absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl ${isDark() ? 'bg-blue-500/20' : 'bg-blue-300/40'}"></div><div class="absolute top-1/3 -right-24 w-80 h-80 rounded-full blur-3xl ${isDark() ? 'bg-emerald-500/10' : 'bg-emerald-300/35'}"></div><div class="absolute -bottom-32 left-1/3 w-80 h-80 rounded-full blur-3xl ${isDark() ? 'bg-purple-500/10' : 'bg-purple-300/30'}"></div></div>`; }
+    function header() { return `<header class="${isDark() ? 'sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10' : 'sticky top-0 z-30 bg-slate-100/80 backdrop-blur-xl border-b border-slate-200'}"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><div class="flex items-center justify-between gap-4"><div><div class="flex items-center gap-2 mb-1"><div class="${isDark() ? 'w-9 h-9 rounded-2xl bg-white text-slate-950' : 'w-9 h-9 rounded-2xl bg-slate-950 text-white'} flex items-center justify-center">${icon('spark','text-[22px]')}</div><h1 class="text-xl sm:text-2xl font-black">Team Leader Dashboard</h1></div><p class="${mutedClass()}">${esc(state.user?.username)} • ${esc(state.user?.role)} • ${esc(state.user?.branch)}</p></div><div class="flex items-center gap-2"><button onclick="toggleTheme()" class="${iconButtonClass()}" title="Toggle theme">${icon(isDark() ? 'sun' : 'moon')}</button><button onclick="requestLogout()" class="${iconButtonClass()}" title="Logout">${icon('logout')}</button></div></div></div></header>`; }
+    function dock() { const menus = [{key:'dashboard',label:'Dashboard',icon:'chart'},{key:'input',label:'Input',icon:'edit'},{key:'records',label:'Records',icon:'database'},{key:'activity',label:'Activity',icon:'activity'},{key:'settings',label:'Settings',icon:'settings'},{key:'profile',label:'Profile',icon:'user'}]; return `<nav class="fixed left-0 right-0 z-40 flex justify-center px-4 dock-pop" style="bottom:var(--dock-bottom)"><div class="${isDark() ? 'dock-glass-dark border-white/15 shadow-black/40' : 'dock-glass-light border-white shadow-slate-300/60'} border shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 max-w-full overflow-x-auto custom-scroll">${menus.map(m => { const active = state.activeMenu === m.key; const cls = active ? (isDark() ? 'w-20 h-20 bg-white text-slate-950 -translate-y-3 shadow-xl' : 'w-20 h-20 bg-slate-950 text-white -translate-y-3 shadow-xl') : (isDark() ? 'w-16 h-16 bg-white/10 text-white/70 hover:bg-white/15 hover:-translate-y-2' : 'w-16 h-16 bg-slate-950/5 text-slate-600 hover:bg-slate-950/10 hover:-translate-y-2'); return `<button onclick="setMenu('${m.key}')" class="group relative flex flex-col items-center justify-center rounded-3xl transition-all duration-300 shrink-0 ${cls}">${icon(m.icon, active ? 'text-[30px]' : 'text-[26px]')}<span class="text-[10px] font-black mt-1 ${active ? 'opacity-100' : 'opacity-70'}">${m.label}</span></button>`; }).join('')}</div></nav>`; }
+    function statCard(label, value, iconName) { return `<div class="${cardClass()} rounded-3xl p-4 sm:p-5"><div class="flex items-center justify-between gap-3"><div><p class="${mutedClass()}">${esc(label)}</p><h3 class="text-2xl sm:text-3xl font-black mt-1">${esc(value)}</h3></div><div class="${isDark() ? 'w-11 h-11 rounded-2xl bg-white/10' : 'w-11 h-11 rounded-2xl bg-slate-950/5'} flex items-center justify-center">${icon(iconName)}</div></div></div>`; }
+    function mainView() { if (state.activeMenu === 'dashboard') return dashboardView(); if (state.activeMenu === 'input') return inputView(); if (state.activeMenu === 'records') return recordsView(); if (state.activeMenu === 'activity') return activityView(); if (state.activeMenu === 'settings') return settingsView(); if (state.activeMenu === 'profile') return profileView(); return dashboardView(); }
 
-      return h(
-        'section',
-        { className: 'space-y-6 slide-up' },
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6' },
-          h('h2', { className: 'text-xl font-black mb-2' }, 'Supplies Dashboard'),
-          h('p', { className: mutedClass(props.isDark) }, 'Monthly recap supplies dari backend. Debug-safe version.'),
-
-          h(
-            'div',
-            { className: 'grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5' },
-            h(SelectInput, {
-              isDark: props.isDark,
-              label: 'Month',
-              value: props.recapMonth,
-              onChange: function (value) { props.setRecapMonth(Number(value)); },
-              options: MONTH_NAMES.map(function (name, index) {
-                return { value: index + 1, label: name };
-              })
-            }),
-            h(TextInput, {
-              isDark: props.isDark,
-              label: 'Year',
-              type: 'number',
-              value: props.recapYear,
-              onChange: function (value) { props.setRecapYear(Number(value)); }
-            }),
-            h(
-              'div',
-              { className: 'flex items-end' },
-              h('button', { onClick: props.onLoad, className: primaryButtonClass(props.isDark) }, 'Reload Monthly')
-            )
-          )
-        ),
-
-        h(
-          'div',
-          { className: 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4' },
-          h(StatCard, { isDark: props.isDark, label: 'Total Paper', value: summary.totalPaper || 0, icon: '📄' }),
-          h(StatCard, { isDark: props.isDark, label: 'Total Printing', value: summary.totalPrinting || 0, icon: '🖨️' }),
-          h(StatCard, { isDark: props.isDark, label: 'Active Items', value: summary.activeClassCount || 0, icon: '📦' }),
-          h(StatCard, { isDark: props.isDark, label: 'Filled Records', value: summary.filledRecords || 0, icon: '🗃️' })
-        ),
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
-          h('h2', { className: 'text-lg font-black mb-4' }, 'Daily Totals'),
-          dailyTotals.length
-            ? h(
-                'div',
-                { className: 'overflow-x-auto custom-scroll' },
-                h(
-                  'table',
-                  { className: 'w-full min-w-[760px] text-sm' },
-                  h(
-                    'thead',
-                    null,
-                    h(
-                      'tr',
-                      { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
-                      h('th', { className: 'py-3 text-left' }, 'Day'),
-                      h('th', { className: 'py-3 text-left' }, 'Paper'),
-                      h('th', { className: 'py-3 text-left' }, 'Printing')
-                    )
-                  ),
-                  h(
-                    'tbody',
-                    null,
-                    dailyTotals.map(function (item, index) {
-                      return h(
-                        'tr',
-                        { key: index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
-                        h('td', { className: 'py-3' }, item.day),
-                        h('td', { className: 'py-3 font-black' }, item.paperTotal || 0),
-                        h('td', { className: 'py-3 font-black' }, item.printingTotal || 0)
-                      );
-                    })
-                  )
-                )
-              )
-            : h(EmptyState, { isDark: props.isDark, text: 'Belum ada daily totals.' })
-        ),
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
-          h('h2', { className: 'text-lg font-black mb-4' }, 'Inventory Recap Rows'),
-          classes.length
-            ? h(
-                'div',
-                { className: 'overflow-x-auto custom-scroll' },
-                h(
-                  'table',
-                  { className: 'w-full min-w-[900px] text-xs' },
-                  h(
-                    'thead',
-                    null,
-                    h(
-                      'tr',
-                      { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
-                      h('th', { className: 'py-3 text-left' }, 'Trainer'),
-                      h('th', { className: 'py-3 text-left' }, 'Section'),
-                      h('th', { className: 'py-3 text-left' }, 'Level'),
-                      h('th', { className: 'py-3 text-left' }, 'Total Paper'),
-                      h('th', { className: 'py-3 text-left' }, 'Total Printing')
-                    )
-                  ),
-                  h(
-                    'tbody',
-                    null,
-                    classes.map(function (row, index) {
-                      return h(
-                        'tr',
-                        { key: index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
-                        h('td', { className: 'py-3 font-black' }, row.trainerName || row['Trainer Name'] || '-'),
-                        h('td', { className: 'py-3' }, row.jamSection || row['Jam/Section'] || '-'),
-                        h('td', { className: 'py-3' }, row.level || row.Level || '-'),
-                        h('td', { className: 'py-3 font-black' }, row.totalPaper || 0),
-                        h('td', { className: 'py-3 font-black' }, row.totalPrinting || 0)
-                      );
-                    })
-                  )
-                )
-              )
-            : h(EmptyState, { isDark: props.isDark, text: 'Belum ada inventory recap.' })
-        )
-      );
+    function dashboardView() {
+      const recap = state.monthlyRecap || {}; const summary = recap.summary || {}; const classes = recap.classes || []; const dailyTotals = recap.dailyTotals || []; const daysInMonth = recap.daysInMonth || 31;
+      const maxPaper = Math.max(...dailyTotals.map(i => num(i.paperTotal)), 1); const maxPrinting = Math.max(...dailyTotals.map(i => num(i.printingTotal)), 1);
+      return `<section class="space-y-6 slide-up">
+        <div class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"><div class="flex items-center gap-3">${icon('chart','text-[34px]')}<div><h2 class="text-xl font-black">Supplies Dashboard</h2><p class="${mutedClass()}">Monthly recap supplies per inventory item.</p></div></div><div class="grid grid-cols-2 gap-3 w-full lg:w-auto">${selectField('Month','recapMonth',state.recapMonth,MONTH_NAMES.map((name,i)=>({value:i+1,label:name})),"changeRecapMonth(this.value)")}${field('Year','recapYear',state.recapYear,'number','','false',"changeRecapYear(this.value)")}</div></div></div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">${statCard('Total Paper', summary.totalPaper || 0, 'paper')}${statCard('Total Printing', summary.totalPrinting || 0, 'printer')}${statCard('Active Items', summary.activeClassCount || 0, 'layers')}${statCard('Filled Records', summary.filledRecords || 0, 'database')}</div>
+        <div class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="flex items-center justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Daily Usage Chart</h2><p class="${mutedClass()}">Total paper dan printing per tanggal.</p></div><span class="${badgeClass()}">${esc(MONTH_NAMES[state.recapMonth-1])} ${esc(state.recapYear)}</span></div><div class="overflow-x-auto custom-scroll pb-2"><div class="min-w-[900px] h-72 flex items-end gap-2">${dailyTotals.map(item => { const ph = Math.max(8, (num(item.paperTotal)/maxPaper)*210); const prh = Math.max(8, (num(item.printingTotal)/maxPrinting)*210); return `<div class="flex-1 flex flex-col items-center gap-2"><div class="text-[10px] font-black opacity-70">${esc(item.paperTotal||0)}/${esc(item.printingTotal||0)}</div><div class="flex items-end gap-1 h-[220px]"><div class="${getSupplyColorClass(num(item.paperTotal), 'bar')}" style="height:${ph}px;width:10px"></div><div class="rounded-t-xl bg-blue-500/70" style="height:${prh}px;width:10px"></div></div><div class="text-[10px] opacity-60">${esc(item.day)}</div></div>`; }).join('')}</div></div><div class="mt-4 flex flex-wrap gap-2 text-xs font-black"><span class="px-3 py-2 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">Paper</span><span class="px-3 py-2 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/20">Printing</span></div></div>
+        <div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Horizontal Recap Per Inventory Item</h2><p class="${mutedClass()}">Kolom tanggal 1 sampai ${daysInMonth}. Format: Paper / Printing.</p></div>${supplyLegend()}</div>${classes.length ? recapTable(classes, daysInMonth) : emptyState('Belum ada inventory detail active atau data supplies bulan ini.')}</div>
+      </section>`;
     }
+    function recapTable(classes, daysInMonth) { return `<div class="max-h-[62vh] overflow-auto custom-scroll"><table class="w-full min-w-[1180px] text-xs"><thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}"><tr class="${isDark() ? 'border-b border-white/10 text-white/50' : 'border-b border-slate-200 text-slate-500'}"><th class="sticky left-0 z-20 py-3 pr-4 text-left min-w-[230px] bg-inherit">Inventory Item</th>${Array.from({length:daysInMonth},(_,i)=>`<th class="py-3 px-2 text-center min-w-[58px]">${i+1}</th>`).join('')}<th class="py-3 px-3 text-center min-w-[90px]">Total</th></tr></thead><tbody>${classes.map(row => `<tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}"><td class="${isDark() ? 'sticky left-0 z-10 py-3 pr-4 bg-slate-900/95' : 'sticky left-0 z-10 py-3 pr-4 bg-white/95'}"><p class="font-black">${esc(row.trainerName)}</p><p class="opacity-55">${esc(row.jamSection)} • ${esc(row.level)}</p></td>${(row.days||[]).map(day => `<td class="py-2 px-2 text-center"><span class="${getSupplyColorClass(num(day.paperUsed)+num(day.printingUsed), 'cell')}">${day.paperUsed === '' && day.printingUsed === '' ? '-' : `${esc(day.paperUsed||0)}/${esc(day.printingUsed||0)}`}</span></td>`).join('')}<td class="py-3 px-3 text-center font-black">${esc(row.totalPaper)}/${esc(row.totalPrinting)}</td></tr>`).join('')}</tbody></table></div>`; }
 
-    function InputView(props) {
-      return h(
-        'section',
-        { className: 'grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 slide-up' },
+    function inputView() { return `<section class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 slide-up"><div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit"><div class="flex items-center gap-3 mb-5">${icon('edit','text-[30px]')}<div><h2 class="text-lg font-black">Daily Supplies Input</h2><p class="${mutedClass()}">Input supplies untuk semua inventory item.</p></div></div>${field('Tanggal Input','inputDate',state.inputDate,'date','','false',"changeInputDate(this.value)")}<div class="${softBoxClass()} mt-5 rounded-2xl p-4"><p class="text-sm font-bold mb-2">Anti Duplicate Logic</p><p class="${mutedClass()}">Data unik berdasarkan Branch + Date + Jam/Section + Level + Trainer Name. Kalau sudah ada, sistem update. Kalau belum ada, sistem create.</p></div><button onclick="confirmSaveSupply()" ${state.saving?'disabled':''} class="${primaryButtonClass()} mt-5 w-full">${state.saving?'Saving...':'Save All Supplies'}</button></div><div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Inventory Supplies Matrix</h2><p class="${mutedClass()}">Isi paper dan printing per inventory item.</p></div><span class="${badgeClass()}">${state.supplyRows.length} Items</span></div>${state.supplyRows.length ? supplyMatrix() : emptyState('Belum ada inventory detail active untuk branch ini.')}</div></section>`; }
+    function supplyPreviewSpan(row, index) { return `<span id="supply-preview-${index}" class="${getSupplyColorClass(num(row.paperUsed)+num(row.printingUsed), 'cell')}">${esc(row.paperUsed||0)}/${esc(row.printingUsed||0)}</span>`; }
+    function supplyMatrix() { return `<div class="lg:hidden max-h-[62vh] overflow-y-auto custom-scroll pr-1 space-y-3">${state.supplyRows.map((row,i)=>`<div class="${softBoxClass()} rounded-2xl p-4"><div class="flex items-start justify-between gap-3 mb-3"><div><p class="font-black">${esc(row.trainerName)}</p><p class="${mutedClass()}">${esc(row.jamSection)} • ${esc(row.level)}</p></div>${statusPill(row.isSaved,row.isEdited,`supply-status-mobile-${i}`)}</div><div class="grid grid-cols-2 gap-3">${field('Paper Used',`paperMobile${i}`,row.paperUsed,'number','0',false,`updateSupplyValue(${i}, 'paperUsed', this.value)`)}${field('Printing Used',`printingMobile${i}`,row.printingUsed,'number','0',false,`updateSupplyValue(${i}, 'printingUsed', this.value)`)}</div><div class="mt-3">${supplyPreviewSpan(row,i)}</div></div>`).join('')}</div><div class="hidden lg:block max-h-[62vh] overflow-auto custom-scroll"><table class="w-full min-w-[880px] text-sm"><thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}"><tr class="${isDark() ? 'text-white/45 border-b border-white/10' : 'text-slate-500 border-b border-slate-200'}"><th class="py-3 pr-4 text-left">Jam/Section</th><th class="py-3 pr-4 text-left">Level</th><th class="py-3 pr-4 text-left">Trainer</th><th class="py-3 pr-4 text-left">Paper Used</th><th class="py-3 pr-4 text-left">Printing Used</th><th class="py-3 pr-4 text-left">Preview</th><th class="py-3 pr-4 text-left">Status</th></tr></thead><tbody>${state.supplyRows.map((row,i)=>`<tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}"><td class="py-3 pr-4 font-semibold">${esc(row.jamSection)}</td><td class="py-3 pr-4">${esc(row.level)}</td><td class="py-3 pr-4">${esc(row.trainerName)}</td><td class="py-3 pr-4 w-36"><input type="number" value="${esc(row.paperUsed)}" placeholder="0" oninput="updateSupplyValue(${i}, 'paperUsed', this.value)" class="${inputClass()}"></td><td class="py-3 pr-4 w-36"><input type="number" value="${esc(row.printingUsed)}" placeholder="0" oninput="updateSupplyValue(${i}, 'printingUsed', this.value)" class="${inputClass()}"></td><td class="py-3 pr-4">${supplyPreviewSpan(row,i)}</td><td class="py-3 pr-4">${statusPill(row.isSaved,row.isEdited,`supply-status-${i}`)}</td></tr>`).join('')}</tbody></table></div>`; }
 
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 h-fit' },
-          h('h2', { className: 'text-lg font-black mb-2' }, 'Daily Supplies Input'),
-          h('p', { className: mutedClass(props.isDark) }, 'Input paper dan printing untuk inventory item.'),
+    function recordsView() { return `<section class="${cardClass()} rounded-3xl p-5 sm:p-6 slide-up overflow-hidden"><div class="flex items-center gap-3 mb-5">${icon('database','text-[30px]')}<div><h2 class="text-lg font-black">Supplies Records</h2><p class="${mutedClass()}">Data tersimpan per inventory item di DailySupplies.</p></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">${field('Filter Date','filterDate',state.filters.date,'date')}${field('Month','filterMonth',state.filters.month,'text','June')}${field('Year','filterYear',state.filters.year,'text','2026')}<div class="flex items-end gap-2"><button onclick="applyFilters()" class="${primaryButtonClass()}">Filter</button><button onclick="clearFilters()" class="${secondaryButtonClass()}">Clear</button></div></div>${responsiveTable(['Date','Jam/Section','Level','Trainer','Paper','Printing','Action'], state.records.map((item,i)=>[esc(item.Date),esc(item['Jam/Section']),esc(item.Level),esc(item['Trainer Name']),`<span class="${getSupplyColorClass(item['Paper Used'],'cell')}">${esc(item['Paper Used'])}</span>`,`<span class="${getSupplyColorClass(item['Printing Used'],'cell')}">${esc(item['Printing Used'])}</span>`,`<div class="flex gap-2"><button onclick="openEditRecord(${i})" class="h-9 px-3 rounded-xl bg-blue-500/15 text-blue-500 border border-blue-500/20 text-xs font-black">Edit</button><button onclick="requestDeleteSupply('${esc(item.ID)}')" class="h-9 px-3 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20 text-xs font-black">Delete</button></div>`]), 'Belum ada data supplies.')}</section>`; }
 
-          h(
-            'div',
-            { className: 'space-y-4 mt-5' },
-            h(TextInput, {
-              isDark: props.isDark,
-              label: 'Date',
-              type: 'date',
-              value: props.inputDate,
-              onChange: props.setInputDate
-            }),
-            h('button', { onClick: props.onLoad, className: secondaryButtonClass(props.isDark) + ' w-full' }, 'Load Matrix'),
-            h('button', { onClick: props.onSave, disabled: props.saving, className: primaryButtonClass(props.isDark) }, props.saving ? 'Saving...' : 'Save All Supplies')
-          )
-        ),
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
-          h(
-            'div',
-            { className: 'flex items-center justify-between gap-3 mb-5' },
-            h('div', null, h('h2', { className: 'text-lg font-black' }, 'Supplies Matrix'), h('p', { className: mutedClass(props.isDark) }, 'Rows loaded from getDailySupplyInputMatrix.')),
-            h('span', { className: badgeClass(props.isDark) }, props.supplyRows.length + ' Items')
-          ),
-
-          props.supplyRows.length
-            ? h(
-                'div',
-                { className: 'overflow-auto custom-scroll max-h-[62vh]' },
-                h(
-                  'table',
-                  { className: 'w-full min-w-[880px] text-sm' },
-                  h(
-                    'thead',
-                    { className: props.isDark ? 'sticky top-0 bg-slate-900/95' : 'sticky top-0 bg-white/95' },
-                    h(
-                      'tr',
-                      { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
-                      h('th', { className: 'py-3 pr-4 text-left' }, 'Section'),
-                      h('th', { className: 'py-3 pr-4 text-left' }, 'Level'),
-                      h('th', { className: 'py-3 pr-4 text-left' }, 'Trainer'),
-                      h('th', { className: 'py-3 pr-4 text-left' }, 'Paper'),
-                      h('th', { className: 'py-3 pr-4 text-left' }, 'Printing'),
-                      h('th', { className: 'py-3 pr-4 text-left' }, 'Status')
-                    )
-                  ),
-                  h(
-                    'tbody',
-                    null,
-                    props.supplyRows.map(function (row, index) {
-                      return h(
-                        'tr',
-                        { key: row.classId || index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
-                        h('td', { className: 'py-3 pr-4 font-semibold' }, row.jamSection || '-'),
-                        h('td', { className: 'py-3 pr-4' }, row.level || '-'),
-                        h('td', { className: 'py-3 pr-4' }, row.trainerName || '-'),
-                        h(
-                          'td',
-                          { className: 'py-3 pr-4 w-36' },
-                          h('input', {
-                            type: 'number',
-                            value: row.paperUsed || '',
-                            onChange: function (event) {
-                              props.updateSupplyValue(index, 'paperUsed', event.target.value);
-                            },
-                            className: inputClass(props.isDark),
-                            placeholder: '0'
-                          })
-                        ),
-                        h(
-                          'td',
-                          { className: 'py-3 pr-4 w-36' },
-                          h('input', {
-                            type: 'number',
-                            value: row.printingUsed || '',
-                            onChange: function (event) {
-                              props.updateSupplyValue(index, 'printingUsed', event.target.value);
-                            },
-                            className: inputClass(props.isDark),
-                            placeholder: '0'
-                          })
-                        ),
-                        h('td', { className: 'py-3 pr-4' }, h(StatusPill, { saved: row.isSaved, edited: row.isEdited }))
-                      );
-                    })
-                  )
-                )
-              )
-            : h(EmptyState, { isDark: props.isDark, text: 'Belum ada matrix. Klik Load Matrix.' })
-        )
-      );
+    function activityView() {
+      const tabs = [{key:'daily',label:'Daily'},{key:'notes',label:'View Notes'},{key:'setup',label:'Sheet Setup'}];
+      return `<section class="space-y-6 slide-up"><div class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"><div class="flex items-center gap-3">${icon('activity','text-[34px]')}<div><h2 class="text-xl font-black">Team Leader Activity Tracker</h2><p class="${mutedClass()}">Checklist shift dan notes harian yang tersimpan di sheet pribadi Team Leader.</p></div></div><div class="flex flex-wrap gap-2">${tabs.map(t=>`<button onclick="state.activitySubMenu='${t.key}'; render();" class="${smallButtonClass(state.activitySubMenu===t.key)}">${t.label}</button>`).join('')}</div></div></div>${!state.activitySettings ? activitySetupCard() : ''}${state.activitySettings && state.activitySubMenu==='setup' ? activitySetupCard() : ''}${state.activitySettings && state.activitySubMenu==='daily' ? activityDailyView() : ''}${state.activitySettings && state.activitySubMenu==='notes' ? activityNotesView() : ''}</section>`;
     }
+    function activitySetupCard() { return `<section class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start"><div><div class="flex items-center gap-3 mb-5">${icon('sheet','text-[34px]')}<div><h2 class="text-xl font-black">Activity Sheet Setup</h2><p class="${mutedClass()}">Simpan Activity Tracker di spreadsheet pribadi Team Leader agar data harian tetap ringan dan cepat.</p></div></div><div class="${softBoxClass()} rounded-2xl p-4"><p class="text-sm font-bold mb-2">Required access</p><p class="${mutedClass()}">Pastikan spreadsheet yang dimasukkan bisa diakses oleh script/web app. Sistem akan membuat sheet ActivityChecks dan ActivityNotes otomatis.</p></div>${state.activitySettings ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">${infoBox('Username',state.activitySettings.Username)}${infoBox('Branch',state.activitySettings.Branch)}${infoBox('Status',state.activitySettings.Status)}${infoBox('Updated At',state.activitySettings['Updated At'])}</div>` : ''}</div><div class="${softBoxClass()} rounded-3xl p-5">${field('Activity Sheet ID / URL','activitySheetId',state.activitySheetId,'text','Paste Sheet ID or Google Sheet URL')}<button onclick="saveActivitySheet()" ${state.saving?'disabled':''} class="${primaryButtonClass()} mt-5 w-full">${state.saving?'Setting Up...':state.activitySettings?'Update Activity Sheet':'Save & Setup Activity Sheet'}</button></div></div></section>`; }
+    function activityDailyView() { const done = state.activityRows.filter(r=>r.isDone).length; return `<section class="grid grid-cols-1 xl:grid-cols-[370px_1fr] gap-6"><div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit"><div class="flex items-center gap-3 mb-5">${icon('checklist','text-[30px]')}<div><h2 class="text-lg font-black">Daily Shift Checklist</h2><p class="${mutedClass()}">Notes wajib diisi setiap hari.</p></div></div><div class="grid grid-cols-1 gap-4">${field('Activity Date','activityDate',state.activityDate,'date','','false',"changeActivityDate(this.value)")}${selectField('Shift','activityShift',state.activityShift,SHIFT_OPTIONS,"changeActivityShift(this.value)")}</div><div class="${softBoxClass()} rounded-2xl p-4 mt-5"><p class="text-sm font-bold mb-2">Progress</p><p id="activityProgressText" class="${mutedClass()}">${done} dari ${state.activityRows.length} task selesai.</p><div class="${isDark() ? 'mt-3 h-3 rounded-full bg-white/10' : 'mt-3 h-3 rounded-full bg-slate-200'} overflow-hidden"><div id="activityProgressBar" class="h-full bg-emerald-500 rounded-full" style="width:${state.activityRows.length ? (done/state.activityRows.length)*100 : 0}%"></div></div></div><button onclick="loadActivityMatrix()" ${state.activityLoading||state.activitySyncing?'disabled':''} class="${secondaryButtonClass()} w-full mt-5">${state.activityLoading?'Loading...':state.activitySyncing?'Syncing...':'Refresh Checklist'}</button><button onclick="confirmSaveActivity()" ${state.saving||state.activityLoading||state.activitySyncing?'disabled':''} class="${primaryButtonClass()} mt-3 w-full">${state.saving?'Saving...':'Save Daily Activity'}</button></div><div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Checklist Items</h2><p class="${mutedClass()}">Task aktif untuk shift yang dipilih.</p></div><span class="${badgeClass()}">${state.activityRows.length} Tasks</span></div>${state.activityRows.length ? `<div class="max-h-[44vh] overflow-y-auto custom-scroll pr-1 space-y-3 mb-5">${state.activityRows.map((row,i)=>`<label class="${softBoxClass()} rounded-2xl p-4 flex items-start gap-4 cursor-pointer"><input type="checkbox" ${row.isDone?'checked':''} onchange="updateActivityCheck(${i}, this.checked)" class="mt-1 w-5 h-5 rounded accent-emerald-500"><div class="flex-1"><div class="flex flex-wrap items-center gap-2 mb-1"><p class="font-black">${esc(row.taskName)}</p>${statusPill(row.isSaved,row.isEdited,`activity-status-${i}`)}</div><p class="${mutedClass()}">${esc(row.description || 'No description.')}</p></div></label>`).join('')}</div>` : emptyState('Belum ada task aktif untuk shift ini yang disiapkan oleh Management.')}<div><label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Daily Notes *</label><textarea id="activityNotes" rows="6" oninput="state.activityNotes=this.value" placeholder="Tulis catatan shift hari ini. Wajib diisi agar TL berikutnya bisa memahami kondisi terakhir." class="${textareaClass()}">${esc(state.activityNotes)}</textarea></div></div></section>`; }
+    function activityNotesView() { return `<section class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex items-center gap-3 mb-5">${icon('note','text-[30px]')}<div><h2 class="text-lg font-black">Notes Viewer</h2><p class="${mutedClass()}">Notes tidak diload otomatis. Klik Load Notes agar data besar tidak membebani dashboard.</p></div></div><div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-5">${field('Exact Date','notesExactDate',state.notesFilters.date,'date')}${field('Date From','notesDateFrom',state.notesFilters.dateFrom,'date')}${field('Date To','notesDateTo',state.notesFilters.dateTo,'date')}${selectField('Shift','notesShift',state.notesFilters.shift,[{value:'',label:'All Shift'},...SHIFT_OPTIONS])}${field('Limit','notesLimit',state.notesFilters.limit,'number')}</div><div class="flex flex-col sm:flex-row gap-3 mb-5"><button onclick="loadActivityNotes()" ${state.notesLoading?'disabled':''} class="${primaryButtonClass()}">${state.notesLoading?'Loading Notes...':'Load Notes'}</button><button onclick="clearLoadedNotes()" class="${secondaryButtonClass()}">Clear Loaded Notes</button></div>${!state.notesLoaded ? emptyState('Notes belum dimuat. Gunakan tombol Load Notes untuk mengambil data.') : responsiveTable(['Date','Shift','Notes','Updated At'], state.loadedNotes.map(item=>[esc(item.Date),esc(item.Shift),`<div class="max-w-xl whitespace-normal leading-relaxed">${esc(item.Notes)}</div>`,esc(item['Updated At'])]), 'Tidak ada notes sesuai filter.')}</section>`; }
 
-    function RecordsView(props) {
-      return h(
-        'section',
-        { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 slide-up overflow-hidden' },
-        h(
-          'div',
-          { className: 'flex items-center justify-between gap-3 mb-5' },
-          h('div', null, h('h2', { className: 'text-lg font-black' }, 'Supplies Records'), h('p', { className: mutedClass(props.isDark) }, 'Loaded from getDailySupplies.')),
-          h('button', { onClick: props.onLoad, className: secondaryButtonClass(props.isDark) }, 'Reload')
-        ),
+    function settingsView() { const s = state.supplySettings; return `<section class="grid grid-cols-1 lg:grid-cols-[430px_1fr] gap-6 slide-up"><div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit"><div class="flex items-center gap-3 mb-5">${icon('settings','text-[30px]')}<div><h2 class="text-lg font-black">Supply Color Settings</h2><p class="${mutedClass()}">Atur batas warna paper + printing.</p></div></div><div class="space-y-4">${field('Merah jika ≤','lowMax',s.lowMax,'number')}${field('Kuning mulai dari','mediumMin',s.mediumMin,'number')}${field('Kuning sampai','mediumMax',s.mediumMax,'number')}${field('Hijau jika ≥','highMin',s.highMin,'number')}<div class="flex gap-3"><button onclick="saveSettingsFromForm()" class="${primaryButtonClass()}">Save Settings</button><button onclick="resetSettings()" class="${secondaryButtonClass()}">Reset</button></div></div></div><div class="${cardClass()} rounded-3xl p-5 sm:p-6"><h2 class="text-lg font-black mb-5">Preview</h2><div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div class="rounded-3xl border p-5 bg-red-500/15 text-red-500 border-red-500/20"><p class="text-sm font-black">≤ ${esc(s.lowMax)}</p><h3 class="text-4xl font-black mt-2">30</h3></div><div class="rounded-3xl border p-5 bg-amber-500/15 text-amber-500 border-amber-500/20"><p class="text-sm font-black">${esc(s.mediumMin)} - ${esc(s.mediumMax)}</p><h3 class="text-4xl font-black mt-2">75</h3></div><div class="rounded-3xl border p-5 bg-emerald-500/15 text-emerald-500 border-emerald-500/20"><p class="text-sm font-black">≥ ${esc(s.highMin)}</p><h3 class="text-4xl font-black mt-2">120</h3></div></div><div class="${softBoxClass()} rounded-2xl p-4 mt-5"><p class="text-sm font-bold mb-2">Default rules</p><p class="${mutedClass()}">Default: ≤50 merah, 51–100 kuning, ≥101 hijau. Warna dihitung dari total Paper + Printing per inventory item.</p></div></div></section>`; }
+    function profileView() { const u = state.user || {}; return `<section class="${cardClass()} rounded-3xl p-6 slide-up max-w-2xl"><div class="flex items-center gap-4 mb-6"><div class="${isDark() ? 'w-16 h-16 rounded-3xl bg-white text-slate-950' : 'w-16 h-16 rounded-3xl bg-slate-950 text-white'} flex items-center justify-center">${icon('user','text-[34px]')}</div><div><h2 class="text-xl font-black">${esc(u.username)}</h2><p class="${mutedClass()}">${esc(u.role)} • ${esc(u.branch)}</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${infoBox('Username',u.username)}${infoBox('Role',u.role)}${infoBox('Branch',u.branch)}${infoBox('Login Time',u.loginTime)}</div></section>`; }
 
-        props.records.length
-          ? h(
-              'div',
-              { className: 'overflow-auto custom-scroll max-h-[65vh]' },
-              h(
-                'table',
-                { className: 'w-full min-w-[900px] text-sm' },
-                h(
-                  'thead',
-                  { className: props.isDark ? 'sticky top-0 bg-slate-900/95' : 'sticky top-0 bg-white/95' },
-                  h(
-                    'tr',
-                    { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
-                    ['Date', 'Section', 'Level', 'Trainer', 'Paper', 'Printing', 'Action'].map(function (head) {
-                      return h('th', { key: head, className: 'py-3 pr-4 text-left' }, head);
-                    })
-                  )
-                ),
-                h(
-                  'tbody',
-                  null,
-                  props.records.map(function (item, index) {
-                    return h(
-                      'tr',
-                      { key: item.ID || index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
-                      h('td', { className: 'py-3 pr-4' }, item.Date || '-'),
-                      h('td', { className: 'py-3 pr-4' }, item['Jam/Section'] || '-'),
-                      h('td', { className: 'py-3 pr-4' }, item.Level || '-'),
-                      h('td', { className: 'py-3 pr-4 font-black' }, item['Trainer Name'] || '-'),
-                      h('td', { className: 'py-3 pr-4' }, item['Paper Used'] || 0),
-                      h('td', { className: 'py-3 pr-4' }, item['Printing Used'] || 0),
-                      h(
-                        'td',
-                        { className: 'py-3 pr-4' },
-                        h(
-                          'button',
-                          {
-                            onClick: function () { props.onDelete(item.ID); },
-                            className: 'h-9 px-3 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20 text-xs font-black'
-                          },
-                          'Delete'
-                        )
-                      )
-                    );
-                  })
-                )
-              )
-            )
-          : h(EmptyState, { isDark: props.isDark, text: 'Belum ada records.' })
-      );
-    }
+    function responsiveTable(headers, rows, emptyText) { if (!rows.length) return emptyState(emptyText); return `<div class="overflow-hidden rounded-2xl"><div class="overflow-auto custom-scroll" style="max-height:62vh"><table class="w-full min-w-[780px] text-sm"><thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}"><tr class="${isDark() ? 'text-left text-white/45 border-b border-white/10' : 'text-left text-slate-500 border-b border-slate-200'}">${headers.map(h=>`<th class="py-3 pr-4 font-bold first:pl-1">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}">${row.map(cell=>`<td class="py-3 pr-4 first:pl-1">${cell || '-'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`; }
+    function statusPill(isSaved, isEdited, id='') { let text='New', cls='bg-blue-500/15 text-blue-500 border-blue-500/20'; if (isSaved && isEdited) { text='Edited'; cls='bg-amber-500/15 text-amber-500 border-amber-500/20'; } else if (isSaved) { text='Saved'; cls='bg-emerald-500/15 text-emerald-500 border-emerald-500/20'; } return `<span ${id?`id="${esc(id)}"`:''} class="inline-flex h-8 items-center px-3 rounded-full border text-xs font-black ${cls}">${text}</span>`; }
+    function supplyLegend() { const s=state.supplySettings; return `<div class="flex flex-wrap gap-2 text-xs font-black"><span class="px-3 py-2 rounded-full bg-red-500/15 text-red-500 border border-red-500/20">≤ ${esc(s.lowMax)}</span><span class="px-3 py-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20">${esc(s.mediumMin)}-${esc(s.mediumMax)}</span><span class="px-3 py-2 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">≥ ${esc(s.highMin)}</span></div>`; }
+    function emptyState(text) { return `<div class="${softBoxClass()} rounded-3xl p-8 text-center"><div class="mx-auto w-14 h-14 rounded-3xl flex items-center justify-center mb-4 bg-slate-500/10">${icon('empty','opacity-60 text-[30px]')}</div><p class="${mutedClass()}">${esc(text)}</p></div>`; }
+    function infoBox(label,value) { return `<div class="${softBoxClass()} rounded-2xl p-4"><p class="${mutedClass()}">${esc(label)}</p><p class="font-black mt-1">${esc(value || '-')}</p></div>`; }
+    function getSupplyColorClass(value, type) { if (value === '' || value == null || Number.isNaN(Number(value))) return type === 'bar' ? 'w-full rounded-t-xl bg-slate-400/20' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black'; const n = Number(value); const s = state.supplySettings; if (n <= Number(s.lowMax)) return type === 'bar' ? 'w-full rounded-t-xl bg-red-500/70' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-red-500/15 text-red-500 border border-red-500/20 font-black'; if (n >= Number(s.mediumMin) && n <= Number(s.mediumMax)) return type === 'bar' ? 'w-full rounded-t-xl bg-amber-500/70' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-amber-500/15 text-amber-500 border border-amber-500/20 font-black'; if (n >= Number(s.highMin)) return type === 'bar' ? 'w-full rounded-t-xl bg-emerald-500/70' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 font-black'; return type === 'bar' ? 'w-full rounded-t-xl bg-slate-400/40' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black'; }
+    function toastView() { if (!state.toast) return ''; const success = state.toast.type === 'success'; const cls = success ? (isDark() ? 'bg-emerald-500/15 text-emerald-100 border-emerald-400/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200') : (isDark() ? 'bg-red-500/15 text-red-100 border-red-400/20' : 'bg-red-50 text-red-700 border-red-200'); return `<div class="fixed left-4 right-4 bottom-32 z-50 flex justify-center pointer-events-none"><div class="toast-in pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl backdrop-blur-xl ${cls}"><div class="flex items-start gap-3"><div class="mt-0.5">${icon(success?'check':'alert')}</div><p class="text-sm font-bold leading-relaxed">${esc(state.toast.text)}</p></div></div></div>`; }
+    function confirmDialogView() { const d = state.confirmDialog; if (!d) return ''; const danger = d.tone === 'danger', success = d.tone === 'success'; const iconCls = danger ? 'bg-red-500/15 text-red-500 border-red-500/20' : success ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20' : isDark() ? 'bg-white/10 text-white border-white/10' : 'bg-slate-950/5 text-slate-950 border-slate-200'; const confirmCls = danger ? 'bg-red-500 text-white hover:bg-red-600' : success ? 'bg-emerald-500 text-white hover:bg-emerald-600' : isDark() ? 'bg-white text-slate-950 hover:bg-slate-200' : 'bg-slate-950 text-white hover:bg-slate-800'; return `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-6"><div onclick="closeConfirm()" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div><div class="${cardClass()} relative w-full max-w-md rounded-[2rem] p-6 modal-pop"><div class="w-14 h-14 rounded-3xl border flex items-center justify-center mb-5 ${iconCls}">${icon(danger?'trash':success?'check':'spark','text-[30px]')}</div><h3 class="text-xl font-black mb-2">${esc(d.title)}</h3><p class="${mutedClass()} leading-relaxed mb-6">${esc(d.message)}</p><div class="flex gap-3"><button onclick="closeConfirm()" class="${secondaryButtonClass()} flex-1">${esc(d.cancelText)}</button><button onclick="confirmAction()" class="h-11 px-5 rounded-2xl font-black transition active:scale-[0.98] flex-1 ${confirmCls}">${esc(d.confirmText)}</button></div></div></div>`; }
+    function recordEditModal() { const r = state.editingRecord; if (!r) return ''; return `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-6"><div onclick="closeEditRecord()" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div><div class="${cardClass()} relative w-full max-w-md rounded-[2rem] p-6 modal-pop"><div class="flex items-center justify-between mb-5"><h3 class="text-xl font-black">Edit Record</h3><button onclick="closeEditRecord()" class="${iconButtonClass()} !w-8 !h-8 !rounded-xl">${icon('close','text-[18px]')}</button></div><div class="mb-5"><p class="font-black text-lg">${esc(r['Trainer Name'])}</p><p class="${mutedClass()}">${esc(r['Jam/Section'])} • ${esc(r.Level)}</p><p class="${mutedClass()} mt-1 font-semibold">${esc(r.Date)}</p></div><div class="space-y-4"><div class="grid grid-cols-2 gap-3">${field('Paper Used','editPaperUsed',state.editRecordForm.paperUsed,'number')}${field('Printing Used','editPrintingUsed',state.editRecordForm.printingUsed,'number')}</div><div class="flex gap-3 mt-4"><button onclick="closeEditRecord()" class="${secondaryButtonClass()} flex-1">Cancel</button><button onclick="submitEditRecord()" ${state.saving?'disabled':''} class="${primaryButtonClass()} flex-1">${state.saving?'Saving...':'Save'}</button></div></div></div></div>`; }
 
-    function ActivityView(props) {
-      var doneCount = props.activityRows.filter(function (row) { return row.isDone; }).length;
-
-      return h(
-        'section',
-        { className: 'space-y-6 slide-up' },
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6' },
-          h('h2', { className: 'text-xl font-black mb-2' }, 'Team Leader Activity Tracker'),
-          h('p', { className: mutedClass(props.isDark) }, 'Setup sheet, load checklist, save daily activity, and view notes.'),
-
-          h(
-            'div',
-            { className: 'mt-5 flex flex-wrap gap-3' },
-            h('button', { onClick: props.onLoadSettings, disabled: props.saving, className: secondaryButtonClass(props.isDark) }, 'Load Settings'),
-            h('span', { className: badgeClass(props.isDark) }, props.activitySettings ? 'Sheet Ready' : 'No Sheet Loaded')
-          )
-        ),
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6' },
-          h('h3', { className: 'text-lg font-black mb-4' }, 'Activity Sheet Setup'),
-          h(
-            'div',
-            { className: 'grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3' },
-            h(TextInput, {
-              isDark: props.isDark,
-              label: 'Activity Sheet ID / URL',
-              value: props.activitySheetId,
-              onChange: props.setActivitySheetId,
-              placeholder: 'Paste Google Sheet ID or URL'
-            }),
-            h(
-              'div',
-              { className: 'flex items-end' },
-              h('button', { onClick: props.onSaveSheet, disabled: props.saving, className: primaryButtonClass(props.isDark) }, props.saving ? 'Saving...' : 'Save Sheet')
-            )
-          )
-        ),
-
-        h(
-          'section',
-          { className: 'grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6' },
-
-          h(
-            'div',
-            { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 h-fit' },
-            h('h3', { className: 'text-lg font-black mb-4' }, 'Daily Checklist Control'),
-
-            h(
-              'div',
-              { className: 'space-y-4' },
-              h(TextInput, {
-                isDark: props.isDark,
-                label: 'Date',
-                type: 'date',
-                value: props.activityDate,
-                onChange: props.setActivityDate
-              }),
-              h(SelectInput, {
-                isDark: props.isDark,
-                label: 'Shift',
-                value: props.activityShift,
-                onChange: props.setActivityShift,
-                options: SHIFT_OPTIONS.map(function (shift) {
-                  return { value: shift, label: shift };
-                })
-              }),
-              h('div', { className: softBoxClass(props.isDark) + ' rounded-2xl p-4' },
-                h('p', { className: 'text-sm font-black mb-1' }, 'Progress'),
-                h('p', { className: mutedClass(props.isDark) }, doneCount + ' of ' + props.activityRows.length + ' tasks done.')
-              ),
-              h('button', { onClick: props.onLoadMatrix, disabled: props.saving, className: secondaryButtonClass(props.isDark) + ' w-full' }, 'Load Checklist'),
-              h('button', { onClick: props.onSaveActivity, disabled: props.saving, className: primaryButtonClass(props.isDark) }, props.saving ? 'Saving...' : 'Save Daily Activity')
-            )
-          ),
-
-          h(
-            'div',
-            { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
-            h(
-              'div',
-              { className: 'flex items-center justify-between gap-3 mb-5' },
-              h('div', null, h('h3', { className: 'text-lg font-black' }, 'Checklist Items'), h('p', { className: mutedClass(props.isDark) }, 'Task aktif untuk shift yang dipilih.')),
-              h('span', { className: badgeClass(props.isDark) }, props.activityRows.length + ' Tasks')
-            ),
-
-            props.activityRows.length
-              ? h(
-                  'div',
-                  { className: 'max-h-[42vh] overflow-y-auto custom-scroll space-y-3 pr-1 mb-5' },
-                  props.activityRows.map(function (row, index) {
-                    return h(
-                      'label',
-                      { key: row.taskId || index, className: softBoxClass(props.isDark) + ' rounded-2xl p-4 flex items-start gap-4 cursor-pointer' },
-                      h('input', {
-                        type: 'checkbox',
-                        checked: !!row.isDone,
-                        onChange: function (event) {
-                          props.updateActivityCheck(index, event.target.checked);
-                        },
-                        className: 'mt-1 w-5 h-5 rounded accent-emerald-500'
-                      }),
-                      h(
-                        'div',
-                        { className: 'flex-1' },
-                        h('p', { className: 'font-black' }, row.taskName || row['Task Name'] || '-'),
-                        h('p', { className: mutedClass(props.isDark) }, row.description || row.Description || 'No description.')
-                      )
-                    );
-                  })
-                )
-              : h(EmptyState, { isDark: props.isDark, text: 'Checklist belum dimuat.' }),
-
-            h(TextArea, {
-              isDark: props.isDark,
-              label: 'Daily Notes *',
-              value: props.activityNotes,
-              onChange: props.setActivityNotes,
-              placeholder: 'Tulis catatan shift hari ini...'
-            })
-          )
-        ),
-
-        h(
-          'div',
-          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
-          h('h3', { className: 'text-lg font-black mb-4' }, 'Notes Viewer'),
-          h(
-            'div',
-            { className: 'grid grid-cols-1 sm:grid-cols-[160px_auto] gap-3 mb-5' },
-            h(TextInput, {
-              isDark: props.isDark,
-              label: 'Limit',
-              type: 'number',
-              value: props.noteLimit,
-              onChange: props.setNoteLimit
-            }),
-            h(
-              'div',
-              { className: 'flex items-end' },
-              h('button', { onClick: props.onLoadNotes, disabled: props.saving, className: secondaryButtonClass(props.isDark) }, 'Load Notes')
-            )
-          ),
-
-          props.notesLoaded
-            ? props.loadedNotes.length
-              ? h(
-                  'div',
-                  { className: 'overflow-auto custom-scroll max-h-[45vh]' },
-                  h(
-                    'table',
-                    { className: 'w-full min-w-[760px] text-sm' },
-                    h(
-                      'thead',
-                      null,
-                      h(
-                        'tr',
-                        { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
-                        h('th', { className: 'py-3 pr-4 text-left' }, 'Date'),
-                        h('th', { className: 'py-3 pr-4 text-left' }, 'Shift'),
-                        h('th', { className: 'py-3 pr-4 text-left' }, 'Notes'),
-                        h('th', { className: 'py-3 pr-4 text-left' }, 'Updated At')
-                      )
-                    ),
-                    h(
-                      'tbody',
-                      null,
-                      props.loadedNotes.map(function (note, index) {
-                        return h(
-                          'tr',
-                          { key: index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
-                          h('td', { className: 'py-3 pr-4' }, note.Date || '-'),
-                          h('td', { className: 'py-3 pr-4' }, note.Shift || '-'),
-                          h('td', { className: 'py-3 pr-4 max-w-xl whitespace-normal' }, note.Notes || '-'),
-                          h('td', { className: 'py-3 pr-4' }, note['Updated At'] || '-')
-                        );
-                      })
-                    )
-                  )
-                )
-              : h(EmptyState, { isDark: props.isDark, text: 'Tidak ada notes.' })
-            : h(EmptyState, { isDark: props.isDark, text: 'Notes belum dimuat.' })
-        )
-      );
-    }
-
-    function ProfileView(props) {
-      return h(
-        'section',
-        { className: cardClass(props.isDark) + ' rounded-3xl p-6 slide-up max-w-2xl' },
-        h('h2', { className: 'text-xl font-black mb-5' }, 'Profile'),
-        h(
-          'div',
-          { className: 'grid grid-cols-1 sm:grid-cols-2 gap-3' },
-          h(InfoBox, { isDark: props.isDark, label: 'Username', value: props.user && props.user.username }),
-          h(InfoBox, { isDark: props.isDark, label: 'Role', value: props.user && props.user.role }),
-          h(InfoBox, { isDark: props.isDark, label: 'Branch', value: props.user && props.user.branch }),
-          h(InfoBox, { isDark: props.isDark, label: 'Login Time', value: props.user && props.user.loginTime })
-        )
-      );
-    }
-
-    function MacDock(props) {
-      var menus = [
-        { key: 'dashboard', label: 'Dashboard', icon: '📊' },
-        { key: 'input', label: 'Input', icon: '✍️' },
-        { key: 'records', label: 'Records', icon: '🗃️' },
-        { key: 'activity', label: 'Activity', icon: '📋' },
-        { key: 'profile', label: 'Profile', icon: '👤' }
-      ];
-
-      return h(
-        'nav',
-        { className: 'fixed left-0 right-0 z-40 flex justify-center px-4', style: { bottom: 'var(--dock-bottom)' } },
-        h(
-          'div',
-          { className: props.isDark ? 'bg-slate-900/90 border border-white/15 shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 overflow-x-auto custom-scroll backdrop-blur-xl' : 'bg-white/90 border border-white shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 overflow-x-auto custom-scroll backdrop-blur-xl' },
-          menus.map(function (menu) {
-            var active = props.activeMenu === menu.key;
-
-            return h(
-              'button',
-              {
-                key: menu.key,
-                onClick: function () { props.setActiveMenu(menu.key); },
-                className: active
-                  ? props.isDark
-                    ? 'w-20 h-20 rounded-3xl bg-white text-slate-950 -translate-y-3 shadow-xl flex flex-col items-center justify-center shrink-0'
-                    : 'w-20 h-20 rounded-3xl bg-slate-950 text-white -translate-y-3 shadow-xl flex flex-col items-center justify-center shrink-0'
-                  : props.isDark
-                    ? 'w-16 h-16 rounded-3xl bg-white/10 text-white/70 hover:bg-white/15 flex flex-col items-center justify-center shrink-0'
-                    : 'w-16 h-16 rounded-3xl bg-slate-950/5 text-slate-600 hover:bg-slate-950/10 flex flex-col items-center justify-center shrink-0'
-              },
-              h('span', { className: 'text-lg' }, menu.icon),
-              h('span', { className: 'text-[10px] font-black mt-1' }, menu.label)
-            );
-          })
-        )
-      );
-    }
-
-    function DebugPanel(props) {
-      if (!props.open) return null;
-
-      return h(
-        'aside',
-        { className: 'fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-xl max-h-[78vh] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl fade-in' },
-
-        h(
-          'div',
-          { className: 'flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10' },
-          h(
-            'div',
-            null,
-            h('h3', { className: 'text-sm font-black' }, 'Team Leader Debug Panel'),
-            h('p', { className: 'text-xs text-white/40' }, 'GAS, session, raw response, and API event log')
-          ),
-          h(
-            'button',
-            { onClick: function () { props.setOpen(false); }, className: 'w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center font-black' },
-            '×'
-          )
-        ),
-
-        h(
-          'div',
-          { className: 'p-4 overflow-y-auto max-h-[calc(78vh-56px)] space-y-4 custom-scroll' },
-
-          h(
-            'div',
-            { className: 'grid grid-cols-2 sm:grid-cols-4 gap-2' },
-            h('button', { onClick: props.onTestGet, className: 'h-10 rounded-xl bg-blue-500/20 border border-blue-500/20 text-blue-200 text-xs font-black' }, 'Test GET'),
-            h('button', { onClick: props.onTestSession, className: 'h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/20 text-emerald-200 text-xs font-black' }, 'Test Session'),
-            h('button', { onClick: props.onClearToken, className: 'h-10 rounded-xl bg-red-500/20 border border-red-500/20 text-red-200 text-xs font-black' }, 'Clear Token'),
-            h('button', { onClick: props.onClearDebug, className: 'h-10 rounded-xl bg-white/10 border border-white/10 text-white/70 text-xs font-black' }, 'Clear Log')
-          ),
-
-          h(DebugBlock, {
-            title: 'Environment',
-            data: {
-              currentUrl: window.location.href,
-              gasUrl: GAS_WEB_APP_URL,
-              hasToken: !!safeGetStorage(SESSION_KEY),
-              user: props.user || null
-            }
-          }),
-
-          h(DebugBlock, {
-            title: 'Last API Status',
-            data: { status: props.status || '-' }
-          }),
-
-          h(
-            'div',
-            { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
-            h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, 'Raw Response'),
-            h(
-              'pre',
-              { className: 'text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-36 overflow-auto custom-scroll' },
-              props.rawResponse || 'No raw response yet.'
-            )
-          ),
-
-          h(DebugBlock, {
-            title: 'Parsed JSON',
-            data: props.parsedResponse || { message: 'No parsed JSON yet.' }
-          }),
-
-          h(
-            'div',
-            { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
-            h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, 'Event Log'),
-            props.debugRows.length
-              ? h(
-                  'div',
-                  { className: 'space-y-2' },
-                  props.debugRows.map(function (row, index) {
-                    return h(
-                      'div',
-                      { key: index, className: 'rounded-xl bg-black/30 border border-white/5 p-2' },
-                      h(
-                        'div',
-                        { className: 'flex items-center justify-between gap-3 mb-1' },
-                        h('p', { className: 'text-xs font-black text-white/80' }, row.label),
-                        h('p', { className: 'text-[10px] text-white/35' }, row.time)
-                      ),
-                      h(
-                        'pre',
-                        { className: 'text-[10px] text-white/45 whitespace-pre-wrap break-words' },
-                        JSON.stringify(row.data, null, 2)
-                      )
-                    );
-                  })
-                )
-              : h('p', { className: 'text-xs text-white/40' }, 'No debug events yet.')
-          )
-        )
-      );
-    }
-
-    function DebugBlock(props) {
-      return h(
-        'div',
-        { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
-        h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, props.title),
-        h(
-          'pre',
-          { className: 'text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-44 overflow-auto custom-scroll' },
-          JSON.stringify(props.data, null, 2)
-        )
-      );
-    }
-
-    function StatCard(props) {
-      return h(
-        'div',
-        { className: cardClass(props.isDark) + ' rounded-3xl p-4 sm:p-5' },
-        h(
-          'div',
-          { className: 'flex items-center justify-between gap-3' },
-          h(
-            'div',
-            null,
-            h('p', { className: mutedClass(props.isDark) }, props.label),
-            h('h3', { className: 'text-2xl sm:text-3xl font-black mt-1' }, props.value)
-          ),
-          h('div', { className: props.isDark ? 'w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center' : 'w-11 h-11 rounded-2xl bg-slate-950/5 flex items-center justify-center' }, props.icon)
-        )
-      );
-    }
-
-    function TextInput(props) {
-      return h(
-        'div',
-        null,
-        props.label ? h('label', { className: props.isDark ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2' }, props.label) : null,
-        h('input', {
-          type: props.type || 'text',
-          value: props.value || '',
-          placeholder: props.placeholder || '',
-          disabled: !!props.disabled,
-          onChange: function (event) { props.onChange(event.target.value); },
-          className: inputClass(props.isDark, props.disabled)
-        })
-      );
-    }
-
-    function TextArea(props) {
-      return h(
-        'div',
-        null,
-        props.label ? h('label', { className: props.isDark ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2' }, props.label) : null,
-        h('textarea', {
-          value: props.value || '',
-          rows: 5,
-          placeholder: props.placeholder || '',
-          onChange: function (event) { props.onChange(event.target.value); },
-          className: props.isDark
-            ? 'w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 outline-none focus:border-white/30 resize-none'
-            : 'w-full rounded-2xl bg-white border border-slate-200 text-slate-950 px-4 py-3 outline-none focus:border-slate-400 resize-none'
-        })
-      );
-    }
-
-    function SelectInput(props) {
-      return h(
-        'div',
-        null,
-        props.label ? h('label', { className: props.isDark ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2' }, props.label) : null,
-        h(
-          'select',
-          {
-            value: props.value,
-            onChange: function (event) { props.onChange(event.target.value); },
-            className: inputClass(props.isDark)
-          },
-          props.options.map(function (option) {
-            return h('option', { key: option.value, value: option.value, className: props.isDark ? 'bg-slate-900' : 'bg-white' }, option.label);
-          })
-        )
-      );
-    }
-
-    function StatusPill(props) {
-      var text = 'New';
-      var cls = 'bg-blue-500/15 text-blue-500 border-blue-500/20';
-
-      if (props.saved && props.edited) {
-        text = 'Edited';
-        cls = 'bg-amber-500/15 text-amber-500 border-amber-500/20';
-      } else if (props.saved) {
-        text = 'Saved';
-        cls = 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20';
-      }
-
-      return h('span', { className: 'inline-flex h-8 items-center px-3 rounded-full border text-xs font-black ' + cls }, text);
-    }
-
-    function EmptyState(props) {
-      return h(
-        'div',
-        { className: softBoxClass(props.isDark) + ' rounded-3xl p-8 text-center' },
-        h('p', { className: mutedClass(props.isDark) }, props.text)
-      );
-    }
-
-    function InfoBox(props) {
-      return h(
-        'div',
-        { className: softBoxClass(props.isDark) + ' rounded-2xl p-4' },
-        h('p', { className: mutedClass(props.isDark) }, props.label),
-        h('p', { className: 'font-black mt-1' }, props.value || '-')
-      );
-    }
-
-    function Toast(props) {
-      if (!props.toast) return null;
-
-      return h(
-        'div',
-        { className: 'fixed left-4 right-4 bottom-32 z-50 flex justify-center pointer-events-none' },
-        h(
-          'div',
-          { className: props.toast.type === 'success' ? 'pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl bg-emerald-500 text-white fade-in' : 'pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl bg-red-500 text-white fade-in' },
-          h('p', { className: 'text-sm font-bold leading-relaxed' }, props.toast.text)
-        )
-      );
-    }
-
-    function BackgroundGlow(props) {
-      return h(
-        'div',
-        { className: 'fixed inset-0 pointer-events-none overflow-hidden' },
-        h('div', { className: 'absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl ' + (props.isDark ? 'bg-blue-500/20' : 'bg-blue-300/40') }),
-        h('div', { className: 'absolute top-1/3 -right-24 w-80 h-80 rounded-full blur-3xl ' + (props.isDark ? 'bg-emerald-500/10' : 'bg-emerald-300/35') }),
-        h('div', { className: 'absolute -bottom-32 left-1/3 w-80 h-80 rounded-full blur-3xl ' + (props.isDark ? 'bg-purple-500/10' : 'bg-purple-300/30') })
-      );
-    }
-
-    function cardClass(isDark) {
-      return isDark
-        ? 'bg-slate-900/75 backdrop-blur-2xl border border-white/10 shadow-2xl'
-        : 'bg-white/80 backdrop-blur-2xl border border-white shadow-xl';
-    }
-
-    function softBoxClass(isDark) {
-      return isDark
-        ? 'bg-white/5 border border-white/10'
-        : 'bg-slate-950/5 border border-slate-200';
-    }
-
-    function mutedClass(isDark) {
-      return isDark ? 'text-sm text-white/50' : 'text-sm text-slate-500';
-    }
-
-    function badgeClass(isDark) {
-      return isDark
-        ? 'inline-flex items-center h-9 px-3 rounded-full bg-white/10 border border-white/10 text-xs font-black text-white/70'
-        : 'inline-flex items-center h-9 px-3 rounded-full bg-slate-950/5 border border-slate-200 text-xs font-black text-slate-600';
-    }
-
-    function inputClass(isDark, disabled) {
-      if (disabled) {
-        return isDark
-          ? 'w-full h-11 rounded-2xl bg-white/5 border border-white/10 text-white px-4 outline-none opacity-50'
-          : 'w-full h-11 rounded-2xl bg-slate-100 border border-slate-200 text-slate-950 px-4 outline-none opacity-50';
-      }
-
-      return isDark
-        ? 'w-full h-11 rounded-2xl bg-white/10 border border-white/10 text-white px-4 outline-none focus:border-white/30 transition'
-        : 'w-full h-11 rounded-2xl bg-white border border-slate-200 text-slate-950 px-4 outline-none focus:border-slate-400 transition';
-    }
-
-    function primaryButtonClass(isDark) {
-      return isDark
-        ? 'w-full h-11 rounded-2xl bg-white text-slate-950 font-black hover:bg-slate-200 transition disabled:opacity-50'
-        : 'w-full h-11 rounded-2xl bg-slate-950 text-white font-black hover:bg-slate-800 transition disabled:opacity-50';
-    }
-
-    function secondaryButtonClass(isDark) {
-      return isDark
-        ? 'h-11 px-4 rounded-2xl bg-white/10 border border-white/10 text-white font-black hover:bg-white/15 transition disabled:opacity-50'
-        : 'h-11 px-4 rounded-2xl bg-white border border-slate-200 text-slate-700 font-black hover:bg-slate-50 transition disabled:opacity-50';
-    }
-
-    function iconButtonClass(isDark) {
-      return isDark
-        ? 'w-10 h-10 rounded-xl bg-white/10 border border-white/10 text-white hover:bg-white/20 flex items-center justify-center transition'
-        : 'w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 flex items-center justify-center transition';
-    }
-
-    var rootElement = document.getElementById('root');
-
-    if (ReactDOM.createRoot) {
-      ReactDOM.createRoot(rootElement).render(h(App));
-    } else {
-      ReactDOM.render(h(App), rootElement);
-    }
+    window.addEventListener('DOMContentLoaded', () => { applyTheme(); render(); boot(); });
   </script>
 </body>
 </html>
