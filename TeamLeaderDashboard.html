@@ -2,29 +2,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Login - GAS Management System</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Team Leader Dashboard</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
+    :root { --dock-bottom: max(18px, env(safe-area-inset-bottom)); }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    .fade-in {
-      animation: fadeIn 0.7s ease both;
-    }
-
-    .slide-up {
-      animation: slideUp 0.65s ease both;
-    }
-
-    .float-soft {
-      animation: floatSoft 5s ease-in-out infinite;
-    }
+    .fade-in { animation: fadeIn 0.35s ease both; }
+    .slide-up { animation: slideUp 0.38s ease both; }
+    .dock-pop { animation: dockPop 0.35s cubic-bezier(.2,.9,.2,1.2) both; }
+    .modal-pop { animation: modalPop 0.24s cubic-bezier(.2,.9,.2,1.1) both; }
+    .toast-in { animation: toastIn 0.26s ease both; }
 
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -32,225 +33,153 @@
     }
 
     @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes floatSoft {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
+    @keyframes dockPop {
+      from { opacity: 0; transform: translateY(18px) scale(.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: translateY(14px) scale(.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    input, select, textarea { color-scheme: light; }
+    .dark input, .dark select, .dark textarea { color-scheme: dark; }
+
+    .glass-light {
+      background: rgba(255,255,255,.76);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .glass-dark {
+      background: rgba(15,23,42,.76);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .dock-glass-light {
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    }
+
+    .dock-glass-dark {
+      background: rgba(15,23,42,.84);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, .45);
+      border-radius: 999px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, .7); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, .fade-in, .slide-up, .dock-pop, .modal-pop, .toast-in {
+        transition: none !important;
+        animation: none !important;
       }
     }
   </style>
 </head>
 
-<body class="bg-slate-950 text-slate-100 overflow-hidden selection:bg-blue-500/30">
-
-  <div id="loadingScreen" class="min-h-screen flex items-center justify-center">
-    <div class="text-center fade-in">
-      <div class="w-12 h-12 border-4 rounded-full animate-spin border-white/20 border-t-white mx-auto mb-4"></div>
-      <p class="text-white/60 text-sm">Checking session...</p>
-    </div>
-  </div>
-
-  <div id="loginScreen" class="hidden relative min-h-screen flex items-center justify-center p-4">
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen float-soft"></div>
-      <div class="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-emerald-600/10 blur-[120px] mix-blend-screen float-soft" style="animation-delay: -2s;"></div>
-      <div class="absolute top-[20%] left-[40%] w-[30%] h-[30%] rounded-full bg-purple-600/10 blur-[100px] mix-blend-screen float-soft" style="animation-delay: -4s;"></div>
-    </div>
-
-    <main class="relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
-
-      <div class="hidden lg:block slide-up" style="animation-delay: 0.1s;">
-        <div class="mb-8">
-          <div class="w-14 h-14 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-white/10">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#020617" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z"></path>
-            </svg>
-          </div>
-
-          <h1 class="text-5xl font-black tracking-tight leading-tight mb-4">
-            Management <br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-              System Hub.
-            </span>
-          </h1>
-
-          <p class="text-lg text-white/60 leading-relaxed max-w-md">
-            Centralized platform untuk mengelola absensi kelas, tracking supply inventory, dan memonitor aktivitas Team Leader secara real-time.
-          </p>
-        </div>
-
-        <div class="flex gap-3">
-          <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
-            <p class="text-white text-sm font-semibold">Admin</p>
-          </div>
-
-          <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
-            <p class="text-white text-sm font-semibold">Team Leader</p>
-          </div>
-
-          <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
-            <p class="text-white text-sm font-semibold">Management</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="w-full max-w-md mx-auto lg:mx-0 slide-up" style="animation-delay: 0.2s;">
-        <section class="relative group">
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-70 transition duration-500"></div>
-
-          <div class="relative bg-[#0b1120]/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl">
-
-            <div class="lg:hidden flex flex-col items-center mb-8 text-center">
-              <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-white/10">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#020617" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z"></path>
-                </svg>
-              </div>
-
-              <h2 class="text-2xl font-black tracking-tight">System Hub</h2>
-            </div>
-
-            <div class="mb-8">
-              <h2 class="text-2xl font-black mb-2">Welcome back</h2>
-              <p class="text-white/50 text-sm">Silakan login untuk mengakses dashboard kamu.</p>
-            </div>
-
-            <div id="errorBox" class="hidden mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 items-start gap-3 fade-in">
-              <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <p id="errorText" class="text-sm text-red-400 font-medium leading-relaxed"></p>
-            </div>
-
-            <form id="loginForm" class="space-y-5">
-              <div>
-                <label class="block text-sm font-semibold text-white/70 mb-2 pl-1">
-                  Username
-                </label>
-
-                <input
-                  id="usernameInput"
-                  type="text"
-                  class="w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50"
-                  placeholder="Enter your username"
-                  autocomplete="username"
-                >
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-white/70 mb-2 pl-1">
-                  Password
-                </label>
-
-                <input
-                  id="passwordInput"
-                  type="password"
-                  class="w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50"
-                  placeholder="••••••••"
-                  autocomplete="current-password"
-                >
-              </div>
-
-              <button
-                id="loginButton"
-                type="submit"
-                class="w-full h-12 mt-4 rounded-2xl bg-white text-slate-950 font-black tracking-wide hover:bg-slate-200 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                Login
-              </button>
-            </form>
-
-          </div>
-        </section>
-      </div>
-    </main>
-  </div>
+<body>
+  <div id="root"></div>
 
   <script>
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyNngZ57fzkW_GcM6nAxwKoEGL-oIwkK7_URfXVmAF8XIdunWx792jGQWYNXnfkxyYiMQ/exec';
     const SESSION_KEY = 'gas_auth_token';
+    const THEME_KEY = 'team_leader_dashboard_theme';
+    const SUPPLY_SETTINGS_KEY = 'team_leader_supply_color_settings';
 
-    const loadingScreen = document.getElementById('loadingScreen');
-    const loginScreen = document.getElementById('loginScreen');
-    const loginForm = document.getElementById('loginForm');
-    const usernameInput = document.getElementById('usernameInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const loginButton = document.getElementById('loginButton');
-    const errorBox = document.getElementById('errorBox');
-    const errorText = document.getElementById('errorText');
+    const MONTH_NAMES = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
 
-    function showLogin() {
-      loadingScreen.classList.add('hidden');
-      loginScreen.classList.remove('hidden');
-    }
+    const SHIFT_OPTIONS = [
+      { value: 'General', label: 'General / All Shifts' },
+      { value: 'Shift 1', label: 'Shift 1' },
+      { value: 'Shift 2', label: 'Shift 2' },
+      { value: 'Shift 3', label: 'Shift 3' }
+    ];
 
-    function showLoadingScreen() {
-      loadingScreen.classList.remove('hidden');
-      loginScreen.classList.add('hidden');
-    }
+    const DEFAULT_SUPPLY_SETTINGS = {
+      lowMax: 50,
+      mediumMin: 51,
+      mediumMax: 100,
+      highMin: 101
+    };
 
-    function showError(message) {
-      errorText.textContent = message || 'Terjadi kesalahan.';
-      errorBox.classList.remove('hidden');
-      errorBox.classList.add('flex');
-    }
+    const TODAY = new Date().toISOString().slice(0, 10);
 
-    function hideError() {
-      errorText.textContent = '';
-      errorBox.classList.add('hidden');
-      errorBox.classList.remove('flex');
-    }
+    const state = {
+      loading: true,
+      saving: false,
+      theme: safeGet(THEME_KEY) || 'dark',
+      activeMenu: 'dashboard',
+      user: null,
+      accessError: '',
+      toast: null,
+      confirmDialog: null,
+      confirmAction: null,
 
-    function setLoading(isLoading) {
-      usernameInput.disabled = isLoading;
-      passwordInput.disabled = isLoading;
-      loginButton.disabled = isLoading;
+      inputDate: TODAY,
+      supplyRows: [],
+      records: [],
+      editingRecord: null,
+      editRecordForm: { paperUsed: '', printingUsed: '' },
 
-      if (isLoading) {
-        loginButton.innerHTML = '<div class="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"></div>';
-      } else {
-        loginButton.textContent = 'Login';
-      }
-    }
+      recapMonth: new Date().getMonth() + 1,
+      recapYear: new Date().getFullYear(),
+      monthlyRecap: null,
 
-    function safeGetToken() {
-      try {
-        return localStorage.getItem(SESSION_KEY);
-      } catch (error) {
-        console.warn('LocalStorage get failed:', error);
-        return '';
-      }
-    }
+      supplySettings: loadSupplySettings(),
 
-    function safeSetToken(token) {
-      try {
-        localStorage.setItem(SESSION_KEY, token);
-      } catch (error) {
-        console.warn('LocalStorage set failed:', error);
-      }
-    }
+      filters: { date: '', month: '', year: '' },
 
-    function safeRemoveToken() {
-      try {
-        localStorage.removeItem(SESSION_KEY);
-      } catch (error) {
-        console.warn('LocalStorage remove failed:', error);
-      }
-    }
+      activitySettings: null,
+      activitySheetId: '',
+      activitySubMenu: 'daily',
+      activityBooted: false,
+      activityLoading: false,
+      activitySyncing: false,
+      activityDate: TODAY,
+      activityShift: 'Shift 1',
+      activityRows: [],
+      activityNotes: '',
+      notesFilters: {
+        date: '',
+        dateFrom: '',
+        dateTo: '',
+        shift: '',
+        limit: 50
+      },
+      loadedNotes: [],
+      notesLoaded: false,
+      notesLoading: false
+    };
+
+    const root = document.getElementById('root');
 
     async function apiCall(action, data = {}) {
       if (!GAS_API_URL || GAS_API_URL === 'YOUR_GAS_WEB_APP_URL_HERE') {
@@ -260,12 +189,12 @@
       const response = await fetch(GAS_API_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
+          'Content-Type': 'text/plain;charset=utf-8'
         },
         body: JSON.stringify({
           action,
-          ...data,
-        }),
+          ...data
+        })
       });
 
       if (!response.ok) {
@@ -275,79 +204,2224 @@
       return response.json();
     }
 
-    async function checkActiveSession() {
-      const token = safeGetToken();
+    function safeGet(key) {
+      try { return localStorage.getItem(key); } catch (error) { return ''; }
+    }
 
-      if (!token) {
-        showLogin();
-        return;
-      }
+    function safeSet(key, value) {
+      try { localStorage.setItem(key, value); } catch (error) {}
+    }
 
+    function safeRemove(key) {
+      try { localStorage.removeItem(key); } catch (error) {}
+    }
+
+    function loadSupplySettings() {
       try {
-        const response = await apiCall('checkSession', { token });
-
-        if (response && response.success && response.redirectUrl) {
-          window.location.href = response.redirectUrl;
-          return;
-        }
-
-        safeRemoveToken();
-        showLogin();
-
+        const saved = safeGet(SUPPLY_SETTINGS_KEY);
+        return saved ? JSON.parse(saved) : Object.assign({}, DEFAULT_SUPPLY_SETTINGS);
       } catch (error) {
-        console.warn('Session check failed:', error);
-        safeRemoveToken();
-        showLogin();
+        return Object.assign({}, DEFAULT_SUPPLY_SETTINGS);
       }
     }
 
-    async function handleLogin(event) {
-      event.preventDefault();
+    function saveSupplySettings() {
+      safeSet(SUPPLY_SETTINGS_KEY, JSON.stringify(state.supplySettings));
+    }
 
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
+    function isDark() {
+      return state.theme === 'dark';
+    }
 
-      if (!username || !password) {
-        showError('Username dan password wajib diisi.');
+    function esc(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function redirectToLogin() {
+      window.location.href = 'Index.html';
+    }
+
+    function pageClass() {
+      return isDark()
+        ? 'dark min-h-screen bg-[#020617] text-white'
+        : 'min-h-screen bg-slate-100 text-slate-950';
+    }
+
+    function cardClass() {
+      return isDark()
+        ? 'glass-dark border border-white/10 shadow-2xl shadow-black/20'
+        : 'glass-light border border-white shadow-xl shadow-slate-300/40';
+    }
+
+    function softBoxClass() {
+      return isDark()
+        ? 'bg-white/5 border border-white/10'
+        : 'bg-slate-950/5 border border-slate-200';
+    }
+
+    function mutedClass() {
+      return isDark()
+        ? 'text-sm text-white/50'
+        : 'text-sm text-slate-500';
+    }
+
+    function badgeClass() {
+      return isDark()
+        ? 'inline-flex h-9 items-center px-4 rounded-full bg-white/10 border border-white/10 text-white/80 text-sm font-black'
+        : 'inline-flex h-9 items-center px-4 rounded-full bg-slate-950/5 border border-slate-200 text-slate-700 text-sm font-black';
+    }
+
+    function inputClass(disabled) {
+      if (disabled) {
+        return isDark()
+          ? 'w-full h-11 rounded-2xl bg-white/5 border border-white/10 text-white/40 px-4 outline-none cursor-not-allowed'
+          : 'w-full h-11 rounded-2xl bg-slate-100 border border-slate-200 text-slate-400 px-4 outline-none cursor-not-allowed';
+      }
+
+      return isDark()
+        ? 'w-full h-11 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-white/30 px-4 outline-none focus:ring-2 focus:ring-white/30'
+        : 'w-full h-11 rounded-2xl bg-white border border-slate-200 text-slate-950 placeholder-slate-400 px-4 outline-none focus:ring-2 focus:ring-slate-300';
+    }
+
+    function textareaClass(disabled) {
+      if (disabled) {
+        return isDark()
+          ? 'w-full rounded-2xl bg-white/5 border border-white/10 text-white/40 px-4 py-3 outline-none cursor-not-allowed resize-none'
+          : 'w-full rounded-2xl bg-slate-100 border border-slate-200 text-slate-400 px-4 py-3 outline-none cursor-not-allowed resize-none';
+      }
+
+      return isDark()
+        ? 'w-full rounded-2xl bg-white/10 border border-white/10 text-white placeholder-white/30 px-4 py-3 outline-none focus:ring-2 focus:ring-white/30 resize-none'
+        : 'w-full rounded-2xl bg-white border border-slate-200 text-slate-950 placeholder-slate-400 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-300 resize-none';
+    }
+
+    function primaryButtonClass() {
+      return isDark()
+        ? 'w-full h-11 rounded-2xl bg-white text-slate-950 font-black hover:bg-slate-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed'
+        : 'w-full h-11 rounded-2xl bg-slate-950 text-white font-black hover:bg-slate-800 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed';
+    }
+
+    function secondaryButtonClass() {
+      return isDark()
+        ? 'h-11 px-4 rounded-2xl bg-white/10 border border-white/10 text-white font-black hover:bg-white/15 disabled:opacity-60 disabled:cursor-not-allowed'
+        : 'h-11 px-4 rounded-2xl bg-white border border-slate-200 text-slate-700 font-black hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed';
+    }
+
+    function iconButtonClass() {
+      return isDark()
+        ? 'w-11 h-11 rounded-2xl bg-white/10 border border-white/10 text-white hover:bg-white/15 flex items-center justify-center'
+        : 'w-11 h-11 rounded-2xl bg-white border border-slate-200 text-slate-950 hover:bg-slate-50 flex items-center justify-center';
+    }
+
+    function smallButtonClass(active) {
+      if (active) {
+        return isDark()
+          ? 'h-10 px-4 rounded-2xl bg-white text-slate-950 text-sm font-black'
+          : 'h-10 px-4 rounded-2xl bg-slate-950 text-white text-sm font-black';
+      }
+
+      return isDark()
+        ? 'h-10 px-4 rounded-2xl bg-white/10 border border-white/10 text-white/75 text-sm font-black hover:bg-white/15'
+        : 'h-10 px-4 rounded-2xl bg-white border border-slate-200 text-slate-600 text-sm font-black hover:bg-slate-50';
+    }
+
+    function icon(name, cls) {
+      const className = cls || 'w-5 h-5';
+
+      const icons = {
+        chart:
+          '<path d="M3 3v18h18" />' +
+          '<path d="M7 16V9" />' +
+          '<path d="M12 16V5" />' +
+          '<path d="M17 16v-3" />',
+        layers:
+          '<path d="M12 3 3 8l9 5 9-5-9-5Z" />' +
+          '<path d="m3 13 9 5 9-5" />' +
+          '<path d="m3 18 9 5 9-5" />',
+        paper:
+          '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />' +
+          '<path d="M14 2v6h6" />' +
+          '<path d="M8 13h8" />' +
+          '<path d="M8 17h6" />',
+        printer:
+          '<path d="M6 9V2h12v7" />' +
+          '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />' +
+          '<path d="M6 14h12v8H6z" />',
+        edit:
+          '<path d="M12 20h9" />' +
+          '<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />',
+        database:
+          '<ellipse cx="12" cy="5" rx="8" ry="3" />' +
+          '<path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5" />' +
+          '<path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />',
+        settings:
+          '<path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />' +
+          '<path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.03 3.84l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.18.36.5.72 1 .9.33.12.7.1 1.1.1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z" />',
+        user:
+          '<path d="M20 21a8 8 0 0 0-16 0" />' +
+          '<circle cx="12" cy="7" r="4" />',
+        check: '<path d="m20 6-11 11-5-5" />',
+        alert:
+          '<path d="M12 9v4" />' +
+          '<path d="M12 17h.01" />' +
+          '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />',
+        trash:
+          '<path d="M3 6h18" />' +
+          '<path d="M8 6V4h8v2" />' +
+          '<path d="M19 6l-1 14H6L5 6" />' +
+          '<path d="M10 11v6" />' +
+          '<path d="M14 11v6" />',
+        sun:
+          '<circle cx="12" cy="12" r="4" />' +
+          '<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />',
+        moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" />',
+        logout:
+          '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />' +
+          '<path d="M16 17l5-5-5-5" />' +
+          '<path d="M21 12H9" />',
+        spark: '<path d="M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z" />',
+        empty:
+          '<path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />' +
+          '<path d="M3.3 7 12 12l8.7-5" />' +
+          '<path d="M12 22V12" />',
+        activity: '<path d="M22 12h-4l-3 8-6-16-3 8H2" />',
+        checklist:
+          '<path d="M9 11l2 2 4-4" />' +
+          '<path d="M21 12a9 9 0 1 1-9-9" />',
+        note:
+          '<path d="M4 4h16v16H4z" />' +
+          '<path d="M8 8h8" />' +
+          '<path d="M8 12h8" />' +
+          '<path d="M8 16h5" />',
+        sheet:
+          '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />' +
+          '<path d="M14 2v6h6" />' +
+          '<path d="M8 13h8" />' +
+          '<path d="M8 17h8" />',
+        x:
+          '<path d="M18 6 6 18" />' +
+          '<path d="m6 6 12 12" />'
+      };
+
+      return (
+        '<svg class="' + className + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+          (icons[name] || icons.spark) +
+        '</svg>'
+      );
+    }
+
+    function getSupplyColorClass(value, type) {
+      const settings = state.supplySettings;
+
+      if (value === '' || value === null || value === undefined) {
+        return type === 'bar'
+          ? 'rounded-t-xl bg-slate-400/20'
+          : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black';
+      }
+
+      const number = Number(value);
+
+      if (isNaN(number)) {
+        return 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black';
+      }
+
+      if (number <= Number(settings.lowMax)) {
+        return type === 'bar'
+          ? 'rounded-t-xl bg-red-500/70'
+          : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-red-500/15 text-red-500 border border-red-500/20 font-black';
+      }
+
+      if (number >= Number(settings.mediumMin) && number <= Number(settings.mediumMax)) {
+        return type === 'bar'
+          ? 'rounded-t-xl bg-amber-500/70'
+          : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-amber-500/15 text-amber-500 border border-amber-500/20 font-black';
+      }
+
+      if (number >= Number(settings.highMin)) {
+        return type === 'bar'
+          ? 'rounded-t-xl bg-emerald-500/70'
+          : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 font-black';
+      }
+
+      return type === 'bar'
+        ? 'rounded-t-xl bg-slate-400/40'
+        : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black';
+    }
+
+    function render() {
+      document.documentElement.classList.toggle('dark', isDark());
+
+      if (state.loading) {
+        root.innerHTML = renderLoading();
         return;
       }
 
-      hideError();
-      setLoading(true);
+      if (state.accessError && !state.user) {
+        root.innerHTML = renderAccessError();
+        return;
+      }
+
+      root.innerHTML = renderApp();
+    }
+
+    function renderLoading() {
+      return `
+        <div class="${pageClass()}">
+          <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="text-center fade-in">
+              <div class="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4 ${isDark() ? 'border-white/20 border-t-white' : 'border-slate-300 border-t-slate-950'}"></div>
+              <p class="${isDark() ? 'text-white/70 text-sm' : 'text-slate-500 text-sm'}">Loading Team Leader Dashboard...</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAccessError() {
+      return `
+        <div class="${pageClass()}">
+          <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="${cardClass()} max-w-md w-full rounded-3xl p-6 text-center">
+              <h1 class="text-xl font-black mb-2">Access Error</h1>
+              <p class="text-red-500 text-sm mb-5">${esc(state.accessError)}</p>
+              <button data-action="logout" class="${primaryButtonClass()}">Back to Login</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderApp() {
+      const stats = calculateStats();
+
+      return `
+        <div class="${pageClass()}">
+          ${renderBackgroundGlow()}
+
+          <div class="relative min-h-screen pb-32">
+            ${renderHeader()}
+
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+              <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 slide-up">
+                ${renderStatCard('Paper Used', stats.totalPaper, 'paper')}
+                ${renderStatCard('Printing Used', stats.totalPrinting, 'printer')}
+                ${renderStatCard('Saved Today', stats.savedToday, 'check')}
+                ${renderStatCard('Activity Done', stats.activityDone + '/' + stats.activityTotal, 'activity')}
+              </section>
+
+              ${state.activeMenu === 'dashboard' ? renderDashboardView() : ''}
+              ${state.activeMenu === 'input' ? renderInputView() : ''}
+              ${state.activeMenu === 'records' ? renderRecordsView() : ''}
+              ${state.activeMenu === 'activity' ? renderActivityView() : ''}
+              ${state.activeMenu === 'settings' ? renderSettingsView() : ''}
+              ${state.activeMenu === 'profile' ? renderProfileView() : ''}
+            </main>
+
+            ${renderDock()}
+            ${renderToast()}
+            ${renderConfirmDialog()}
+            ${renderEditRecordModal()}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHeader() {
+      const user = state.user || {};
+
+      return `
+        <header class="${isDark() ? 'sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10' : 'sticky top-0 z-30 bg-slate-100/80 backdrop-blur-xl border-b border-slate-200'}">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="${isDark() ? 'w-9 h-9 rounded-2xl bg-white text-slate-950 flex items-center justify-center' : 'w-9 h-9 rounded-2xl bg-slate-950 text-white flex items-center justify-center'}">
+                    ${icon('spark', 'w-5 h-5')}
+                  </div>
+                  <h1 class="text-xl sm:text-2xl font-black">Team Leader Dashboard</h1>
+                </div>
+                <p class="${mutedClass()}">${esc(user.username)} • ${esc(user.role)} • ${esc(user.branch)}</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button data-action="toggle-theme" class="${iconButtonClass()}" title="Toggle theme">
+                  ${icon(state.theme === 'dark' ? 'sun' : 'moon', 'w-5 h-5')}
+                </button>
+
+                <button data-action="confirm-logout" class="${iconButtonClass()}" title="Logout">
+                  ${icon('logout', 'w-5 h-5')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+      `;
+    }
+
+    function renderStatCard(label, value, iconName) {
+      return `
+        <div class="${cardClass()} rounded-3xl p-4 sm:p-5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="${mutedClass()}">${esc(label)}</p>
+              <h3 class="text-2xl sm:text-3xl font-black mt-1">${esc(value)}</h3>
+            </div>
+            <div class="${isDark() ? 'w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center' : 'w-11 h-11 rounded-2xl bg-slate-950/5 flex items-center justify-center'}">
+              ${icon(iconName, 'w-5 h-5')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDashboardView() {
+      const recap = state.monthlyRecap || {};
+      const summary = recap.summary || {};
+      const classes = recap.classes || [];
+      const dailyTotals = recap.dailyTotals || [];
+      const daysInMonth = recap.daysInMonth || 31;
+
+      const maxPaper = Math.max.apply(null, dailyTotals.map(function(item) {
+        return Number(item.paperTotal || 0);
+      }).concat([1]));
+
+      const maxPrinting = Math.max.apply(null, dailyTotals.map(function(item) {
+        return Number(item.printingTotal || 0);
+      }).concat([1]));
+
+      let monthOptions = '';
+      MONTH_NAMES.forEach(function(name, index) {
+        const value = index + 1;
+        monthOptions += `<option value="${value}" ${Number(state.recapMonth) === value ? 'selected' : ''}>${name}</option>`;
+      });
+
+      let chartBars = '';
+      dailyTotals.forEach(function(item) {
+        const paperHeight = Math.max(8, (Number(item.paperTotal || 0) / maxPaper) * 210);
+        const printingHeight = Math.max(8, (Number(item.printingTotal || 0) / maxPrinting) * 210);
+
+        chartBars += `
+          <div class="flex-1 flex flex-col items-center gap-2">
+            <div class="text-[10px] font-black opacity-70">${esc(item.paperTotal)}/${esc(item.printingTotal)}</div>
+            <div class="flex items-end gap-1 h-[220px]">
+              <div title="Paper Used" class="${getSupplyColorClass(Number(item.paperTotal || 0), 'bar')}" style="height:${paperHeight}px;width:10px"></div>
+              <div title="Printing Used" class="rounded-t-xl bg-blue-500/70" style="height:${printingHeight}px;width:10px"></div>
+            </div>
+            <div class="text-[10px] opacity-60">${esc(item.day)}</div>
+          </div>
+        `;
+      });
+
+      let dayHeaders = '';
+      for (let i = 1; i <= daysInMonth; i++) {
+        dayHeaders += `<th class="py-3 px-2 text-center min-w-[58px]">${i}</th>`;
+      }
+
+      let itemRows = '';
+      classes.forEach(function(row) {
+        let cells = '';
+
+        (row.days || []).forEach(function(day) {
+          const total = Number(day.paperUsed || 0) + Number(day.printingUsed || 0);
+          const valueText = day.paperUsed === '' && day.printingUsed === ''
+            ? '-'
+            : (day.paperUsed || 0) + '/' + (day.printingUsed || 0);
+
+          cells += `
+            <td class="py-2 px-2 text-center">
+              <span class="${getSupplyColorClass(total, 'cell')}">${esc(valueText)}</span>
+            </td>
+          `;
+        });
+
+        itemRows += `
+          <tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}">
+            <td class="${isDark() ? 'sticky left-0 z-10 py-3 pr-4 bg-slate-900/95' : 'sticky left-0 z-10 py-3 pr-4 bg-white/95'}">
+              <p class="font-black">${esc(row.trainerName)}</p>
+              <p class="opacity-55">${esc(row.jamSection)} • ${esc(row.level)}</p>
+            </td>
+            ${cells}
+            <td class="py-3 px-3 text-center font-black">${esc(row.totalPaper)}/${esc(row.totalPrinting)}</td>
+          </tr>
+        `;
+      });
+
+      return `
+        <section class="space-y-6 slide-up">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div class="flex items-center gap-3">
+                ${icon('chart', 'w-8 h-8')}
+                <div>
+                  <h2 class="text-xl font-black">Supplies Dashboard</h2>
+                  <p class="${mutedClass()}">Monthly recap supplies per inventory item.</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 w-full lg:w-auto">
+                <div>
+                  <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Month</label>
+                  <select data-change="recap-month" class="${inputClass()}">${monthOptions}</select>
+                </div>
+
+                <div>
+                  <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Year</label>
+                  <input data-change="recap-year" type="number" value="${esc(state.recapYear)}" class="${inputClass()}">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            ${renderStatCard('Total Paper', summary.totalPaper || 0, 'paper')}
+            ${renderStatCard('Total Printing', summary.totalPrinting || 0, 'printer')}
+            ${renderStatCard('Active Items', summary.activeClassCount || 0, 'layers')}
+            ${renderStatCard('Filled Records', summary.filledRecords || 0, 'database')}
+          </div>
+
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3 mb-5">
+              <div>
+                <h2 class="text-lg font-black">Daily Usage Chart</h2>
+                <p class="${mutedClass()}">Total paper dan printing per tanggal.</p>
+              </div>
+              <span class="${badgeClass()}">${MONTH_NAMES[state.recapMonth - 1]} ${state.recapYear}</span>
+            </div>
+
+            <div class="overflow-x-auto custom-scroll pb-2">
+              <div class="min-w-[900px] h-72 flex items-end gap-2">${chartBars}</div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2 text-xs font-black">
+              <span class="px-3 py-2 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">Paper</span>
+              <span class="px-3 py-2 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/20">Printing</span>
+            </div>
+          </div>
+
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <h2 class="text-lg font-black">Horizontal Recap Per Inventory Item</h2>
+                <p class="${mutedClass()}">Kolom tanggal 1 sampai ${daysInMonth}. Format: Paper / Printing.</p>
+              </div>
+              ${renderSupplyLegend()}
+            </div>
+
+            ${classes.length === 0 ? renderEmptyState('Belum ada inventory detail active atau data supplies bulan ini.') : `
+              <div class="max-h-[62vh] overflow-auto custom-scroll">
+                <table class="w-full min-w-[1180px] text-xs">
+                  <thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}">
+                    <tr class="${isDark() ? 'border-b border-white/10 text-white/50' : 'border-b border-slate-200 text-slate-500'}">
+                      <th class="sticky left-0 z-20 py-3 pr-4 text-left min-w-[230px] bg-inherit">Inventory Item</th>
+                      ${dayHeaders}
+                      <th class="py-3 px-3 text-center min-w-[90px]">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>${itemRows}</tbody>
+                </table>
+              </div>
+            `}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderInputView() {
+      let mobileCards = '';
+      let tableRows = '';
+
+      state.supplyRows.forEach(function(row, index) {
+        const total = Number(row.paperUsed || 0) + Number(row.printingUsed || 0);
+        const preview = (row.paperUsed || 0) + '/' + (row.printingUsed || 0);
+
+        mobileCards += `
+          <div class="${softBoxClass()} rounded-2xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p class="font-black">${esc(row.trainerName)}</p>
+                <p class="${mutedClass()}">${esc(row.jamSection)} • ${esc(row.level)}</p>
+              </div>
+              <span data-supply-status-index="${index}">${renderStatusPill(row.isSaved, row.isEdited)}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Paper Used</label>
+                <input data-supply-input="${index}" data-supply-field="paperUsed" type="number" value="${esc(row.paperUsed)}" placeholder="0" class="${inputClass()}">
+              </div>
+
+              <div>
+                <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Printing Used</label>
+                <input data-supply-input="${index}" data-supply-field="printingUsed" type="number" value="${esc(row.printingUsed)}" placeholder="0" class="${inputClass()}">
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <span data-supply-preview-index="${index}" class="${getSupplyColorClass(total, 'cell')}">${esc(preview)}</span>
+            </div>
+          </div>
+        `;
+
+        tableRows += `
+          <tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}">
+            <td class="py-3 pr-4 font-semibold">${esc(row.jamSection)}</td>
+            <td class="py-3 pr-4">${esc(row.level)}</td>
+            <td class="py-3 pr-4">${esc(row.trainerName)}</td>
+            <td class="py-3 pr-4 w-36">
+              <input data-supply-input="${index}" data-supply-field="paperUsed" type="number" value="${esc(row.paperUsed)}" placeholder="0" class="${inputClass()}">
+            </td>
+            <td class="py-3 pr-4 w-36">
+              <input data-supply-input="${index}" data-supply-field="printingUsed" type="number" value="${esc(row.printingUsed)}" placeholder="0" class="${inputClass()}">
+            </td>
+            <td class="py-3 pr-4">
+              <span data-supply-preview-index="${index}" class="${getSupplyColorClass(total, 'cell')}">${esc(preview)}</span>
+            </td>
+            <td class="py-3 pr-4">
+              <span data-supply-status-index="${index}">${renderStatusPill(row.isSaved, row.isEdited)}</span>
+            </td>
+          </tr>
+        `;
+      });
+
+      return `
+        <section class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 slide-up">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit">
+            <div class="flex items-center gap-3 mb-5">
+              ${icon('edit', 'w-7 h-7')}
+              <div>
+                <h2 class="text-lg font-black">Daily Supplies Input</h2>
+                <p class="${mutedClass()}">Input supplies untuk semua inventory item.</p>
+              </div>
+            </div>
+
+            <div>
+              <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Tanggal Input</label>
+              <input data-change="input-date" type="date" value="${esc(state.inputDate)}" class="${inputClass()}">
+            </div>
+
+            <div class="${softBoxClass()} mt-5 rounded-2xl p-4">
+              <p class="text-sm font-bold mb-2">Anti Duplicate Logic</p>
+              <p class="${mutedClass()}">
+                Data unik berdasarkan Branch + Date + Jam/Section + Level + Trainer Name.
+                Kalau sudah ada, sistem update. Kalau belum ada, sistem create.
+              </p>
+            </div>
+
+            <button data-action="confirm-save-supply" ${state.saving ? 'disabled' : ''} class="${primaryButtonClass()} mt-5">
+              ${state.saving ? 'Saving...' : 'Save All Supplies'}
+            </button>
+          </div>
+
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <h2 class="text-lg font-black">Inventory Supplies Matrix</h2>
+                <p class="${mutedClass()}">Isi paper dan printing per inventory item.</p>
+              </div>
+              <span class="${badgeClass()}">${state.supplyRows.length} Items</span>
+            </div>
+
+            ${state.supplyRows.length === 0 ? renderEmptyState('Belum ada inventory detail active untuk branch ini.') : `
+              <div class="lg:hidden max-h-[62vh] overflow-y-auto custom-scroll pr-1 space-y-3">${mobileCards}</div>
+
+              <div class="hidden lg:block max-h-[62vh] overflow-auto custom-scroll">
+                <table class="w-full min-w-[880px] text-sm">
+                  <thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}">
+                    <tr class="${isDark() ? 'text-white/45 border-b border-white/10' : 'text-slate-500 border-b border-slate-200'}">
+                      <th class="py-3 pr-4 text-left">Jam/Section</th>
+                      <th class="py-3 pr-4 text-left">Level</th>
+                      <th class="py-3 pr-4 text-left">Trainer</th>
+                      <th class="py-3 pr-4 text-left">Paper Used</th>
+                      <th class="py-3 pr-4 text-left">Printing Used</th>
+                      <th class="py-3 pr-4 text-left">Preview</th>
+                      <th class="py-3 pr-4 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>${tableRows}</tbody>
+                </table>
+              </div>
+            `}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderRecordsView() {
+      let rows = '';
+
+      state.records.forEach(function(item, index) {
+        rows += `
+          <tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}">
+            <td class="py-3 pr-4 first:pl-1">${esc(item.Date)}</td>
+            <td class="py-3 pr-4">${esc(item['Jam/Section'])}</td>
+            <td class="py-3 pr-4">${esc(item.Level)}</td>
+            <td class="py-3 pr-4">${esc(item['Trainer Name'])}</td>
+            <td class="py-3 pr-4">
+              <span class="${getSupplyColorClass(item['Paper Used'], 'cell')}">${esc(item['Paper Used'])}</span>
+            </td>
+            <td class="py-3 pr-4">
+              <span class="${getSupplyColorClass(item['Printing Used'], 'cell')}">${esc(item['Printing Used'])}</span>
+            </td>
+            <td class="py-3 pr-4">
+              <div class="flex gap-2">
+                <button data-edit-record="${index}" class="h-9 px-3 rounded-xl bg-blue-500/15 text-blue-500 border border-blue-500/20 text-xs font-black">Edit</button>
+                <button data-delete-supply="${esc(item.ID)}" class="h-9 px-3 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20 text-xs font-black">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      return `
+        <section class="${cardClass()} rounded-3xl p-5 sm:p-6 slide-up overflow-hidden">
+          <div class="flex items-center gap-3 mb-5">
+            ${icon('database', 'w-7 h-7')}
+            <div>
+              <h2 class="text-lg font-black">Supplies Records</h2>
+              <p class="${mutedClass()}">Data tersimpan per inventory item di DailySupplies.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+            <div>
+              <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Filter Date</label>
+              <input data-filter="date" type="date" value="${esc(state.filters.date)}" class="${inputClass()}">
+            </div>
+
+            <div>
+              <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Month</label>
+              <input data-filter="month" value="${esc(state.filters.month)}" placeholder="June" class="${inputClass()}">
+            </div>
+
+            <div>
+              <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Year</label>
+              <input data-filter="year" value="${esc(state.filters.year)}" placeholder="2026" class="${inputClass()}">
+            </div>
+
+            <div class="flex items-end gap-2">
+              <button data-action="apply-filters" class="${primaryButtonClass()}">Filter</button>
+              <button data-action="clear-filters" class="${secondaryButtonClass()}">Clear</button>
+            </div>
+          </div>
+
+          ${state.records.length === 0 ? renderEmptyState('Belum ada data supplies.') : `
+            <div class="overflow-hidden rounded-2xl">
+              <div class="overflow-auto custom-scroll" style="max-height:62vh">
+                <table class="w-full min-w-[900px] text-sm">
+                  <thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}">
+                    <tr class="${isDark() ? 'text-left text-white/45 border-b border-white/10' : 'text-left text-slate-500 border-b border-slate-200'}">
+                      <th class="py-3 pr-4 font-bold first:pl-1 whitespace-nowrap">Date</th>
+                      <th class="py-3 pr-4 font-bold whitespace-nowrap">Jam/Section</th>
+                      <th class="py-3 pr-4 font-bold whitespace-nowrap">Level</th>
+                      <th class="py-3 pr-4 font-bold whitespace-nowrap">Trainer</th>
+                      <th class="py-3 pr-4 font-bold whitespace-nowrap">Paper</th>
+                      <th class="py-3 pr-4 font-bold whitespace-nowrap">Printing</th>
+                      <th class="py-3 pr-4 font-bold whitespace-nowrap">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function renderActivityView() {
+      const doneCount = state.activityRows.filter(function(row) { return row.isDone; }).length;
+
+      return `
+        <section class="space-y-6 slide-up">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div class="flex items-center gap-3">
+                ${icon('activity', 'w-8 h-8')}
+                <div>
+                  <h2 class="text-xl font-black">Team Leader Activity Tracker</h2>
+                  <p class="${mutedClass()}">Checklist shift dan notes harian yang tersimpan di sheet pribadi Team Leader.</p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <button data-activity-submenu="daily" class="${smallButtonClass(state.activitySubMenu === 'daily')}">Daily</button>
+                <button data-activity-submenu="notes" class="${smallButtonClass(state.activitySubMenu === 'notes')}">View Notes</button>
+                <button data-activity-submenu="setup" class="${smallButtonClass(state.activitySubMenu === 'setup')}">Sheet Setup</button>
+              </div>
+            </div>
+          </div>
+
+          ${!state.activitySettings ? renderActivitySetupCard() : ''}
+          ${state.activitySettings && state.activitySubMenu === 'setup' ? renderActivitySetupCard() : ''}
+          ${state.activitySettings && state.activitySubMenu === 'daily' ? renderActivityDaily(doneCount) : ''}
+          ${state.activitySettings && state.activitySubMenu === 'notes' ? renderActivityNotes() : ''}
+        </section>
+      `;
+    }
+
+    function renderActivitySetupCard() {
+      const settings = state.activitySettings;
+
+      return `
+        <section class="${cardClass()} rounded-3xl p-5 sm:p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
+            <div>
+              <div class="flex items-center gap-3 mb-5">
+                ${icon('sheet', 'w-8 h-8')}
+                <div>
+                  <h2 class="text-xl font-black">Activity Sheet Setup</h2>
+                  <p class="${mutedClass()}">Simpan Activity Tracker di spreadsheet pribadi Team Leader agar data harian tetap ringan dan cepat.</p>
+                </div>
+              </div>
+
+              <div class="${softBoxClass()} rounded-2xl p-4">
+                <p class="text-sm font-bold mb-2">Required access</p>
+                <p class="${mutedClass()}">
+                  Pastikan spreadsheet yang dimasukkan bisa diakses oleh script/web app. Sistem akan membuat sheet ActivityChecks dan ActivityNotes otomatis.
+                </p>
+              </div>
+
+              ${settings ? `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                  ${renderInfoBox('Username', settings.Username)}
+                  ${renderInfoBox('Branch', settings.Branch)}
+                  ${renderInfoBox('Status', settings.Status)}
+                  ${renderInfoBox('Updated At', settings['Updated At'])}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="${softBoxClass()} rounded-3xl p-5">
+              <div>
+                <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Activity Sheet ID / URL</label>
+                <input data-activity-sheet-id value="${esc(state.activitySheetId)}" placeholder="Paste Sheet ID or Google Sheet URL" class="${inputClass()}">
+              </div>
+
+              <button data-action="save-activity-sheet" ${state.saving ? 'disabled' : ''} class="${primaryButtonClass()} mt-5">
+                ${state.saving ? 'Setting Up...' : settings ? 'Update Activity Sheet' : 'Save & Setup Activity Sheet'}
+              </button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderActivityDaily(doneCount) {
+      let shiftOptions = '';
+      SHIFT_OPTIONS.forEach(function(option) {
+        shiftOptions += `<option value="${esc(option.value)}" ${state.activityShift === option.value ? 'selected' : ''}>${esc(option.label)}</option>`;
+      });
+
+      let tasks = '';
+      state.activityRows.forEach(function(row, index) {
+        tasks += `
+          <label class="${softBoxClass()} rounded-2xl p-4 flex items-start gap-4 cursor-pointer">
+            <input data-activity-check="${index}" type="checkbox" ${row.isDone ? 'checked' : ''} class="mt-1 w-5 h-5 rounded accent-emerald-500">
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <p class="font-black">${esc(row.taskName)}</p>
+                <span data-activity-status-index="${index}">${renderStatusPill(row.isSaved, row.isEdited)}</span>
+              </div>
+              <p class="${mutedClass()}">${esc(row.description || 'No description.')}</p>
+            </div>
+          </label>
+        `;
+      });
+
+      const progressWidth = state.activityRows.length ? (doneCount / state.activityRows.length) * 100 : 0;
+
+      return `
+        <section class="grid grid-cols-1 xl:grid-cols-[370px_1fr] gap-6">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit">
+            <div class="flex items-center gap-3 mb-5">
+              ${icon('checklist', 'w-7 h-7')}
+              <div>
+                <h2 class="text-lg font-black">Daily Shift Checklist</h2>
+                <p class="${mutedClass()}">Notes wajib diisi setiap hari.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Activity Date</label>
+                <input data-change="activity-date" type="date" value="${esc(state.activityDate)}" class="${inputClass()}">
+              </div>
+
+              <div>
+                <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Shift</label>
+                <select data-change="activity-shift" class="${inputClass()}">${shiftOptions}</select>
+              </div>
+            </div>
+
+            <div class="${softBoxClass()} rounded-2xl p-4 mt-5">
+              <p class="text-sm font-bold mb-2">Progress</p>
+              <p class="${mutedClass()}"><span data-activity-done-count>${doneCount}</span> dari ${state.activityRows.length} task selesai.</p>
+              <div class="${isDark() ? 'mt-3 h-3 rounded-full bg-white/10 overflow-hidden' : 'mt-3 h-3 rounded-full bg-slate-200 overflow-hidden'}">
+                <div data-activity-progress class="h-full bg-emerald-500 rounded-full" style="width:${progressWidth}%"></div>
+              </div>
+            </div>
+
+            <button data-action="refresh-activity" ${state.activityLoading || state.activitySyncing ? 'disabled' : ''} class="${secondaryButtonClass()} w-full mt-5 relative overflow-hidden">
+              ${state.activityLoading ? 'Loading...' : state.activitySyncing ? 'Syncing...' : 'Refresh Checklist'}
+            </button>
+
+            <button data-action="confirm-save-activity" ${state.saving || state.activityLoading || state.activitySyncing ? 'disabled' : ''} class="${primaryButtonClass()} mt-3">
+              ${state.saving ? 'Saving...' : 'Save Daily Activity'}
+            </button>
+          </div>
+
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <h2 class="text-lg font-black">Checklist Items</h2>
+                <p class="${mutedClass()}">Task aktif untuk shift yang dipilih.</p>
+              </div>
+              <span class="${badgeClass()}">${state.activityRows.length} Tasks</span>
+            </div>
+
+            ${state.activityRows.length === 0 ? renderEmptyState('Belum ada task aktif untuk shift ini yang disiapkan oleh Management.') : `
+              <div class="max-h-[44vh] overflow-y-auto custom-scroll pr-1 space-y-3 mb-5">${tasks}</div>
+            `}
+
+            <div>
+              <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Daily Notes *</label>
+              <textarea data-activity-notes rows="6" placeholder="Tulis catatan shift hari ini. Wajib diisi agar TL berikutnya bisa memahami kondisi terakhir." class="${textareaClass()}">${esc(state.activityNotes)}</textarea>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderActivityNotes() {
+      let shiftOptions = '<option value="">All Shift</option>';
+      SHIFT_OPTIONS.forEach(function(option) {
+        shiftOptions += `<option value="${esc(option.value)}" ${state.notesFilters.shift === option.value ? 'selected' : ''}>${esc(option.label)}</option>`;
+      });
+
+      let rows = '';
+      state.loadedNotes.forEach(function(item) {
+        rows += `
+          <tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}">
+            <td class="py-3 pr-4 first:pl-1 align-top">${esc(item.Date)}</td>
+            <td class="py-3 pr-4 align-top">${esc(item.Shift)}</td>
+            <td class="py-3 pr-4 align-top"><div class="max-w-xl whitespace-normal leading-relaxed">${esc(item.Notes)}</div></td>
+            <td class="py-3 pr-4 align-top">${esc(item['Updated At'])}</td>
+          </tr>
+        `;
+      });
+
+      return `
+        <section class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden">
+          <div class="flex items-center gap-3 mb-5">
+            ${icon('note', 'w-7 h-7')}
+            <div>
+              <h2 class="text-lg font-black">Notes Viewer</h2>
+              <p class="${mutedClass()}">Notes tidak diload otomatis. Klik Load Notes agar data besar tidak membebani dashboard.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-5">
+            ${renderNotesFilterInput('Exact Date', 'date', 'date')}
+            ${renderNotesFilterInput('Date From', 'dateFrom', 'date')}
+            ${renderNotesFilterInput('Date To', 'dateTo', 'date')}
+
+            <div>
+              <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Shift</label>
+              <select data-notes-filter="shift" class="${inputClass()}">${shiftOptions}</select>
+            </div>
+
+            ${renderNotesFilterInput('Limit', 'limit', 'number')}
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 mb-5">
+            <button data-action="load-notes" ${state.notesLoading ? 'disabled' : ''} class="${primaryButtonClass()}">
+              ${state.notesLoading ? 'Loading Notes...' : 'Load Notes'}
+            </button>
+            <button data-action="clear-loaded-notes" class="${secondaryButtonClass()}">Clear Loaded Notes</button>
+          </div>
+
+          ${!state.notesLoaded ? renderEmptyState('Notes belum dimuat. Gunakan tombol Load Notes untuk mengambil data.') : `
+            ${state.loadedNotes.length === 0 ? renderEmptyState('Tidak ada notes sesuai filter.') : `
+              <div class="overflow-hidden rounded-2xl">
+                <div class="overflow-auto custom-scroll" style="max-height:62vh">
+                  <table class="w-full min-w-[900px] text-sm">
+                    <thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}">
+                      <tr class="${isDark() ? 'text-left text-white/45 border-b border-white/10' : 'text-left text-slate-500 border-b border-slate-200'}">
+                        <th class="py-3 pr-4 font-bold first:pl-1 whitespace-nowrap">Date</th>
+                        <th class="py-3 pr-4 font-bold whitespace-nowrap">Shift</th>
+                        <th class="py-3 pr-4 font-bold whitespace-nowrap">Notes</th>
+                        <th class="py-3 pr-4 font-bold whitespace-nowrap">Updated At</th>
+                      </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                  </table>
+                </div>
+              </div>
+            `}
+          `}
+        </section>
+      `;
+    }
+
+    function renderNotesFilterInput(label, key, type) {
+      return `
+        <div>
+          <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">${esc(label)}</label>
+          <input data-notes-filter="${esc(key)}" type="${esc(type || 'text')}" value="${esc(state.notesFilters[key])}" class="${inputClass()}">
+        </div>
+      `;
+    }
+
+    function renderSettingsView() {
+      const s = state.supplySettings;
+
+      return `
+        <section class="grid grid-cols-1 lg:grid-cols-[430px_1fr] gap-6 slide-up">
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit">
+            <div class="flex items-center gap-3 mb-5">
+              ${icon('settings', 'w-7 h-7')}
+              <div>
+                <h2 class="text-lg font-black">Supply Color Settings</h2>
+                <p class="${mutedClass()}">Atur batas warna paper + printing.</p>
+              </div>
+            </div>
+
+            <form data-form="settings" class="space-y-4">
+              ${renderSettingInput('Merah jika ≤', 'lowMax', s.lowMax)}
+              ${renderSettingInput('Kuning mulai dari', 'mediumMin', s.mediumMin)}
+              ${renderSettingInput('Kuning sampai', 'mediumMax', s.mediumMax)}
+              ${renderSettingInput('Hijau jika ≥', 'highMin', s.highMin)}
+
+              <div class="flex gap-3">
+                <button type="submit" class="${primaryButtonClass()}">Save Settings</button>
+                <button type="button" data-action="reset-settings" class="${secondaryButtonClass()}">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="${cardClass()} rounded-3xl p-5 sm:p-6">
+            <h2 class="text-lg font-black mb-5">Preview</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="rounded-3xl border p-5 bg-red-500/15 text-red-500 border-red-500/20">
+                <p class="text-sm font-black">≤ ${esc(s.lowMax)}</p>
+                <h3 class="text-4xl font-black mt-2">30</h3>
+              </div>
+              <div class="rounded-3xl border p-5 bg-amber-500/15 text-amber-500 border-amber-500/20">
+                <p class="text-sm font-black">${esc(s.mediumMin)} - ${esc(s.mediumMax)}</p>
+                <h3 class="text-4xl font-black mt-2">75</h3>
+              </div>
+              <div class="rounded-3xl border p-5 bg-emerald-500/15 text-emerald-500 border-emerald-500/20">
+                <p class="text-sm font-black">≥ ${esc(s.highMin)}</p>
+                <h3 class="text-4xl font-black mt-2">120</h3>
+              </div>
+            </div>
+
+            <div class="${softBoxClass()} rounded-2xl p-4 mt-5">
+              <p class="text-sm font-bold mb-2">Default rules</p>
+              <p class="${mutedClass()}">
+                Default: ≤50 merah, 51–100 kuning, ≥101 hijau. Warna dihitung dari total Paper + Printing per inventory item.
+              </p>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderSettingInput(label, key, value) {
+      return `
+        <div>
+          <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">${esc(label)}</label>
+          <input data-setting-field="${esc(key)}" type="number" value="${esc(value)}" class="${inputClass()}">
+        </div>
+      `;
+    }
+
+    function renderProfileView() {
+      const user = state.user || {};
+
+      return `
+        <section class="${cardClass()} rounded-3xl p-6 slide-up max-w-2xl">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="${isDark() ? 'w-16 h-16 rounded-3xl bg-white text-slate-950 flex items-center justify-center' : 'w-16 h-16 rounded-3xl bg-slate-950 text-white flex items-center justify-center'}">
+              ${icon('user', 'w-8 h-8')}
+            </div>
+
+            <div>
+              <h2 class="text-xl font-black">${esc(user.username)}</h2>
+              <p class="${mutedClass()}">${esc(user.role)} • ${esc(user.branch)}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            ${renderInfoBox('Username', user.username)}
+            ${renderInfoBox('Role', user.role)}
+            ${renderInfoBox('Branch', user.branch)}
+            ${renderInfoBox('Login Time', user.loginTime)}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDock() {
+      const menus = [
+        { key: 'dashboard', label: 'Dashboard', icon: 'chart' },
+        { key: 'input', label: 'Input', icon: 'edit' },
+        { key: 'records', label: 'Records', icon: 'database' },
+        { key: 'activity', label: 'Activity', icon: 'activity' },
+        { key: 'settings', label: 'Settings', icon: 'settings' },
+        { key: 'profile', label: 'Profile', icon: 'user' }
+      ];
+
+      let buttons = '';
+
+      menus.forEach(function(menu) {
+        const active = state.activeMenu === menu.key;
+
+        const activeClass = active
+          ? isDark()
+            ? 'w-20 h-20 bg-white text-slate-950 -translate-y-3 shadow-xl'
+            : 'w-20 h-20 bg-slate-950 text-white -translate-y-3 shadow-xl'
+          : isDark()
+            ? 'w-16 h-16 bg-white/10 text-white/70 hover:bg-white/15 hover:-translate-y-2'
+            : 'w-16 h-16 bg-slate-950/5 text-slate-600 hover:bg-slate-950/10 hover:-translate-y-2';
+
+        buttons += `
+          <button data-menu="${menu.key}" class="group relative flex flex-col items-center justify-center rounded-3xl transition-all duration-300 shrink-0 ${activeClass}">
+            ${icon(menu.icon, active ? 'w-7 h-7' : 'w-6 h-6')}
+            <span class="text-[10px] font-black mt-1 ${active ? 'opacity-100' : 'opacity-70'}">${esc(menu.label)}</span>
+          </button>
+        `;
+      });
+
+      return `
+        <nav class="fixed left-0 right-0 z-40 flex justify-center px-4 dock-pop" style="bottom:var(--dock-bottom)">
+          <div class="${isDark() ? 'dock-glass-dark border-white/15 shadow-black/40' : 'dock-glass-light border-white shadow-slate-300/60'} border shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 max-w-full overflow-x-auto custom-scroll">
+            ${buttons}
+          </div>
+        </nav>
+      `;
+    }
+
+    function renderEditRecordModal() {
+      if (!state.editingRecord) return '';
+
+      const record = state.editingRecord;
+
+      return `
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-6">
+          <div data-action="close-edit-record" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+          <div class="${cardClass()} relative w-full max-w-md rounded-[2rem] p-6 modal-pop">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="text-xl font-black">Edit Record</h3>
+              <button data-action="close-edit-record" class="${iconButtonClass()} !w-8 !h-8 !rounded-xl">${icon('x', 'w-4 h-4')}</button>
+            </div>
+
+            <div class="mb-5">
+              <p class="font-black text-lg">${esc(record['Trainer Name'])}</p>
+              <p class="${mutedClass()}">${esc(record['Jam/Section'])} • ${esc(record.Level)}</p>
+              <p class="${mutedClass()} mt-1 font-semibold">${esc(record.Date)}</p>
+            </div>
+
+            <form data-form="edit-record" class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Paper Used</label>
+                  <input data-edit-record-field="paperUsed" type="number" value="${esc(state.editRecordForm.paperUsed)}" class="${inputClass()}">
+                </div>
+                <div>
+                  <label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Printing Used</label>
+                  <input data-edit-record-field="printingUsed" type="number" value="${esc(state.editRecordForm.printingUsed)}" class="${inputClass()}">
+                </div>
+              </div>
+
+              <div class="flex gap-3 mt-4">
+                <button type="button" data-action="close-edit-record" class="${secondaryButtonClass()} flex-1">Cancel</button>
+                <button type="submit" ${state.saving ? 'disabled' : ''} class="${primaryButtonClass()} flex-1">${state.saving ? 'Saving...' : 'Save'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderToast() {
+      if (!state.toast) return '';
+
+      const success = state.toast.type === 'success';
+
+      const boxClass = success
+        ? isDark()
+          ? 'bg-emerald-500/15 text-emerald-100 border-emerald-400/20'
+          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        : isDark()
+          ? 'bg-red-500/15 text-red-100 border-red-400/20'
+          : 'bg-red-50 text-red-700 border-red-200';
+
+      return `
+        <div class="fixed left-4 right-4 bottom-32 z-50 flex justify-center pointer-events-none">
+          <div class="toast-in pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl backdrop-blur-xl ${boxClass}">
+            <div class="flex items-start gap-3">
+              <div>${icon(success ? 'check' : 'alert', 'w-5 h-5')}</div>
+              <p class="text-sm font-bold leading-relaxed">${esc(state.toast.text)}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderConfirmDialog() {
+      if (!state.confirmDialog) return '';
+
+      const d = state.confirmDialog;
+      const danger = d.tone === 'danger';
+      const success = d.tone === 'success';
+
+      const iconClass = danger
+        ? 'bg-red-500/15 text-red-500 border-red-500/20'
+        : success
+          ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20'
+          : isDark()
+            ? 'bg-white/10 text-white border-white/10'
+            : 'bg-slate-950/5 text-slate-950 border-slate-200';
+
+      const confirmClass = danger
+        ? 'bg-red-500 text-white hover:bg-red-600'
+        : success
+          ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+          : isDark()
+            ? 'bg-white text-slate-950 hover:bg-slate-200'
+            : 'bg-slate-950 text-white hover:bg-slate-800';
+
+      return `
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-6">
+          <div data-action="close-confirm" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+          <div class="${cardClass()} relative w-full max-w-md rounded-[2rem] p-6 modal-pop">
+            <div class="w-14 h-14 rounded-3xl border flex items-center justify-center mb-5 ${iconClass}">
+              ${icon(danger ? 'trash' : success ? 'check' : 'spark', 'w-7 h-7')}
+            </div>
+
+            <h3 class="text-xl font-black mb-2">${esc(d.title)}</h3>
+            <p class="${mutedClass()} leading-relaxed mb-6">${esc(d.message)}</p>
+
+            <div class="flex gap-3">
+              <button data-action="close-confirm" class="${secondaryButtonClass()} flex-1">${esc(d.cancelText)}</button>
+              <button data-action="run-confirm" class="h-11 px-5 rounded-2xl font-black active:scale-[0.98] flex-1 ${confirmClass}">
+                ${esc(d.confirmText)}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSupplyLegend() {
+      const s = state.supplySettings;
+
+      return `
+        <div class="flex flex-wrap gap-2 text-xs font-black">
+          <span class="px-3 py-2 rounded-full bg-red-500/15 text-red-500 border border-red-500/20">≤ ${esc(s.lowMax)}</span>
+          <span class="px-3 py-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20">${esc(s.mediumMin)}-${esc(s.mediumMax)}</span>
+          <span class="px-3 py-2 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">≥ ${esc(s.highMin)}</span>
+        </div>
+      `;
+    }
+
+    function renderStatusPill(isSaved, isEdited) {
+      let text = 'New';
+      let cls = 'bg-blue-500/15 text-blue-500 border-blue-500/20';
+
+      if (isSaved && isEdited) {
+        text = 'Edited';
+        cls = 'bg-amber-500/15 text-amber-500 border-amber-500/20';
+      } else if (isSaved) {
+        text = 'Saved';
+        cls = 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20';
+      }
+
+      return `<span class="inline-flex h-8 items-center px-3 rounded-full border text-xs font-black ${cls}">${text}</span>`;
+    }
+
+    function renderEmptyState(text) {
+      return `
+        <div class="${softBoxClass()} rounded-3xl p-8 text-center">
+          <div class="mx-auto w-14 h-14 rounded-3xl flex items-center justify-center mb-4 bg-slate-500/10">
+            ${icon('empty', 'w-7 h-7 opacity-60')}
+          </div>
+          <p class="${mutedClass()}">${esc(text)}</p>
+        </div>
+      `;
+    }
+
+    function renderInfoBox(label, value) {
+      return `
+        <div class="${softBoxClass()} rounded-2xl p-4">
+          <p class="${mutedClass()}">${esc(label)}</p>
+          <p class="font-black mt-1 break-all">${value ? esc(value) : '-'}</p>
+        </div>
+      `;
+    }
+
+    function renderBackgroundGlow() {
+      return `
+        <div class="fixed inset-0 pointer-events-none overflow-hidden">
+          <div class="absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl ${isDark() ? 'bg-blue-500/20' : 'bg-blue-300/40'}"></div>
+          <div class="absolute top-1/3 -right-24 w-80 h-80 rounded-full blur-3xl ${isDark() ? 'bg-emerald-500/10' : 'bg-emerald-300/35'}"></div>
+          <div class="absolute -bottom-32 left-1/3 w-80 h-80 rounded-full blur-3xl ${isDark() ? 'bg-purple-500/10' : 'bg-purple-300/30'}"></div>
+        </div>
+      `;
+    }
+
+    function calculateStats() {
+      const totalPaper = state.records.reduce(function(sum, item) {
+        return sum + Number(item['Paper Used'] || 0);
+      }, 0);
+
+      const totalPrinting = state.records.reduce(function(sum, item) {
+        return sum + Number(item['Printing Used'] || 0);
+      }, 0);
+
+      const savedToday = state.supplyRows.filter(function(row) {
+        return row.isSaved;
+      }).length;
+
+      const activityDone = state.activityRows.filter(function(row) {
+        return row.isDone;
+      }).length;
+
+      return {
+        totalPaper: totalPaper,
+        totalPrinting: totalPrinting,
+        totalRecords: state.records.length,
+        savedToday: savedToday,
+        activityDone: activityDone,
+        activityTotal: state.activityRows.length
+      };
+    }
+
+    function showToast(type, text) {
+      state.toast = { type: type, text: text };
+      render();
+
+      setTimeout(function() {
+        state.toast = null;
+        render();
+      }, 3200);
+    }
+
+    function showSuccess(text) {
+      showToast('success', text);
+    }
+
+    function showError(text) {
+      showToast('error', text);
+    }
+
+    function openConfirm(config) {
+      state.confirmAction = config.onConfirm;
+      state.confirmDialog = {
+        title: config.title || 'Are you sure?',
+        message: config.message || 'This action needs confirmation.',
+        confirmText: config.confirmText || 'Confirm',
+        cancelText: config.cancelText || 'Cancel',
+        tone: config.tone || 'danger'
+      };
+      render();
+    }
+
+    function closeConfirm() {
+      state.confirmAction = null;
+      state.confirmDialog = null;
+      render();
+    }
+
+    async function boot() {
+      state.loading = true;
+      state.accessError = '';
+      render();
 
       try {
-        const response = await apiCall('loginUser', {
-          username,
-          password,
+        const token = safeGet(SESSION_KEY);
+
+        if (!token) {
+          redirectToLogin();
+          return;
+        }
+
+        const sessionResponse = await apiCall('getUserSession', { token });
+
+        if (!sessionResponse || !sessionResponse.success) {
+          safeRemove(SESSION_KEY);
+          redirectToLogin();
+          return;
+        }
+
+        if (!sessionResponse.user || sessionResponse.user.role !== 'Team Leader') {
+          state.accessError = 'Akses ditolak. Halaman ini hanya untuk Team Leader.';
+          state.loading = false;
+          render();
+          return;
+        }
+
+        state.user = sessionResponse.user;
+
+        await Promise.all([
+          loadSupplyMatrix(token, state.inputDate, false),
+          loadRecords(token, null, false),
+          loadMonthlyRecap(token, state.recapMonth, state.recapYear, false),
+          loadMasterActivityTasks(token)
+        ]);
+
+      } catch (error) {
+        console.error(error);
+        state.accessError = error && error.message ? error.message : 'Gagal memuat Team Leader Dashboard.';
+      } finally {
+        state.loading = false;
+        render();
+      }
+    }
+
+    async function loadMasterActivityTasks(token) {
+      try {
+        const response = await apiCall('getTeamLeaderActivityTasks', {
+          token,
+          filters: JSON.stringify({ includeInactive: false })
         });
 
         if (response && response.success) {
-          safeSetToken(response.token);
-
-          if (response.redirectUrl) {
-            window.location.href = response.redirectUrl;
-            return;
-          }
-
-          showError('Login berhasil, tapi URL dashboard tidak ditemukan.');
-          setLoading(false);
-          return;
+          safeSet('gas_master_activity_tasks', JSON.stringify(response.data || []));
         }
-
-        showError(response && response.message ? response.message : 'Login gagal.');
-        setLoading(false);
-
       } catch (error) {
-        console.error('Login server error:', error);
-        showError(error && error.message ? error.message : 'Terjadi error saat menghubungi server.');
-        setLoading(false);
+        console.warn('Failed to cache master tasks', error);
       }
     }
 
-    loginForm.addEventListener('submit', handleLogin);
+    async function loadSupplyMatrix(tokenParam, dateParam, shouldRender) {
+      const token = tokenParam || safeGet(SESSION_KEY);
+      const response = await apiCall('getDailySupplyInputMatrix', {
+        token,
+        date: dateParam || state.inputDate
+      });
 
-    showLoadingScreen();
-    checkActiveSession();
+      if (response && response.success) {
+        state.supplyRows = (response.data || []).map(function(row) {
+          row.isEdited = false;
+          return row;
+        });
+      } else {
+        showError(response && response.message ? response.message : 'Gagal memuat matrix supplies.');
+      }
+
+      if (shouldRender !== false) render();
+    }
+
+    async function loadRecords(tokenParam, customFilters, shouldRender) {
+      const token = tokenParam || safeGet(SESSION_KEY);
+      const response = await apiCall('getDailySupplies', {
+        token,
+        filters: JSON.stringify(customFilters || state.filters)
+      });
+
+      if (response && response.success) {
+        state.records = response.data || [];
+      } else {
+        showError(response && response.message ? response.message : 'Gagal memuat records supplies.');
+      }
+
+      if (shouldRender !== false) render();
+    }
+
+    async function loadMonthlyRecap(tokenParam, monthParam, yearParam, shouldRender) {
+      const token = tokenParam || safeGet(SESSION_KEY);
+      const response = await apiCall('getMonthlySuppliesRecap', {
+        token,
+        month: Number(monthParam),
+        year: Number(yearParam)
+      });
+
+      if (response && response.success) {
+        state.monthlyRecap = response.data;
+      } else {
+        showError(response && response.message ? response.message : 'Gagal memuat monthly supplies recap.');
+      }
+
+      if (shouldRender !== false) render();
+    }
+
+    async function changeInputDate(value) {
+      state.inputDate = value;
+      render();
+
+      try {
+        await loadSupplyMatrix(null, value, true);
+      } catch (error) {
+        showError('Gagal memuat matrix supplies.');
+      }
+    }
+
+    function updateSupplyInput(index, field, value) {
+      const row = state.supplyRows[index];
+      if (!row) return;
+
+      row[field] = value;
+
+      row.isEdited =
+        String(row.paperUsed || '') !== String(row.originalPaperUsed || '') ||
+        String(row.printingUsed || '') !== String(row.originalPrintingUsed || '');
+
+      const total = Number(row.paperUsed || 0) + Number(row.printingUsed || 0);
+      const preview = (row.paperUsed || 0) + '/' + (row.printingUsed || 0);
+
+      document.querySelectorAll('[data-supply-preview-index="' + index + '"]').forEach(function(el) {
+        el.className = getSupplyColorClass(total, 'cell');
+        el.textContent = preview;
+      });
+
+      document.querySelectorAll('[data-supply-status-index="' + index + '"]').forEach(function(el) {
+        el.innerHTML = renderStatusPill(row.isSaved, row.isEdited);
+      });
+    }
+
+    function confirmSaveSupply() {
+      const rowsToSave = state.supplyRows.filter(function(row) {
+        const hasPaper = row.paperUsed !== '' && row.paperUsed !== null && row.paperUsed !== undefined;
+        const hasPrinting = row.printingUsed !== '' && row.printingUsed !== null && row.printingUsed !== undefined;
+        return hasPaper || hasPrinting;
+      });
+
+      if (!rowsToSave.length) {
+        showError('Belum ada data paper/printing yang diisi.');
+        return;
+      }
+
+      openConfirm({
+        title: 'Save all supplies?',
+        message: 'Data supplies per inventory item akan disimpan. Jika item di tanggal yang sama sudah ada, sistem akan update tanpa duplicate.',
+        confirmText: 'Save All',
+        tone: 'success',
+        onConfirm: saveSupplyBulk
+      });
+    }
+
+    async function saveSupplyBulk() {
+      closeConfirm();
+
+      const rowsToSave = state.supplyRows.filter(function(row) {
+        const hasPaper = row.paperUsed !== '' && row.paperUsed !== null && row.paperUsed !== undefined;
+        const hasPrinting = row.printingUsed !== '' && row.printingUsed !== null && row.printingUsed !== undefined;
+        return hasPaper || hasPrinting;
+      });
+
+      state.saving = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('saveDailySuppliesBulk', {
+          token,
+          date: state.inputDate,
+          rows: JSON.stringify(rowsToSave)
+        });
+
+        if (!response || !response.success) {
+          showError(response && response.message ? response.message : 'Gagal menyimpan supplies.');
+          return;
+        }
+
+        await Promise.all([
+          loadSupplyMatrix(token, state.inputDate, false),
+          loadRecords(token, null, false),
+          loadMonthlyRecap(token, state.recapMonth, state.recapYear, false)
+        ]);
+
+        showSuccess(response.message || 'Supplies berhasil disimpan.');
+
+      } catch (error) {
+        showError('Terjadi error saat menyimpan supplies.');
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    function requestDeleteSupply(id) {
+      openConfirm({
+        title: 'Delete supply record?',
+        message: 'Data paper dan printing inventory item ini akan dihapus. Aksi ini tidak bisa dibatalkan.',
+        confirmText: 'Delete',
+        tone: 'danger',
+        onConfirm: function() {
+          deleteSupply(id);
+        }
+      });
+    }
+
+    async function deleteSupply(id) {
+      closeConfirm();
+      state.saving = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('deleteDailySupply', {
+          token,
+          id
+        });
+
+        if (!response || !response.success) {
+          showError(response && response.message ? response.message : 'Gagal menghapus supplies.');
+          return;
+        }
+
+        await Promise.all([
+          loadSupplyMatrix(token, state.inputDate, false),
+          loadRecords(token, null, false),
+          loadMonthlyRecap(token, state.recapMonth, state.recapYear, false)
+        ]);
+
+        showSuccess(response.message || 'Supplies berhasil dihapus.');
+
+      } catch (error) {
+        showError('Terjadi error saat menghapus supplies.');
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    function openEditRecord(index) {
+      const item = state.records[index];
+      if (!item) return;
+
+      state.editingRecord = item;
+      state.editRecordForm = {
+        paperUsed: item['Paper Used'] || 0,
+        printingUsed: item['Printing Used'] || 0
+      };
+
+      render();
+    }
+
+    async function submitEditRecord(event) {
+      event.preventDefault();
+
+      if (!state.editingRecord) return;
+
+      state.saving = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const payload = {
+          paperUsed: state.editRecordForm.paperUsed,
+          printingUsed: state.editRecordForm.printingUsed
+        };
+
+        const response = await apiCall('updateDailySupply', {
+          token,
+          id: state.editingRecord.ID,
+          payload: JSON.stringify(payload)
+        });
+
+        if (!response || !response.success) {
+          showError(response && response.message ? response.message : 'Gagal update record.');
+          return;
+        }
+
+        state.editingRecord = null;
+
+        await Promise.all([
+          loadRecords(token, null, false),
+          loadSupplyMatrix(token, state.inputDate, false),
+          loadMonthlyRecap(token, state.recapMonth, state.recapYear, false)
+        ]);
+
+        showSuccess(response.message || 'Record berhasil diupdate.');
+
+      } catch (error) {
+        showError('Terjadi error saat update record.');
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    async function applyFilters() {
+      try {
+        await loadRecords(null, state.filters, true);
+      } catch (error) {
+        showError('Gagal menerapkan filter.');
+      }
+    }
+
+    async function clearFilters() {
+      state.filters = { date: '', month: '', year: '' };
+      render();
+
+      try {
+        await loadRecords(null, state.filters, true);
+      } catch (error) {
+        showError('Gagal membersihkan filter.');
+      }
+    }
+
+    async function changeRecapMonth(value) {
+      state.recapMonth = Number(value);
+      render();
+
+      try {
+        await loadMonthlyRecap(null, state.recapMonth, state.recapYear, true);
+      } catch (error) {
+        showError('Gagal memuat monthly supplies recap.');
+      }
+    }
+
+    async function changeRecapYear(value) {
+      state.recapYear = Number(value);
+      render();
+
+      try {
+        await loadMonthlyRecap(null, state.recapMonth, state.recapYear, true);
+      } catch (error) {
+        showError('Gagal memuat monthly supplies recap.');
+      }
+    }
+
+    async function bootActivity() {
+      if (state.activityBooted) return;
+
+      state.activityLoading = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('getTeamLeaderActivitySettings', { token });
+
+        if (!response || !response.success) {
+          showError(response && response.message ? response.message : 'Gagal memuat activity settings.');
+          return;
+        }
+
+        state.activitySettings = response.data || null;
+        state.activitySheetId = response.data ? response.data['Activity Sheet ID'] || '' : '';
+        state.activityBooted = true;
+
+        if (response.data && response.data['Activity Sheet ID']) {
+          await loadActivityMatrix(token, state.activityDate, state.activityShift, false);
+        }
+
+      } catch (error) {
+        showError('Terjadi error saat memuat Activity Tracker.');
+      } finally {
+        state.activityLoading = false;
+        render();
+      }
+    }
+
+    async function saveActivitySheet() {
+      if (!String(state.activitySheetId || '').trim()) {
+        showError('Activity Sheet ID wajib diisi.');
+        return;
+      }
+
+      state.saving = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('saveTeamLeaderActivitySheetId', {
+          token,
+          sheetId: state.activitySheetId
+        });
+
+        if (!response || !response.success) {
+          showError(response && response.message ? response.message : 'Gagal menyimpan Activity Sheet ID.');
+          return;
+        }
+
+        state.activitySettings = response.data || null;
+        state.activitySheetId = response.data ? response.data['Activity Sheet ID'] || '' : state.activitySheetId;
+        state.activityBooted = true;
+
+        await loadActivityMatrix(token, state.activityDate, state.activityShift, false);
+
+        showSuccess(response.message || 'Activity Sheet berhasil disiapkan.');
+
+      } catch (error) {
+        showError('Terjadi error saat setup Activity Sheet.');
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    async function loadActivityMatrix(tokenParam, dateParam, shiftParam, shouldRender) {
+      const token = tokenParam || safeGet(SESSION_KEY);
+      const cleanDate = dateParam || state.activityDate;
+      const cleanShift = shiftParam || state.activityShift;
+
+      if (!cleanShift) {
+        showError('Shift wajib dipilih.');
+        return;
+      }
+
+      const cacheKey = 'activity_matrix_' + cleanDate + '_' + cleanShift;
+      const cachedData = safeGet(cacheKey);
+      const masterTasksStr = safeGet('gas_master_activity_tasks');
+
+      let isBackgroundSync = false;
+
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          state.activityRows = parsed.rows || [];
+          state.activityNotes = parsed.notes || '';
+          isBackgroundSync = true;
+        } catch (error) {}
+      } else if (masterTasksStr) {
+        try {
+          const masterTasks = JSON.parse(masterTasksStr);
+          const filteredTasks = masterTasks.filter(function(t) {
+            const taskShift = String(t.Shift || '').trim().toLowerCase();
+            const targetShift = cleanShift.trim().toLowerCase();
+            return !targetShift || !taskShift || taskShift === targetShift || taskShift.includes('all') || taskShift.includes('general');
+          });
+
+          state.activityRows = filteredTasks.map(function(t) {
+            return {
+              taskId: t.ID,
+              existingCheckId: '',
+              isSaved: false,
+              isDone: false,
+              originalIsDone: false,
+              shift: cleanShift,
+              taskName: t['Task Name'],
+              description: t.Description,
+              sortOrder: t['Sort Order']
+            };
+          });
+
+          state.activityNotes = '';
+          isBackgroundSync = true;
+        } catch (error) {}
+      }
+
+      if (isBackgroundSync) {
+        state.activitySyncing = true;
+      } else {
+        state.activityLoading = true;
+      }
+
+      if (shouldRender !== false) render();
+
+      try {
+        const response = await apiCall('getTeamLeaderActivityMatrix', {
+          token,
+          date: cleanDate,
+          shift: cleanShift
+        });
+
+        if (response && response.success) {
+          state.activityRows = (response.data || []).map(function(row) {
+            row.isEdited = false;
+            return row;
+          });
+          state.activityNotes = response.notes || '';
+
+          safeSet(cacheKey, JSON.stringify({
+            rows: response.data || [],
+            notes: response.notes || ''
+          }));
+        } else if (!isBackgroundSync) {
+          state.activityRows = [];
+          state.activityNotes = '';
+          showError(response && response.message ? response.message : 'Gagal memuat activity checklist.');
+        }
+
+      } catch (error) {
+        if (!isBackgroundSync) {
+          showError('Terjadi error saat memuat checklist activity.');
+        }
+      } finally {
+        state.activityLoading = false;
+        state.activitySyncing = false;
+        if (shouldRender !== false) render();
+      }
+    }
+
+    async function changeActivityDate(value) {
+      state.activityDate = value;
+      render();
+
+      if (state.activitySettings) {
+        await loadActivityMatrix(null, value, state.activityShift, true);
+      }
+    }
+
+    async function changeActivityShift(value) {
+      state.activityShift = value;
+      render();
+
+      if (state.activitySettings) {
+        await loadActivityMatrix(null, state.activityDate, value, true);
+      }
+    }
+
+    function updateActivityCheck(index, checked) {
+      const row = state.activityRows[index];
+      if (!row) return;
+
+      row.isDone = checked;
+      row.isEdited = checked !== row.originalIsDone;
+
+      document.querySelectorAll('[data-activity-status-index="' + index + '"]').forEach(function(el) {
+        el.innerHTML = renderStatusPill(row.isSaved, row.isEdited);
+      });
+
+      const doneCount = state.activityRows.filter(function(item) { return item.isDone; }).length;
+      const doneEl = document.querySelector('[data-activity-done-count]');
+      const progressEl = document.querySelector('[data-activity-progress]');
+
+      if (doneEl) doneEl.textContent = doneCount;
+      if (progressEl) {
+        progressEl.style.width = state.activityRows.length ? ((doneCount / state.activityRows.length) * 100) + '%' : '0%';
+      }
+    }
+
+    function confirmSaveActivity() {
+      if (!state.activitySettings) {
+        showError('Setup Activity Sheet terlebih dahulu.');
+        return;
+      }
+
+      if (!state.activityRows.length) {
+        showError('Belum ada task activity untuk shift ini.');
+        return;
+      }
+
+      if (!String(state.activityNotes || '').trim()) {
+        showError('Daily notes wajib diisi.');
+        return;
+      }
+
+      openConfirm({
+        title: 'Save daily activity?',
+        message: 'Checklist dan notes untuk tanggal serta shift ini akan disimpan atau diupdate tanpa duplicate.',
+        confirmText: 'Save Activity',
+        tone: 'success',
+        onConfirm: saveDailyActivity
+      });
+    }
+
+    async function saveDailyActivity() {
+      closeConfirm();
+      state.saving = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('saveTeamLeaderDailyActivity', {
+          token,
+          date: state.activityDate,
+          shift: state.activityShift,
+          rows: JSON.stringify(state.activityRows),
+          notes: state.activityNotes
+        });
+
+        if (!response || !response.success) {
+          showError(response && response.message ? response.message : 'Gagal menyimpan daily activity.');
+          return;
+        }
+
+        const cacheKey = 'activity_matrix_' + state.activityDate + '_' + state.activityShift;
+
+        safeSet(cacheKey, JSON.stringify({
+          rows: state.activityRows.map(function(r) {
+            return Object.assign({}, r, {
+              isSaved: true,
+              originalIsDone: r.isDone,
+              isEdited: false
+            });
+          }),
+          notes: state.activityNotes
+        }));
+
+        await loadActivityMatrix(token, state.activityDate, state.activityShift, false);
+        showSuccess(response.message || 'Daily activity berhasil disimpan.');
+
+      } catch (error) {
+        showError('Terjadi error saat menyimpan daily activity.');
+      } finally {
+        state.saving = false;
+        render();
+      }
+    }
+
+    async function loadActivityNotes() {
+      if (!state.activitySettings) {
+        showError('Setup Activity Sheet terlebih dahulu.');
+        return;
+      }
+
+      state.notesLoading = true;
+      state.notesLoaded = true;
+      render();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('getTeamLeaderActivityNotes', {
+          token,
+          filters: JSON.stringify(state.notesFilters)
+        });
+
+        if (response && response.success) {
+          state.loadedNotes = response.data || [];
+        } else {
+          state.loadedNotes = [];
+          showError(response && response.message ? response.message : 'Gagal memuat notes.');
+        }
+
+      } catch (error) {
+        showError('Terjadi error saat memuat notes.');
+      } finally {
+        state.notesLoading = false;
+        render();
+      }
+    }
+
+    function clearLoadedNotes() {
+      state.loadedNotes = [];
+      state.notesLoaded = false;
+      render();
+    }
+
+    function saveSettings(event) {
+      event.preventDefault();
+
+      const clean = {
+        lowMax: Number(getSettingValue('lowMax')),
+        mediumMin: Number(getSettingValue('mediumMin')),
+        mediumMax: Number(getSettingValue('mediumMax')),
+        highMin: Number(getSettingValue('highMin'))
+      };
+
+      if (
+        isNaN(clean.lowMax) ||
+        isNaN(clean.mediumMin) ||
+        isNaN(clean.mediumMax) ||
+        isNaN(clean.highMin)
+      ) {
+        showError('Semua settings harus berupa angka.');
+        return;
+      }
+
+      state.supplySettings = clean;
+      saveSupplySettings();
+      showSuccess('Settings warna supplies berhasil disimpan.');
+      render();
+    }
+
+    function getSettingValue(key) {
+      const el = root.querySelector('[data-setting-field="' + key + '"]');
+      return el ? el.value : '';
+    }
+
+    function resetSettings() {
+      state.supplySettings = Object.assign({}, DEFAULT_SUPPLY_SETTINGS);
+      saveSupplySettings();
+      showSuccess('Settings dikembalikan ke default.');
+      render();
+    }
+
+    function requestLogout() {
+      openConfirm({
+        title: 'Logout from dashboard?',
+        message: 'Session kamu akan diakhiri dan kamu akan kembali ke halaman login.',
+        confirmText: 'Logout',
+        tone: 'neutral',
+        onConfirm: handleLogout
+      });
+    }
+
+    async function handleLogout() {
+      closeConfirm();
+
+      try {
+        const token = safeGet(SESSION_KEY);
+        const response = await apiCall('logoutUser', { token });
+
+        safeRemove(SESSION_KEY);
+
+        if (response && response.redirectUrl) {
+          window.location.href = response.redirectUrl;
+          return;
+        }
+      } catch (error) {
+        safeRemove(SESSION_KEY);
+      }
+
+      redirectToLogin();
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      safeSet(THEME_KEY, state.theme);
+      render();
+    }
+
+    root.addEventListener('click', function(event) {
+      const target = event.target.closest('button, [data-action], [data-menu], [data-edit-record], [data-delete-supply], [data-activity-submenu]');
+      if (!target) return;
+
+      const action = target.getAttribute('data-action');
+
+      if (target.hasAttribute('data-menu')) {
+        state.activeMenu = target.getAttribute('data-menu');
+        render();
+
+        if (state.activeMenu === 'activity' && state.user && !state.activityBooted) {
+          bootActivity();
+        }
+
+        return;
+      }
+
+      if (target.hasAttribute('data-activity-submenu')) {
+        state.activitySubMenu = target.getAttribute('data-activity-submenu');
+        render();
+        return;
+      }
+
+      if (target.hasAttribute('data-edit-record')) {
+        openEditRecord(Number(target.getAttribute('data-edit-record')));
+        return;
+      }
+
+      if (target.hasAttribute('data-delete-supply')) {
+        requestDeleteSupply(target.getAttribute('data-delete-supply'));
+        return;
+      }
+
+      if (action === 'toggle-theme') toggleTheme();
+      if (action === 'confirm-logout') requestLogout();
+      if (action === 'logout') handleLogout();
+      if (action === 'close-confirm') closeConfirm();
+      if (action === 'run-confirm' && typeof state.confirmAction === 'function') state.confirmAction();
+      if (action === 'confirm-save-supply') confirmSaveSupply();
+      if (action === 'apply-filters') applyFilters();
+      if (action === 'clear-filters') clearFilters();
+      if (action === 'close-edit-record') {
+        state.editingRecord = null;
+        render();
+      }
+      if (action === 'save-activity-sheet') saveActivitySheet();
+      if (action === 'refresh-activity') loadActivityMatrix(null, state.activityDate, state.activityShift, true);
+      if (action === 'confirm-save-activity') confirmSaveActivity();
+      if (action === 'load-notes') loadActivityNotes();
+      if (action === 'clear-loaded-notes') clearLoadedNotes();
+      if (action === 'reset-settings') resetSettings();
+    });
+
+    root.addEventListener('input', function(event) {
+      const target = event.target;
+
+      if (target.hasAttribute('data-supply-input')) {
+        updateSupplyInput(
+          Number(target.getAttribute('data-supply-input')),
+          target.getAttribute('data-supply-field'),
+          target.value
+        );
+        return;
+      }
+
+      if (target.hasAttribute('data-filter')) {
+        state.filters[target.getAttribute('data-filter')] = target.value;
+        return;
+      }
+
+      if (target.hasAttribute('data-edit-record-field')) {
+        state.editRecordForm[target.getAttribute('data-edit-record-field')] = target.value;
+        return;
+      }
+
+      if (target.hasAttribute('data-activity-sheet-id')) {
+        state.activitySheetId = target.value;
+        return;
+      }
+
+      if (target.hasAttribute('data-activity-notes')) {
+        state.activityNotes = target.value;
+        return;
+      }
+
+      if (target.hasAttribute('data-notes-filter')) {
+        state.notesFilters[target.getAttribute('data-notes-filter')] = target.value;
+        return;
+      }
+    });
+
+    root.addEventListener('change', function(event) {
+      const target = event.target;
+      const change = target.getAttribute('data-change');
+
+      if (change === 'input-date') {
+        changeInputDate(target.value);
+        return;
+      }
+
+      if (change === 'recap-month') {
+        changeRecapMonth(target.value);
+        return;
+      }
+
+      if (change === 'recap-year') {
+        changeRecapYear(target.value);
+        return;
+      }
+
+      if (change === 'activity-date') {
+        changeActivityDate(target.value);
+        return;
+      }
+
+      if (change === 'activity-shift') {
+        changeActivityShift(target.value);
+        return;
+      }
+
+      if (target.hasAttribute('data-activity-check')) {
+        updateActivityCheck(Number(target.getAttribute('data-activity-check')), target.checked);
+        return;
+      }
+
+      if (target.hasAttribute('data-notes-filter')) {
+        state.notesFilters[target.getAttribute('data-notes-filter')] = target.value;
+      }
+    });
+
+    root.addEventListener('submit', function(event) {
+      const form = event.target;
+
+      if (form.getAttribute('data-form') === 'edit-record') {
+        submitEditRecord(event);
+        return;
+      }
+
+      if (form.getAttribute('data-form') === 'settings') {
+        saveSettings(event);
+        return;
+      }
+    });
+
+    render();
+    boot();
   </script>
 </body>
 </html>
