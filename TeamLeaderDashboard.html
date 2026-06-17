@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Team Leader Dashboard</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <style>
+    :root { --dock-bottom: max(18px, env(safe-area-inset-bottom)); }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .fade-in { animation: fadeIn 0.35s ease both; }
+    .slide-up { animation: slideUp 0.42s ease both; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, .45);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+
+<body class="bg-[#020617] text-white">
+  <div id="root"></div>
+
+  <script>
+    var h = React.createElement;
+
+    var GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtUEZTa_Wgonc8Hx3u3omxG9zY-0m5z7i0PhNt4hnIeS_qHivMmFp5Yq4LWFaj8GwWCQ/exec';
+
+    var SESSION_KEY = 'gas_auth_token';
+    var THEME_KEY = 'team_leader_dashboard_theme_safe';
+
+    var MONTH_NAMES = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    var SHIFT_OPTIONS = ['Shift 1', 'Shift 2', 'Shift 3', 'General'];
+
+    function safeGetStorage(key) {
+      try { return localStorage.getItem(key); }
+      catch (error) { console.warn('Storage get blocked', error); return null; }
+    }
+
+    function safeSetStorage(key, value) {
+      try { localStorage.setItem(key, value); return true; }
+      catch (error) { console.warn('Storage set blocked', error); return false; }
+    }
+
+    function safeRemoveStorage(key) {
+      try { localStorage.removeItem(key); return true; }
+      catch (error) { console.warn('Storage remove blocked', error); return false; }
+    }
+
+    function getErrorMessage(error) {
+      if (!error) return 'Unknown error';
+      if (typeof error === 'string') return error;
+      return error.message || String(error);
+    }
+
+    function trimText(text, limit) {
+      var value = String(text || '');
+      if (value.length <= limit) return value;
+      return value.slice(0, limit) + '...';
+    }
+
+    function todayString() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function getMonthNow() {
+      return new Date().getMonth() + 1;
+    }
+
+    function getYearNow() {
+      return new Date().getFullYear();
+    }
+
+    function App() {
+      var themeState = React.useState(safeGetStorage(THEME_KEY) || 'dark');
+      var theme = themeState[0];
+      var setTheme = themeState[1];
+
+      var activeMenuState = React.useState('dashboard');
+      var activeMenu = activeMenuState[0];
+      var setActiveMenu = activeMenuState[1];
+
+      var userState = React.useState(null);
+      var user = userState[0];
+      var setUser = userState[1];
+
+      var loadingState = React.useState(true);
+      var loading = loadingState[0];
+      var setLoading = loadingState[1];
+
+      var savingState = React.useState(false);
+      var saving = savingState[0];
+      var setSaving = savingState[1];
+
+      var accessErrorState = React.useState('');
+      var accessError = accessErrorState[0];
+      var setAccessError = accessErrorState[1];
+
+      var toastState = React.useState(null);
+      var toast = toastState[0];
+      var setToast = toastState[1];
+
+      var debugOpenState = React.useState(false);
+      var debugOpen = debugOpenState[0];
+      var setDebugOpen = debugOpenState[1];
+
+      var debugRowsState = React.useState([]);
+      var debugRows = debugRowsState[0];
+      var setDebugRows = debugRowsState[1];
+
+      var rawResponseState = React.useState('');
+      var rawResponse = rawResponseState[0];
+      var setRawResponse = rawResponseState[1];
+
+      var parsedResponseState = React.useState(null);
+      var parsedResponse = parsedResponseState[0];
+      var setParsedResponse = parsedResponseState[1];
+
+      var statusState = React.useState('');
+      var status = statusState[0];
+      var setStatus = statusState[1];
+
+      var inputDateState = React.useState(todayString());
+      var inputDate = inputDateState[0];
+      var setInputDate = inputDateState[1];
+
+      var supplyRowsState = React.useState([]);
+      var supplyRows = supplyRowsState[0];
+      var setSupplyRows = supplyRowsState[1];
+
+      var recordsState = React.useState([]);
+      var records = recordsState[0];
+      var setRecords = recordsState[1];
+
+      var monthState = React.useState(getMonthNow());
+      var recapMonth = monthState[0];
+      var setRecapMonth = monthState[1];
+
+      var yearState = React.useState(getYearNow());
+      var recapYear = yearState[0];
+      var setRecapYear = yearState[1];
+
+      var monthlyRecapState = React.useState(null);
+      var monthlyRecap = monthlyRecapState[0];
+      var setMonthlyRecap = monthlyRecapState[1];
+
+      var activitySettingsState = React.useState(null);
+      var activitySettings = activitySettingsState[0];
+      var setActivitySettings = activitySettingsState[1];
+
+      var activitySheetIdState = React.useState('');
+      var activitySheetId = activitySheetIdState[0];
+      var setActivitySheetId = activitySheetIdState[1];
+
+      var activityDateState = React.useState(todayString());
+      var activityDate = activityDateState[0];
+      var setActivityDate = activityDateState[1];
+
+      var activityShiftState = React.useState('Shift 1');
+      var activityShift = activityShiftState[0];
+      var setActivityShift = activityShiftState[1];
+
+      var activityRowsState = React.useState([]);
+      var activityRows = activityRowsState[0];
+      var setActivityRows = activityRowsState[1];
+
+      var activityNotesState = React.useState('');
+      var activityNotes = activityNotesState[0];
+      var setActivityNotes = activityNotesState[1];
+
+      var notesState = React.useState([]);
+      var loadedNotes = notesState[0];
+      var setLoadedNotes = notesState[1];
+
+      var notesLoadedState = React.useState(false);
+      var notesLoaded = notesLoadedState[0];
+      var setNotesLoaded = notesLoadedState[1];
+
+      var noteLimitState = React.useState(50);
+      var noteLimit = noteLimitState[0];
+      var setNoteLimit = noteLimitState[1];
+
+      function addDebug(label, data) {
+        var item = {
+          time: new Date().toLocaleTimeString(),
+          label: label,
+          data: data || {}
+        };
+
+        console.log('[TL DEBUG]', label, data || {});
+
+        setDebugRows(function (prev) {
+          return [item].concat(prev).slice(0, 60);
+        });
+      }
+
+      function showToast(type, text) {
+        setToast({ type: type, text: text });
+        setTimeout(function () { setToast(null); }, 3500);
+      }
+
+      function showSuccess(text) { showToast('success', text); }
+      function showError(text) { showToast('error', text); }
+
+      async function fetchAPI(action, payload) {
+        var rawText = '';
+
+        addDebug('POST started', {
+          action: action,
+          payloadKeys: Object.keys(payload || {})
+        });
+
+        try {
+          var response = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify({
+              action: action,
+              payload: payload || {}
+            })
+          });
+
+          rawText = await response.text();
+
+          setStatus(String(response.status) + ' ' + String(response.statusText || ''));
+          setRawResponse(rawText);
+
+          addDebug('POST raw response', {
+            action: action,
+            status: response.status,
+            ok: response.ok,
+            preview: trimText(rawText, 350)
+          });
+
+          if (!response.ok) {
+            throw new Error('HTTP error: ' + response.status);
+          }
+
+          var parsed;
+
+          try {
+            parsed = JSON.parse(rawText);
+          } catch (jsonError) {
+            throw new Error('GAS returned non-JSON response: ' + trimText(rawText, 160));
+          }
+
+          setParsedResponse(parsed);
+
+          addDebug('POST parsed JSON', {
+            action: action,
+            success: parsed.success,
+            message: parsed.message
+          });
+
+          return parsed;
+
+        } catch (error) {
+          addDebug('POST failed', {
+            action: action,
+            error: getErrorMessage(error),
+            rawPreview: trimText(rawText, 350)
+          });
+
+          throw error;
+        }
+      }
+
+      async function boot() {
+        setLoading(true);
+        setAccessError('');
+
+        addDebug('Boot started', {
+          href: window.location.href,
+          hasToken: !!safeGetStorage(SESSION_KEY)
+        });
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+
+          if (!token) {
+            redirectToLogin();
+            return;
+          }
+
+          var sessionResponse = await fetchAPI('getUserSession', {
+            token: token
+          });
+
+          if (!sessionResponse || !sessionResponse.success) {
+            safeRemoveStorage(SESSION_KEY);
+            redirectToLogin();
+            return;
+          }
+
+          if (!sessionResponse.user || sessionResponse.user.role !== 'Team Leader') {
+            setAccessError('Akses ditolak. Halaman ini hanya untuk Team Leader.');
+            setLoading(false);
+            return;
+          }
+
+          setUser(sessionResponse.user);
+
+          await Promise.allSettled([
+            loadSupplyMatrix(token, inputDate),
+            loadRecords(token),
+            loadMonthlyRecap(token, recapMonth, recapYear),
+            loadMasterActivityTasks(token)
+          ]);
+
+          addDebug('Boot finished', {
+            user: sessionResponse.user
+          });
+
+        } catch (error) {
+          setAccessError('Gagal memuat Team Leader Dashboard: ' + getErrorMessage(error));
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function redirectToLogin() {
+        window.location.href = './index.html';
+      }
+
+      async function handleLogout() {
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          if (token) {
+            await fetchAPI('logoutUser', { token: token });
+          }
+        } catch (error) {
+          addDebug('Logout API failed but local logout continues', {
+            error: getErrorMessage(error)
+          });
+        }
+
+        safeRemoveStorage(SESSION_KEY);
+        redirectToLogin();
+      }
+
+      async function testGasGet() {
+        try {
+          var response = await fetch(GAS_WEB_APP_URL, { method: 'GET' });
+          var rawText = await response.text();
+
+          setStatus(String(response.status) + ' ' + String(response.statusText || ''));
+          setRawResponse(rawText);
+
+          var parsed = null;
+          try { parsed = JSON.parse(rawText); } catch (error) { parsed = null; }
+          setParsedResponse(parsed);
+
+          addDebug('GET test finished', {
+            status: response.status,
+            ok: response.ok,
+            preview: trimText(rawText, 350),
+            parsed: parsed
+          });
+
+          showSuccess('GET test completed. Check Debug panel.');
+        } catch (error) {
+          showError('GET test failed: ' + getErrorMessage(error));
+        }
+      }
+
+      async function testSessionPost() {
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('getUserSession', { token: token });
+          showSuccess('Session test completed: ' + String(response.success));
+        } catch (error) {
+          showError('Session test failed: ' + getErrorMessage(error));
+        }
+      }
+
+      async function loadSupplyMatrix(tokenParam, dateParam) {
+        var token = tokenParam || safeGetStorage(SESSION_KEY);
+        var response = await fetchAPI('getDailySupplyInputMatrix', {
+          token: token,
+          date: dateParam || inputDate
+        });
+
+        if (response.success) {
+          setSupplyRows(response.data || []);
+        } else {
+          showError(response.message || 'Gagal memuat supplies matrix.');
+        }
+      }
+
+      async function loadRecords(tokenParam) {
+        var token = tokenParam || safeGetStorage(SESSION_KEY);
+        var response = await fetchAPI('getDailySupplies', {
+          token: token,
+          filters: {}
+        });
+
+        if (response.success) {
+          setRecords(response.data || []);
+        } else {
+          showError(response.message || 'Gagal memuat records.');
+        }
+      }
+
+      async function loadMonthlyRecap(tokenParam, monthParam, yearParam) {
+        var token = tokenParam || safeGetStorage(SESSION_KEY);
+        var response = await fetchAPI('getMonthlySuppliesRecap', {
+          token: token,
+          month: Number(monthParam),
+          year: Number(yearParam)
+        });
+
+        if (response.success) {
+          setMonthlyRecap(response.data || null);
+        } else {
+          showError(response.message || 'Gagal memuat monthly recap.');
+        }
+      }
+
+      async function loadMasterActivityTasks(tokenParam) {
+        try {
+          var token = tokenParam || safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('getTeamLeaderActivityTasks', {
+            token: token,
+            filters: { includeInactive: false }
+          });
+
+          if (response.success) {
+            safeSetStorage('gas_master_activity_tasks', JSON.stringify(response.data || []));
+          }
+        } catch (error) {
+          addDebug('Master activity cache failed', {
+            error: getErrorMessage(error)
+          });
+        }
+      }
+
+      function updateSupplyValue(index, field, value) {
+        setSupplyRows(function (prev) {
+          var copy = prev.slice();
+          var oldRow = copy[index] || {};
+
+          copy[index] = Object.assign({}, oldRow, {
+            [field]: value,
+            isEdited: true
+          });
+
+          return copy;
+        });
+      }
+
+      async function saveSupplyBulk() {
+        var rowsToSave = supplyRows.filter(function (row) {
+          var hasPaper = row.paperUsed !== '' && row.paperUsed !== null && row.paperUsed !== undefined;
+          var hasPrinting = row.printingUsed !== '' && row.printingUsed !== null && row.printingUsed !== undefined;
+          return hasPaper || hasPrinting;
+        });
+
+        if (!rowsToSave.length) {
+          showError('Belum ada data paper/printing yang diisi.');
+          return;
+        }
+
+        setSaving(true);
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+
+          var response = await fetchAPI('saveDailySuppliesBulk', {
+            token: token,
+            date: inputDate,
+            rows: rowsToSave
+          });
+
+          if (!response.success) {
+            showError(response.message || 'Gagal menyimpan supplies.');
+            return;
+          }
+
+          await Promise.allSettled([
+            loadSupplyMatrix(token, inputDate),
+            loadRecords(token),
+            loadMonthlyRecap(token, recapMonth, recapYear)
+          ]);
+
+          showSuccess(response.message || 'Supplies berhasil disimpan.');
+
+        } catch (error) {
+          showError('Save supplies error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      async function deleteSupply(id) {
+        if (!id) return;
+
+        var ok = window.confirm('Delete supply record ini?');
+        if (!ok) return;
+
+        setSaving(true);
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('deleteDailySupply', {
+            token: token,
+            id: id
+          });
+
+          if (!response.success) {
+            showError(response.message || 'Gagal menghapus record.');
+            return;
+          }
+
+          await Promise.allSettled([
+            loadRecords(token),
+            loadSupplyMatrix(token, inputDate),
+            loadMonthlyRecap(token, recapMonth, recapYear)
+          ]);
+
+          showSuccess(response.message || 'Record berhasil dihapus.');
+
+        } catch (error) {
+          showError('Delete error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      async function loadActivitySettings() {
+        setSaving(true);
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('getTeamLeaderActivitySettings', {
+            token: token
+          });
+
+          if (!response.success) {
+            showError(response.message || 'Gagal memuat activity settings.');
+            return;
+          }
+
+          setActivitySettings(response.data || null);
+          setActivitySheetId(response.data ? (response.data['Activity Sheet ID'] || '') : '');
+
+          if (response.data && response.data['Activity Sheet ID']) {
+            await loadActivityMatrix(token, activityDate, activityShift);
+          }
+
+          showSuccess('Activity settings loaded.');
+
+        } catch (error) {
+          showError('Activity settings error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      async function saveActivitySheet() {
+        if (!activitySheetId.trim()) {
+          showError('Activity Sheet ID / URL wajib diisi.');
+          return;
+        }
+
+        setSaving(true);
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('saveTeamLeaderActivitySheetId', {
+            token: token,
+            sheetId: activitySheetId.trim()
+          });
+
+          if (!response.success) {
+            showError(response.message || 'Gagal menyimpan Activity Sheet.');
+            return;
+          }
+
+          setActivitySettings(response.data || null);
+          setActivitySheetId(response.data ? (response.data['Activity Sheet ID'] || activitySheetId) : activitySheetId);
+
+          await loadActivityMatrix(token, activityDate, activityShift);
+
+          showSuccess(response.message || 'Activity Sheet berhasil disiapkan.');
+
+        } catch (error) {
+          showError('Save Activity Sheet error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      async function loadActivityMatrix(tokenParam, dateParam, shiftParam) {
+        setSaving(true);
+
+        try {
+          var token = tokenParam || safeGetStorage(SESSION_KEY);
+          var dateValue = dateParam || activityDate;
+          var shiftValue = shiftParam || activityShift;
+
+          var response = await fetchAPI('getTeamLeaderActivityMatrix', {
+            token: token,
+            date: dateValue,
+            shift: shiftValue
+          });
+
+          if (response.success) {
+            setActivityRows(response.data || []);
+            setActivityNotes(response.notes || '');
+          } else {
+            setActivityRows([]);
+            setActivityNotes('');
+            showError(response.message || 'Gagal memuat activity matrix.');
+          }
+
+        } catch (error) {
+          showError('Load activity matrix error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      function updateActivityCheck(index, checked) {
+        setActivityRows(function (prev) {
+          var copy = prev.slice();
+          var oldRow = copy[index] || {};
+          copy[index] = Object.assign({}, oldRow, {
+            isDone: checked,
+            isEdited: true
+          });
+          return copy;
+        });
+      }
+
+      async function saveDailyActivity() {
+        if (!activityRows.length) {
+          showError('Belum ada checklist activity.');
+          return;
+        }
+
+        if (!activityNotes.trim()) {
+          showError('Daily notes wajib diisi.');
+          return;
+        }
+
+        setSaving(true);
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('saveTeamLeaderDailyActivity', {
+            token: token,
+            date: activityDate,
+            shift: activityShift,
+            rows: activityRows,
+            notes: activityNotes
+          });
+
+          if (!response.success) {
+            showError(response.message || 'Gagal menyimpan activity.');
+            return;
+          }
+
+          await loadActivityMatrix(token, activityDate, activityShift);
+
+          showSuccess(response.message || 'Daily activity berhasil disimpan.');
+
+        } catch (error) {
+          showError('Save activity error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      async function loadActivityNotes() {
+        setSaving(true);
+        setNotesLoaded(true);
+
+        try {
+          var token = safeGetStorage(SESSION_KEY);
+          var response = await fetchAPI('getTeamLeaderActivityNotes', {
+            token: token,
+            filters: {
+              limit: Number(noteLimit) || 50
+            }
+          });
+
+          if (response.success) {
+            setLoadedNotes(response.data || []);
+          } else {
+            setLoadedNotes([]);
+            showError(response.message || 'Gagal memuat notes.');
+          }
+
+        } catch (error) {
+          showError('Load notes error: ' + getErrorMessage(error));
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      function toggleTheme() {
+        var next = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        safeSetStorage(THEME_KEY, next);
+      }
+
+      function clearDebug() {
+        setDebugRows([]);
+        setRawResponse('');
+        setParsedResponse(null);
+        setStatus('');
+      }
+
+      function clearToken() {
+        safeRemoveStorage(SESSION_KEY);
+        showSuccess('Token cleared.');
+      }
+
+      React.useEffect(function () {
+        boot();
+      }, []);
+
+      var isDark = theme === 'dark';
+      var pageClass = isDark ? 'min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950';
+
+      var totalPaper = records.reduce(function (sum, item) {
+        return sum + Number(item['Paper Used'] || 0);
+      }, 0);
+
+      var totalPrinting = records.reduce(function (sum, item) {
+        return sum + Number(item['Printing Used'] || 0);
+      }, 0);
+
+      var savedToday = supplyRows.filter(function (row) {
+        return row.isSaved;
+      }).length;
+
+      var activityDone = activityRows.filter(function (row) {
+        return row.isDone;
+      }).length;
+
+      if (loading) {
+        return h(
+          'div',
+          { className: pageClass + ' flex items-center justify-center px-4' },
+          h(
+            'div',
+            { className: 'text-center fade-in' },
+            h('div', { className: 'w-12 h-12 border-4 rounded-full animate-spin border-white/20 border-t-white mx-auto mb-4' }),
+            h('p', { className: isDark ? 'text-white/60 text-sm' : 'text-slate-500 text-sm' }, 'Loading Team Leader Dashboard...'),
+            h(
+              'button',
+              {
+                onClick: function () {
+                  clearToken();
+                  redirectToLogin();
+                },
+                className: 'mt-5 h-10 px-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-bold'
+              },
+              'Clear Token & Login'
+            )
+          )
+        );
+      }
+
+      if (accessError && !user) {
+        return h(
+          'div',
+          { className: pageClass + ' flex items-center justify-center px-4' },
+          h(
+            'div',
+            { className: cardClass(isDark) + ' max-w-md w-full rounded-3xl p-6 text-center' },
+            h('h1', { className: 'text-xl font-black mb-2' }, 'Access Error'),
+            h('p', { className: 'text-red-500 text-sm mb-5' }, accessError),
+            h(
+              'button',
+              {
+                onClick: redirectToLogin,
+                className: primaryButtonClass(isDark)
+              },
+              'Back to Login'
+            )
+          )
+        );
+      }
+
+      return h(
+        'div',
+        { className: pageClass },
+        h(BackgroundGlow, { isDark: isDark }),
+
+        h(
+          'div',
+          { className: 'relative min-h-screen pb-32' },
+
+          h(Header, {
+            user: user,
+            isDark: isDark,
+            theme: theme,
+            onToggleTheme: toggleTheme,
+            onLogout: handleLogout,
+            onOpenDebug: function () { setDebugOpen(true); }
+          }),
+
+          h(
+            'main',
+            { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8' },
+
+            h(
+              'section',
+              { className: 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 slide-up' },
+              h(StatCard, { isDark: isDark, label: 'Paper Used', value: totalPaper, icon: '📄' }),
+              h(StatCard, { isDark: isDark, label: 'Printing Used', value: totalPrinting, icon: '🖨️' }),
+              h(StatCard, { isDark: isDark, label: 'Saved Today', value: savedToday, icon: '✅' }),
+              h(StatCard, { isDark: isDark, label: 'Activity Done', value: activityDone + '/' + activityRows.length, icon: '📋' })
+            ),
+
+            activeMenu === 'dashboard'
+              ? h(DashboardView, {
+                  isDark: isDark,
+                  monthlyRecap: monthlyRecap,
+                  recapMonth: recapMonth,
+                  recapYear: recapYear,
+                  setRecapMonth: setRecapMonth,
+                  setRecapYear: setRecapYear,
+                  onLoad: function () {
+                    loadMonthlyRecap(null, recapMonth, recapYear);
+                  }
+                })
+              : null,
+
+            activeMenu === 'input'
+              ? h(InputView, {
+                  isDark: isDark,
+                  inputDate: inputDate,
+                  setInputDate: setInputDate,
+                  supplyRows: supplyRows,
+                  updateSupplyValue: updateSupplyValue,
+                  onLoad: function () {
+                    loadSupplyMatrix(null, inputDate);
+                  },
+                  onSave: saveSupplyBulk,
+                  saving: saving
+                })
+              : null,
+
+            activeMenu === 'records'
+              ? h(RecordsView, {
+                  isDark: isDark,
+                  records: records,
+                  onLoad: function () { loadRecords(); },
+                  onDelete: deleteSupply
+                })
+              : null,
+
+            activeMenu === 'activity'
+              ? h(ActivityView, {
+                  isDark: isDark,
+                  saving: saving,
+                  activitySettings: activitySettings,
+                  activitySheetId: activitySheetId,
+                  setActivitySheetId: setActivitySheetId,
+                  onLoadSettings: loadActivitySettings,
+                  onSaveSheet: saveActivitySheet,
+                  activityDate: activityDate,
+                  setActivityDate: setActivityDate,
+                  activityShift: activityShift,
+                  setActivityShift: setActivityShift,
+                  activityRows: activityRows,
+                  updateActivityCheck: updateActivityCheck,
+                  activityNotes: activityNotes,
+                  setActivityNotes: setActivityNotes,
+                  onLoadMatrix: function () {
+                    loadActivityMatrix(null, activityDate, activityShift);
+                  },
+                  onSaveActivity: saveDailyActivity,
+                  loadedNotes: loadedNotes,
+                  notesLoaded: notesLoaded,
+                  noteLimit: noteLimit,
+                  setNoteLimit: setNoteLimit,
+                  onLoadNotes: loadActivityNotes
+                })
+              : null,
+
+            activeMenu === 'profile'
+              ? h(ProfileView, { isDark: isDark, user: user })
+              : null
+          ),
+
+          h(MacDock, {
+            isDark: isDark,
+            activeMenu: activeMenu,
+            setActiveMenu: setActiveMenu
+          }),
+
+          h(Toast, { toast: toast }),
+          h(DebugPanel, {
+            open: debugOpen,
+            setOpen: setDebugOpen,
+            debugRows: debugRows,
+            rawResponse: rawResponse,
+            parsedResponse: parsedResponse,
+            status: status,
+            onTestGet: testGasGet,
+            onTestSession: testSessionPost,
+            onClearToken: clearToken,
+            onClearDebug: clearDebug,
+            user: user
+          })
+        )
+      );
+    }
+
+    function Header(props) {
+      return h(
+        'header',
+        { className: props.isDark ? 'sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10' : 'sticky top-0 z-30 bg-slate-100/80 backdrop-blur-xl border-b border-slate-200' },
+        h(
+          'div',
+          { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4' },
+          h(
+            'div',
+            { className: 'flex items-center justify-between gap-4' },
+            h(
+              'div',
+              null,
+              h(
+                'div',
+                { className: 'flex items-center gap-2 mb-1' },
+                h('div', { className: props.isDark ? 'w-9 h-9 rounded-2xl bg-white text-slate-950 flex items-center justify-center font-black' : 'w-9 h-9 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-black' }, 'TL'),
+                h('h1', { className: 'text-xl sm:text-2xl font-black' }, 'Team Leader Dashboard')
+              ),
+              h('p', { className: mutedClass(props.isDark) }, (props.user && props.user.username ? props.user.username : '-') + ' • ' + (props.user && props.user.role ? props.user.role : '-') + ' • ' + (props.user && props.user.branch ? props.user.branch : '-'))
+            ),
+
+            h(
+              'div',
+              { className: 'flex items-center gap-2' },
+              h('button', { onClick: props.onOpenDebug, className: iconButtonClass(props.isDark), title: 'Debug' }, '🐞'),
+              h('button', { onClick: props.onToggleTheme, className: iconButtonClass(props.isDark), title: 'Theme' }, props.theme === 'dark' ? '☀️' : '🌙'),
+              h('button', { onClick: props.onLogout, className: iconButtonClass(props.isDark), title: 'Logout' }, '⎋')
+            )
+          )
+        )
+      );
+    }
+
+    function DashboardView(props) {
+      var summary = props.monthlyRecap && props.monthlyRecap.summary ? props.monthlyRecap.summary : {};
+      var dailyTotals = props.monthlyRecap && props.monthlyRecap.dailyTotals ? props.monthlyRecap.dailyTotals : [];
+      var classes = props.monthlyRecap && props.monthlyRecap.classes ? props.monthlyRecap.classes : [];
+
+      return h(
+        'section',
+        { className: 'space-y-6 slide-up' },
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6' },
+          h('h2', { className: 'text-xl font-black mb-2' }, 'Supplies Dashboard'),
+          h('p', { className: mutedClass(props.isDark) }, 'Monthly recap supplies dari backend. Debug-safe version.'),
+
+          h(
+            'div',
+            { className: 'grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5' },
+            h(SelectInput, {
+              isDark: props.isDark,
+              label: 'Month',
+              value: props.recapMonth,
+              onChange: function (value) { props.setRecapMonth(Number(value)); },
+              options: MONTH_NAMES.map(function (name, index) {
+                return { value: index + 1, label: name };
+              })
+            }),
+            h(TextInput, {
+              isDark: props.isDark,
+              label: 'Year',
+              type: 'number',
+              value: props.recapYear,
+              onChange: function (value) { props.setRecapYear(Number(value)); }
+            }),
+            h(
+              'div',
+              { className: 'flex items-end' },
+              h('button', { onClick: props.onLoad, className: primaryButtonClass(props.isDark) }, 'Reload Monthly')
+            )
+          )
+        ),
+
+        h(
+          'div',
+          { className: 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4' },
+          h(StatCard, { isDark: props.isDark, label: 'Total Paper', value: summary.totalPaper || 0, icon: '📄' }),
+          h(StatCard, { isDark: props.isDark, label: 'Total Printing', value: summary.totalPrinting || 0, icon: '🖨️' }),
+          h(StatCard, { isDark: props.isDark, label: 'Active Items', value: summary.activeClassCount || 0, icon: '📦' }),
+          h(StatCard, { isDark: props.isDark, label: 'Filled Records', value: summary.filledRecords || 0, icon: '🗃️' })
+        ),
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
+          h('h2', { className: 'text-lg font-black mb-4' }, 'Daily Totals'),
+          dailyTotals.length
+            ? h(
+                'div',
+                { className: 'overflow-x-auto custom-scroll' },
+                h(
+                  'table',
+                  { className: 'w-full min-w-[760px] text-sm' },
+                  h(
+                    'thead',
+                    null,
+                    h(
+                      'tr',
+                      { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
+                      h('th', { className: 'py-3 text-left' }, 'Day'),
+                      h('th', { className: 'py-3 text-left' }, 'Paper'),
+                      h('th', { className: 'py-3 text-left' }, 'Printing')
+                    )
+                  ),
+                  h(
+                    'tbody',
+                    null,
+                    dailyTotals.map(function (item, index) {
+                      return h(
+                        'tr',
+                        { key: index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
+                        h('td', { className: 'py-3' }, item.day),
+                        h('td', { className: 'py-3 font-black' }, item.paperTotal || 0),
+                        h('td', { className: 'py-3 font-black' }, item.printingTotal || 0)
+                      );
+                    })
+                  )
+                )
+              )
+            : h(EmptyState, { isDark: props.isDark, text: 'Belum ada daily totals.' })
+        ),
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
+          h('h2', { className: 'text-lg font-black mb-4' }, 'Inventory Recap Rows'),
+          classes.length
+            ? h(
+                'div',
+                { className: 'overflow-x-auto custom-scroll' },
+                h(
+                  'table',
+                  { className: 'w-full min-w-[900px] text-xs' },
+                  h(
+                    'thead',
+                    null,
+                    h(
+                      'tr',
+                      { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
+                      h('th', { className: 'py-3 text-left' }, 'Trainer'),
+                      h('th', { className: 'py-3 text-left' }, 'Section'),
+                      h('th', { className: 'py-3 text-left' }, 'Level'),
+                      h('th', { className: 'py-3 text-left' }, 'Total Paper'),
+                      h('th', { className: 'py-3 text-left' }, 'Total Printing')
+                    )
+                  ),
+                  h(
+                    'tbody',
+                    null,
+                    classes.map(function (row, index) {
+                      return h(
+                        'tr',
+                        { key: index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
+                        h('td', { className: 'py-3 font-black' }, row.trainerName || row['Trainer Name'] || '-'),
+                        h('td', { className: 'py-3' }, row.jamSection || row['Jam/Section'] || '-'),
+                        h('td', { className: 'py-3' }, row.level || row.Level || '-'),
+                        h('td', { className: 'py-3 font-black' }, row.totalPaper || 0),
+                        h('td', { className: 'py-3 font-black' }, row.totalPrinting || 0)
+                      );
+                    })
+                  )
+                )
+              )
+            : h(EmptyState, { isDark: props.isDark, text: 'Belum ada inventory recap.' })
+        )
+      );
+    }
+
+    function InputView(props) {
+      return h(
+        'section',
+        { className: 'grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 slide-up' },
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 h-fit' },
+          h('h2', { className: 'text-lg font-black mb-2' }, 'Daily Supplies Input'),
+          h('p', { className: mutedClass(props.isDark) }, 'Input paper dan printing untuk inventory item.'),
+
+          h(
+            'div',
+            { className: 'space-y-4 mt-5' },
+            h(TextInput, {
+              isDark: props.isDark,
+              label: 'Date',
+              type: 'date',
+              value: props.inputDate,
+              onChange: props.setInputDate
+            }),
+            h('button', { onClick: props.onLoad, className: secondaryButtonClass(props.isDark) + ' w-full' }, 'Load Matrix'),
+            h('button', { onClick: props.onSave, disabled: props.saving, className: primaryButtonClass(props.isDark) }, props.saving ? 'Saving...' : 'Save All Supplies')
+          )
+        ),
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
+          h(
+            'div',
+            { className: 'flex items-center justify-between gap-3 mb-5' },
+            h('div', null, h('h2', { className: 'text-lg font-black' }, 'Supplies Matrix'), h('p', { className: mutedClass(props.isDark) }, 'Rows loaded from getDailySupplyInputMatrix.')),
+            h('span', { className: badgeClass(props.isDark) }, props.supplyRows.length + ' Items')
+          ),
+
+          props.supplyRows.length
+            ? h(
+                'div',
+                { className: 'overflow-auto custom-scroll max-h-[62vh]' },
+                h(
+                  'table',
+                  { className: 'w-full min-w-[880px] text-sm' },
+                  h(
+                    'thead',
+                    { className: props.isDark ? 'sticky top-0 bg-slate-900/95' : 'sticky top-0 bg-white/95' },
+                    h(
+                      'tr',
+                      { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
+                      h('th', { className: 'py-3 pr-4 text-left' }, 'Section'),
+                      h('th', { className: 'py-3 pr-4 text-left' }, 'Level'),
+                      h('th', { className: 'py-3 pr-4 text-left' }, 'Trainer'),
+                      h('th', { className: 'py-3 pr-4 text-left' }, 'Paper'),
+                      h('th', { className: 'py-3 pr-4 text-left' }, 'Printing'),
+                      h('th', { className: 'py-3 pr-4 text-left' }, 'Status')
+                    )
+                  ),
+                  h(
+                    'tbody',
+                    null,
+                    props.supplyRows.map(function (row, index) {
+                      return h(
+                        'tr',
+                        { key: row.classId || index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
+                        h('td', { className: 'py-3 pr-4 font-semibold' }, row.jamSection || '-'),
+                        h('td', { className: 'py-3 pr-4' }, row.level || '-'),
+                        h('td', { className: 'py-3 pr-4' }, row.trainerName || '-'),
+                        h(
+                          'td',
+                          { className: 'py-3 pr-4 w-36' },
+                          h('input', {
+                            type: 'number',
+                            value: row.paperUsed || '',
+                            onChange: function (event) {
+                              props.updateSupplyValue(index, 'paperUsed', event.target.value);
+                            },
+                            className: inputClass(props.isDark),
+                            placeholder: '0'
+                          })
+                        ),
+                        h(
+                          'td',
+                          { className: 'py-3 pr-4 w-36' },
+                          h('input', {
+                            type: 'number',
+                            value: row.printingUsed || '',
+                            onChange: function (event) {
+                              props.updateSupplyValue(index, 'printingUsed', event.target.value);
+                            },
+                            className: inputClass(props.isDark),
+                            placeholder: '0'
+                          })
+                        ),
+                        h('td', { className: 'py-3 pr-4' }, h(StatusPill, { saved: row.isSaved, edited: row.isEdited }))
+                      );
+                    })
+                  )
+                )
+              )
+            : h(EmptyState, { isDark: props.isDark, text: 'Belum ada matrix. Klik Load Matrix.' })
+        )
+      );
+    }
+
+    function RecordsView(props) {
+      return h(
+        'section',
+        { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 slide-up overflow-hidden' },
+        h(
+          'div',
+          { className: 'flex items-center justify-between gap-3 mb-5' },
+          h('div', null, h('h2', { className: 'text-lg font-black' }, 'Supplies Records'), h('p', { className: mutedClass(props.isDark) }, 'Loaded from getDailySupplies.')),
+          h('button', { onClick: props.onLoad, className: secondaryButtonClass(props.isDark) }, 'Reload')
+        ),
+
+        props.records.length
+          ? h(
+              'div',
+              { className: 'overflow-auto custom-scroll max-h-[65vh]' },
+              h(
+                'table',
+                { className: 'w-full min-w-[900px] text-sm' },
+                h(
+                  'thead',
+                  { className: props.isDark ? 'sticky top-0 bg-slate-900/95' : 'sticky top-0 bg-white/95' },
+                  h(
+                    'tr',
+                    { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
+                    ['Date', 'Section', 'Level', 'Trainer', 'Paper', 'Printing', 'Action'].map(function (head) {
+                      return h('th', { key: head, className: 'py-3 pr-4 text-left' }, head);
+                    })
+                  )
+                ),
+                h(
+                  'tbody',
+                  null,
+                  props.records.map(function (item, index) {
+                    return h(
+                      'tr',
+                      { key: item.ID || index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
+                      h('td', { className: 'py-3 pr-4' }, item.Date || '-'),
+                      h('td', { className: 'py-3 pr-4' }, item['Jam/Section'] || '-'),
+                      h('td', { className: 'py-3 pr-4' }, item.Level || '-'),
+                      h('td', { className: 'py-3 pr-4 font-black' }, item['Trainer Name'] || '-'),
+                      h('td', { className: 'py-3 pr-4' }, item['Paper Used'] || 0),
+                      h('td', { className: 'py-3 pr-4' }, item['Printing Used'] || 0),
+                      h(
+                        'td',
+                        { className: 'py-3 pr-4' },
+                        h(
+                          'button',
+                          {
+                            onClick: function () { props.onDelete(item.ID); },
+                            className: 'h-9 px-3 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20 text-xs font-black'
+                          },
+                          'Delete'
+                        )
+                      )
+                    );
+                  })
+                )
+              )
+            )
+          : h(EmptyState, { isDark: props.isDark, text: 'Belum ada records.' })
+      );
+    }
+
+    function ActivityView(props) {
+      var doneCount = props.activityRows.filter(function (row) { return row.isDone; }).length;
+
+      return h(
+        'section',
+        { className: 'space-y-6 slide-up' },
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6' },
+          h('h2', { className: 'text-xl font-black mb-2' }, 'Team Leader Activity Tracker'),
+          h('p', { className: mutedClass(props.isDark) }, 'Setup sheet, load checklist, save daily activity, and view notes.'),
+
+          h(
+            'div',
+            { className: 'mt-5 flex flex-wrap gap-3' },
+            h('button', { onClick: props.onLoadSettings, disabled: props.saving, className: secondaryButtonClass(props.isDark) }, 'Load Settings'),
+            h('span', { className: badgeClass(props.isDark) }, props.activitySettings ? 'Sheet Ready' : 'No Sheet Loaded')
+          )
+        ),
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6' },
+          h('h3', { className: 'text-lg font-black mb-4' }, 'Activity Sheet Setup'),
+          h(
+            'div',
+            { className: 'grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3' },
+            h(TextInput, {
+              isDark: props.isDark,
+              label: 'Activity Sheet ID / URL',
+              value: props.activitySheetId,
+              onChange: props.setActivitySheetId,
+              placeholder: 'Paste Google Sheet ID or URL'
+            }),
+            h(
+              'div',
+              { className: 'flex items-end' },
+              h('button', { onClick: props.onSaveSheet, disabled: props.saving, className: primaryButtonClass(props.isDark) }, props.saving ? 'Saving...' : 'Save Sheet')
+            )
+          )
+        ),
+
+        h(
+          'section',
+          { className: 'grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6' },
+
+          h(
+            'div',
+            { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 h-fit' },
+            h('h3', { className: 'text-lg font-black mb-4' }, 'Daily Checklist Control'),
+
+            h(
+              'div',
+              { className: 'space-y-4' },
+              h(TextInput, {
+                isDark: props.isDark,
+                label: 'Date',
+                type: 'date',
+                value: props.activityDate,
+                onChange: props.setActivityDate
+              }),
+              h(SelectInput, {
+                isDark: props.isDark,
+                label: 'Shift',
+                value: props.activityShift,
+                onChange: props.setActivityShift,
+                options: SHIFT_OPTIONS.map(function (shift) {
+                  return { value: shift, label: shift };
+                })
+              }),
+              h('div', { className: softBoxClass(props.isDark) + ' rounded-2xl p-4' },
+                h('p', { className: 'text-sm font-black mb-1' }, 'Progress'),
+                h('p', { className: mutedClass(props.isDark) }, doneCount + ' of ' + props.activityRows.length + ' tasks done.')
+              ),
+              h('button', { onClick: props.onLoadMatrix, disabled: props.saving, className: secondaryButtonClass(props.isDark) + ' w-full' }, 'Load Checklist'),
+              h('button', { onClick: props.onSaveActivity, disabled: props.saving, className: primaryButtonClass(props.isDark) }, props.saving ? 'Saving...' : 'Save Daily Activity')
+            )
+          ),
+
+          h(
+            'div',
+            { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
+            h(
+              'div',
+              { className: 'flex items-center justify-between gap-3 mb-5' },
+              h('div', null, h('h3', { className: 'text-lg font-black' }, 'Checklist Items'), h('p', { className: mutedClass(props.isDark) }, 'Task aktif untuk shift yang dipilih.')),
+              h('span', { className: badgeClass(props.isDark) }, props.activityRows.length + ' Tasks')
+            ),
+
+            props.activityRows.length
+              ? h(
+                  'div',
+                  { className: 'max-h-[42vh] overflow-y-auto custom-scroll space-y-3 pr-1 mb-5' },
+                  props.activityRows.map(function (row, index) {
+                    return h(
+                      'label',
+                      { key: row.taskId || index, className: softBoxClass(props.isDark) + ' rounded-2xl p-4 flex items-start gap-4 cursor-pointer' },
+                      h('input', {
+                        type: 'checkbox',
+                        checked: !!row.isDone,
+                        onChange: function (event) {
+                          props.updateActivityCheck(index, event.target.checked);
+                        },
+                        className: 'mt-1 w-5 h-5 rounded accent-emerald-500'
+                      }),
+                      h(
+                        'div',
+                        { className: 'flex-1' },
+                        h('p', { className: 'font-black' }, row.taskName || row['Task Name'] || '-'),
+                        h('p', { className: mutedClass(props.isDark) }, row.description || row.Description || 'No description.')
+                      )
+                    );
+                  })
+                )
+              : h(EmptyState, { isDark: props.isDark, text: 'Checklist belum dimuat.' }),
+
+            h(TextArea, {
+              isDark: props.isDark,
+              label: 'Daily Notes *',
+              value: props.activityNotes,
+              onChange: props.setActivityNotes,
+              placeholder: 'Tulis catatan shift hari ini...'
+            })
+          )
+        ),
+
+        h(
+          'div',
+          { className: cardClass(props.isDark) + ' rounded-3xl p-5 sm:p-6 overflow-hidden' },
+          h('h3', { className: 'text-lg font-black mb-4' }, 'Notes Viewer'),
+          h(
+            'div',
+            { className: 'grid grid-cols-1 sm:grid-cols-[160px_auto] gap-3 mb-5' },
+            h(TextInput, {
+              isDark: props.isDark,
+              label: 'Limit',
+              type: 'number',
+              value: props.noteLimit,
+              onChange: props.setNoteLimit
+            }),
+            h(
+              'div',
+              { className: 'flex items-end' },
+              h('button', { onClick: props.onLoadNotes, disabled: props.saving, className: secondaryButtonClass(props.isDark) }, 'Load Notes')
+            )
+          ),
+
+          props.notesLoaded
+            ? props.loadedNotes.length
+              ? h(
+                  'div',
+                  { className: 'overflow-auto custom-scroll max-h-[45vh]' },
+                  h(
+                    'table',
+                    { className: 'w-full min-w-[760px] text-sm' },
+                    h(
+                      'thead',
+                      null,
+                      h(
+                        'tr',
+                        { className: props.isDark ? 'text-white/50 border-b border-white/10' : 'text-slate-500 border-b border-slate-200' },
+                        h('th', { className: 'py-3 pr-4 text-left' }, 'Date'),
+                        h('th', { className: 'py-3 pr-4 text-left' }, 'Shift'),
+                        h('th', { className: 'py-3 pr-4 text-left' }, 'Notes'),
+                        h('th', { className: 'py-3 pr-4 text-left' }, 'Updated At')
+                      )
+                    ),
+                    h(
+                      'tbody',
+                      null,
+                      props.loadedNotes.map(function (note, index) {
+                        return h(
+                          'tr',
+                          { key: index, className: props.isDark ? 'border-b border-white/5' : 'border-b border-slate-100' },
+                          h('td', { className: 'py-3 pr-4' }, note.Date || '-'),
+                          h('td', { className: 'py-3 pr-4' }, note.Shift || '-'),
+                          h('td', { className: 'py-3 pr-4 max-w-xl whitespace-normal' }, note.Notes || '-'),
+                          h('td', { className: 'py-3 pr-4' }, note['Updated At'] || '-')
+                        );
+                      })
+                    )
+                  )
+                )
+              : h(EmptyState, { isDark: props.isDark, text: 'Tidak ada notes.' })
+            : h(EmptyState, { isDark: props.isDark, text: 'Notes belum dimuat.' })
+        )
+      );
+    }
+
+    function ProfileView(props) {
+      return h(
+        'section',
+        { className: cardClass(props.isDark) + ' rounded-3xl p-6 slide-up max-w-2xl' },
+        h('h2', { className: 'text-xl font-black mb-5' }, 'Profile'),
+        h(
+          'div',
+          { className: 'grid grid-cols-1 sm:grid-cols-2 gap-3' },
+          h(InfoBox, { isDark: props.isDark, label: 'Username', value: props.user && props.user.username }),
+          h(InfoBox, { isDark: props.isDark, label: 'Role', value: props.user && props.user.role }),
+          h(InfoBox, { isDark: props.isDark, label: 'Branch', value: props.user && props.user.branch }),
+          h(InfoBox, { isDark: props.isDark, label: 'Login Time', value: props.user && props.user.loginTime })
+        )
+      );
+    }
+
+    function MacDock(props) {
+      var menus = [
+        { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+        { key: 'input', label: 'Input', icon: '✍️' },
+        { key: 'records', label: 'Records', icon: '🗃️' },
+        { key: 'activity', label: 'Activity', icon: '📋' },
+        { key: 'profile', label: 'Profile', icon: '👤' }
+      ];
+
+      return h(
+        'nav',
+        { className: 'fixed left-0 right-0 z-40 flex justify-center px-4', style: { bottom: 'var(--dock-bottom)' } },
+        h(
+          'div',
+          { className: props.isDark ? 'bg-slate-900/90 border border-white/15 shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 overflow-x-auto custom-scroll backdrop-blur-xl' : 'bg-white/90 border border-white shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 overflow-x-auto custom-scroll backdrop-blur-xl' },
+          menus.map(function (menu) {
+            var active = props.activeMenu === menu.key;
+
+            return h(
+              'button',
+              {
+                key: menu.key,
+                onClick: function () { props.setActiveMenu(menu.key); },
+                className: active
+                  ? props.isDark
+                    ? 'w-20 h-20 rounded-3xl bg-white text-slate-950 -translate-y-3 shadow-xl flex flex-col items-center justify-center shrink-0'
+                    : 'w-20 h-20 rounded-3xl bg-slate-950 text-white -translate-y-3 shadow-xl flex flex-col items-center justify-center shrink-0'
+                  : props.isDark
+                    ? 'w-16 h-16 rounded-3xl bg-white/10 text-white/70 hover:bg-white/15 flex flex-col items-center justify-center shrink-0'
+                    : 'w-16 h-16 rounded-3xl bg-slate-950/5 text-slate-600 hover:bg-slate-950/10 flex flex-col items-center justify-center shrink-0'
+              },
+              h('span', { className: 'text-lg' }, menu.icon),
+              h('span', { className: 'text-[10px] font-black mt-1' }, menu.label)
+            );
+          })
+        )
+      );
+    }
+
+    function DebugPanel(props) {
+      if (!props.open) return null;
+
+      return h(
+        'aside',
+        { className: 'fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-xl max-h-[78vh] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl fade-in' },
+
+        h(
+          'div',
+          { className: 'flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10' },
+          h(
+            'div',
+            null,
+            h('h3', { className: 'text-sm font-black' }, 'Team Leader Debug Panel'),
+            h('p', { className: 'text-xs text-white/40' }, 'GAS, session, raw response, and API event log')
+          ),
+          h(
+            'button',
+            { onClick: function () { props.setOpen(false); }, className: 'w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center font-black' },
+            '×'
+          )
+        ),
+
+        h(
+          'div',
+          { className: 'p-4 overflow-y-auto max-h-[calc(78vh-56px)] space-y-4 custom-scroll' },
+
+          h(
+            'div',
+            { className: 'grid grid-cols-2 sm:grid-cols-4 gap-2' },
+            h('button', { onClick: props.onTestGet, className: 'h-10 rounded-xl bg-blue-500/20 border border-blue-500/20 text-blue-200 text-xs font-black' }, 'Test GET'),
+            h('button', { onClick: props.onTestSession, className: 'h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/20 text-emerald-200 text-xs font-black' }, 'Test Session'),
+            h('button', { onClick: props.onClearToken, className: 'h-10 rounded-xl bg-red-500/20 border border-red-500/20 text-red-200 text-xs font-black' }, 'Clear Token'),
+            h('button', { onClick: props.onClearDebug, className: 'h-10 rounded-xl bg-white/10 border border-white/10 text-white/70 text-xs font-black' }, 'Clear Log')
+          ),
+
+          h(DebugBlock, {
+            title: 'Environment',
+            data: {
+              currentUrl: window.location.href,
+              gasUrl: GAS_WEB_APP_URL,
+              hasToken: !!safeGetStorage(SESSION_KEY),
+              user: props.user || null
+            }
+          }),
+
+          h(DebugBlock, {
+            title: 'Last API Status',
+            data: { status: props.status || '-' }
+          }),
+
+          h(
+            'div',
+            { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
+            h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, 'Raw Response'),
+            h(
+              'pre',
+              { className: 'text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-36 overflow-auto custom-scroll' },
+              props.rawResponse || 'No raw response yet.'
+            )
+          ),
+
+          h(DebugBlock, {
+            title: 'Parsed JSON',
+            data: props.parsedResponse || { message: 'No parsed JSON yet.' }
+          }),
+
+          h(
+            'div',
+            { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
+            h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, 'Event Log'),
+            props.debugRows.length
+              ? h(
+                  'div',
+                  { className: 'space-y-2' },
+                  props.debugRows.map(function (row, index) {
+                    return h(
+                      'div',
+                      { key: index, className: 'rounded-xl bg-black/30 border border-white/5 p-2' },
+                      h(
+                        'div',
+                        { className: 'flex items-center justify-between gap-3 mb-1' },
+                        h('p', { className: 'text-xs font-black text-white/80' }, row.label),
+                        h('p', { className: 'text-[10px] text-white/35' }, row.time)
+                      ),
+                      h(
+                        'pre',
+                        { className: 'text-[10px] text-white/45 whitespace-pre-wrap break-words' },
+                        JSON.stringify(row.data, null, 2)
+                      )
+                    );
+                  })
+                )
+              : h('p', { className: 'text-xs text-white/40' }, 'No debug events yet.')
+          )
+        )
+      );
+    }
+
+    function DebugBlock(props) {
+      return h(
+        'div',
+        { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
+        h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, props.title),
+        h(
+          'pre',
+          { className: 'text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-44 overflow-auto custom-scroll' },
+          JSON.stringify(props.data, null, 2)
+        )
+      );
+    }
+
+    function StatCard(props) {
+      return h(
+        'div',
+        { className: cardClass(props.isDark) + ' rounded-3xl p-4 sm:p-5' },
+        h(
+          'div',
+          { className: 'flex items-center justify-between gap-3' },
+          h(
+            'div',
+            null,
+            h('p', { className: mutedClass(props.isDark) }, props.label),
+            h('h3', { className: 'text-2xl sm:text-3xl font-black mt-1' }, props.value)
+          ),
+          h('div', { className: props.isDark ? 'w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center' : 'w-11 h-11 rounded-2xl bg-slate-950/5 flex items-center justify-center' }, props.icon)
+        )
+      );
+    }
+
+    function TextInput(props) {
+      return h(
+        'div',
+        null,
+        props.label ? h('label', { className: props.isDark ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2' }, props.label) : null,
+        h('input', {
+          type: props.type || 'text',
+          value: props.value || '',
+          placeholder: props.placeholder || '',
+          disabled: !!props.disabled,
+          onChange: function (event) { props.onChange(event.target.value); },
+          className: inputClass(props.isDark, props.disabled)
+        })
+      );
+    }
+
+    function TextArea(props) {
+      return h(
+        'div',
+        null,
+        props.label ? h('label', { className: props.isDark ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2' }, props.label) : null,
+        h('textarea', {
+          value: props.value || '',
+          rows: 5,
+          placeholder: props.placeholder || '',
+          onChange: function (event) { props.onChange(event.target.value); },
+          className: props.isDark
+            ? 'w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 outline-none focus:border-white/30 resize-none'
+            : 'w-full rounded-2xl bg-white border border-slate-200 text-slate-950 px-4 py-3 outline-none focus:border-slate-400 resize-none'
+        })
+      );
+    }
+
+    function SelectInput(props) {
+      return h(
+        'div',
+        null,
+        props.label ? h('label', { className: props.isDark ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2' }, props.label) : null,
+        h(
+          'select',
+          {
+            value: props.value,
+            onChange: function (event) { props.onChange(event.target.value); },
+            className: inputClass(props.isDark)
+          },
+          props.options.map(function (option) {
+            return h('option', { key: option.value, value: option.value, className: props.isDark ? 'bg-slate-900' : 'bg-white' }, option.label);
+          })
+        )
+      );
+    }
+
+    function StatusPill(props) {
+      var text = 'New';
+      var cls = 'bg-blue-500/15 text-blue-500 border-blue-500/20';
+
+      if (props.saved && props.edited) {
+        text = 'Edited';
+        cls = 'bg-amber-500/15 text-amber-500 border-amber-500/20';
+      } else if (props.saved) {
+        text = 'Saved';
+        cls = 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20';
+      }
+
+      return h('span', { className: 'inline-flex h-8 items-center px-3 rounded-full border text-xs font-black ' + cls }, text);
+    }
+
+    function EmptyState(props) {
+      return h(
+        'div',
+        { className: softBoxClass(props.isDark) + ' rounded-3xl p-8 text-center' },
+        h('p', { className: mutedClass(props.isDark) }, props.text)
+      );
+    }
+
+    function InfoBox(props) {
+      return h(
+        'div',
+        { className: softBoxClass(props.isDark) + ' rounded-2xl p-4' },
+        h('p', { className: mutedClass(props.isDark) }, props.label),
+        h('p', { className: 'font-black mt-1' }, props.value || '-')
+      );
+    }
+
+    function Toast(props) {
+      if (!props.toast) return null;
+
+      return h(
+        'div',
+        { className: 'fixed left-4 right-4 bottom-32 z-50 flex justify-center pointer-events-none' },
+        h(
+          'div',
+          { className: props.toast.type === 'success' ? 'pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl bg-emerald-500 text-white fade-in' : 'pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl bg-red-500 text-white fade-in' },
+          h('p', { className: 'text-sm font-bold leading-relaxed' }, props.toast.text)
+        )
+      );
+    }
+
+    function BackgroundGlow(props) {
+      return h(
+        'div',
+        { className: 'fixed inset-0 pointer-events-none overflow-hidden' },
+        h('div', { className: 'absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl ' + (props.isDark ? 'bg-blue-500/20' : 'bg-blue-300/40') }),
+        h('div', { className: 'absolute top-1/3 -right-24 w-80 h-80 rounded-full blur-3xl ' + (props.isDark ? 'bg-emerald-500/10' : 'bg-emerald-300/35') }),
+        h('div', { className: 'absolute -bottom-32 left-1/3 w-80 h-80 rounded-full blur-3xl ' + (props.isDark ? 'bg-purple-500/10' : 'bg-purple-300/30') })
+      );
+    }
+
+    function cardClass(isDark) {
+      return isDark
+        ? 'bg-slate-900/75 backdrop-blur-2xl border border-white/10 shadow-2xl'
+        : 'bg-white/80 backdrop-blur-2xl border border-white shadow-xl';
+    }
+
+    function softBoxClass(isDark) {
+      return isDark
+        ? 'bg-white/5 border border-white/10'
+        : 'bg-slate-950/5 border border-slate-200';
+    }
+
+    function mutedClass(isDark) {
+      return isDark ? 'text-sm text-white/50' : 'text-sm text-slate-500';
+    }
+
+    function badgeClass(isDark) {
+      return isDark
+        ? 'inline-flex items-center h-9 px-3 rounded-full bg-white/10 border border-white/10 text-xs font-black text-white/70'
+        : 'inline-flex items-center h-9 px-3 rounded-full bg-slate-950/5 border border-slate-200 text-xs font-black text-slate-600';
+    }
+
+    function inputClass(isDark, disabled) {
+      if (disabled) {
+        return isDark
+          ? 'w-full h-11 rounded-2xl bg-white/5 border border-white/10 text-white px-4 outline-none opacity-50'
+          : 'w-full h-11 rounded-2xl bg-slate-100 border border-slate-200 text-slate-950 px-4 outline-none opacity-50';
+      }
+
+      return isDark
+        ? 'w-full h-11 rounded-2xl bg-white/10 border border-white/10 text-white px-4 outline-none focus:border-white/30 transition'
+        : 'w-full h-11 rounded-2xl bg-white border border-slate-200 text-slate-950 px-4 outline-none focus:border-slate-400 transition';
+    }
+
+    function primaryButtonClass(isDark) {
+      return isDark
+        ? 'w-full h-11 rounded-2xl bg-white text-slate-950 font-black hover:bg-slate-200 transition disabled:opacity-50'
+        : 'w-full h-11 rounded-2xl bg-slate-950 text-white font-black hover:bg-slate-800 transition disabled:opacity-50';
+    }
+
+    function secondaryButtonClass(isDark) {
+      return isDark
+        ? 'h-11 px-4 rounded-2xl bg-white/10 border border-white/10 text-white font-black hover:bg-white/15 transition disabled:opacity-50'
+        : 'h-11 px-4 rounded-2xl bg-white border border-slate-200 text-slate-700 font-black hover:bg-slate-50 transition disabled:opacity-50';
+    }
+
+    function iconButtonClass(isDark) {
+      return isDark
+        ? 'w-10 h-10 rounded-xl bg-white/10 border border-white/10 text-white hover:bg-white/20 flex items-center justify-center transition'
+        : 'w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 flex items-center justify-center transition';
+    }
+
+    var rootElement = document.getElementById('root');
+
+    if (ReactDOM.createRoot) {
+      ReactDOM.createRoot(rootElement).render(h(App));
+    } else {
+      ReactDOM.render(h(App), rootElement);
+    }
+  </script>
+</body>
+</html>
