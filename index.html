@@ -1,26 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+  <title>Manager Workspace - Kampung Inggris Pontianak</title>
 
-  <title>Login - GAS Management System</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Lexend", "system-ui", "sans-serif"]
+          },
+          colors: {
+            primary: "#3b82f6",
+            secondary: "#10b981",
+            dark: "#020617",
+            panel: "#0f172a"
+          },
+          borderRadius: {
+            xl: "1rem",
+            "2xl": "1.25rem",
+            "3xl": "1.75rem",
+            "4xl": "2.25rem"
+          },
+          boxShadow: {
+            glow: "0 0 60px rgba(59, 130, 246, 0.22)",
+            soft: "0 24px 80px rgba(0, 0, 0, 0.45)"
+          }
+        }
+      }
+    };
+  </script>
 
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
     body {
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Lexend", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
     }
 
     .fade-in {
-      animation: fadeIn 0.45s ease both;
+      animation: fadeIn 0.65s ease both;
     }
 
     .slide-up {
-      animation: slideUp 0.5s ease both;
+      animation: slideUp 0.7s ease both;
+    }
+
+    .float-soft {
+      animation: floatSoft 5.5s ease-in-out infinite;
+    }
+
+    .grid-glow {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 72%);
+      -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 72%);
     }
 
     @keyframes fadeIn {
@@ -31,829 +86,326 @@
     @keyframes slideUp {
       from {
         opacity: 0;
-        transform: translateY(18px);
+        transform: translateY(22px);
       }
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
+
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in,
+      .slide-up,
+      .float-soft {
+        animation: none !important;
+      }
+    }
   </style>
 </head>
 
-<body class="bg-slate-950 text-white">
-  <div id="root"></div>
+<body class="min-h-screen overflow-hidden bg-dark text-slate-100 selection:bg-primary/30">
+  <div id="app" class="relative min-h-screen">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute inset-0 grid-glow opacity-70"></div>
+      <div class="absolute -top-48 -left-40 h-[32rem] w-[32rem] rounded-full bg-primary/25 blur-[130px] mix-blend-screen float-soft"></div>
+      <div class="absolute -bottom-48 -right-40 h-[34rem] w-[34rem] rounded-full bg-secondary/15 blur-[130px] mix-blend-screen float-soft" style="animation-delay:-2s"></div>
+      <div class="absolute left-[42%] top-[18%] h-[22rem] w-[22rem] rounded-full bg-purple-600/15 blur-[115px] mix-blend-screen float-soft" style="animation-delay:-4s"></div>
+    </div>
+
+    <section id="sessionLoader" class="relative z-10 flex min-h-screen items-center justify-center p-6">
+      <div class="fade-in text-center">
+        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl border border-white/10 bg-white/5 shadow-glow backdrop-blur-xl">
+          <div class="h-8 w-8 animate-spin rounded-full border-4 border-white/15 border-t-white"></div>
+        </div>
+        <p class="text-sm font-medium text-white/60">Checking session...</p>
+      </div>
+    </section>
+
+    <main id="loginScreen" class="relative z-10 hidden min-h-screen items-center justify-center px-5 py-10 sm:px-8">
+      <div class="grid w-full max-w-6xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
+        <section class="hidden lg:block slide-up" style="animation-delay:0.05s">
+          <div class="mb-10 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-xl">
+            <span class="material-symbols-outlined text-[20px] text-secondary">verified</span>
+            <span class="text-sm font-semibold text-white/70">Kampung Inggris Pontianak</span>
+          </div>
+
+          <div class="mb-8 flex h-16 w-16 items-center justify-center rounded-[1.7rem] bg-white text-slate-950 shadow-2xl shadow-white/10">
+            <span class="material-symbols-outlined text-[34px]">auto_awesome</span>
+          </div>
+
+          <h1 class="max-w-2xl text-5xl font-black leading-[1.02] tracking-[-0.06em] text-white xl:text-6xl">
+            Manager Workspace<br/>
+            <span class="bg-gradient-to-r from-blue-300 via-cyan-200 to-emerald-300 bg-clip-text text-transparent">
+              System Hub.
+            </span>
+          </h1>
+
+          <p class="mt-6 max-w-xl text-base leading-8 text-white/55 xl:text-lg">
+            Centralized platform untuk mengelola absensi kelas, tracking supply inventory, dan memonitor aktivitas Team Leader secara real-time.
+          </p>
+
+          <div class="mt-9 flex flex-wrap gap-3">
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur-xl">Admin</div>
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur-xl">Team Leader</div>
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur-xl">Management</div>
+          </div>
+        </section>
+
+        <section class="mx-auto w-full max-w-md slide-up" style="animation-delay:0.15s">
+          <div class="relative group">
+            <div class="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-r from-primary/30 via-cyan-500/15 to-secondary/25 blur-2xl opacity-70 transition duration-500 group-hover:opacity-90"></div>
+
+            <div class="relative overflow-hidden rounded-[2.4rem] border border-white/10 bg-slate-950/75 p-7 shadow-soft backdrop-blur-2xl sm:p-9">
+              <div class="absolute right-0 top-0 h-28 w-28 rounded-bl-full bg-white/[0.035]"></div>
+
+              <div class="mb-8 flex flex-col items-center text-center lg:hidden">
+                <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-950 shadow-2xl shadow-white/10">
+                  <span class="material-symbols-outlined text-[30px]">auto_awesome</span>
+                </div>
+                <h2 class="text-2xl font-black tracking-[-0.04em] text-white">System Hub</h2>
+                <p class="mt-2 text-xs font-medium text-white/45">Kampung Inggris Pontianak</p>
+              </div>
+
+              <div class="mb-8">
+                <p class="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/55">
+                  <span class="material-symbols-outlined text-[16px] text-secondary">lock</span>
+                  Secure login
+                </p>
+                <h2 class="text-3xl font-black tracking-[-0.05em] text-white">Welcome back</h2>
+                <p class="mt-2 text-sm leading-6 text-white/50">Silakan login untuk mengakses dashboard kamu.</p>
+              </div>
+
+              <div id="errorBox" class="mb-6 hidden rounded-2xl border border-red-500/20 bg-red-500/10 p-4 fade-in">
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined mt-0.5 shrink-0 text-[21px] text-red-400">error</span>
+                  <p id="errorText" class="text-sm font-medium leading-6 text-red-300"></p>
+                </div>
+              </div>
+
+              <form id="loginForm" class="space-y-5" autocomplete="on">
+                <div>
+                  <label for="username" class="mb-2 block pl-1 text-sm font-semibold text-white/70">Username</label>
+                  <div class="relative">
+                    <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[21px] text-white/35">person</span>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      autocomplete="username"
+                      class="h-13 w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-12 pr-4 text-white placeholder:text-white/25 outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="Enter your username"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label for="password" class="mb-2 block pl-1 text-sm font-semibold text-white/70">Password</label>
+                  <div class="relative">
+                    <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[21px] text-white/35">key</span>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autocomplete="current-password"
+                      class="h-13 w-full rounded-2xl border border-white/10 bg-black/35 py-3 pl-12 pr-12 text-white placeholder:text-white/25 outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="••••••••"
+                    />
+                    <button id="togglePassword" type="button" class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-white/45 transition hover:bg-white/10 hover:text-white" aria-label="Show password">
+                      <span id="togglePasswordIcon" class="material-symbols-outlined text-[21px]">visibility</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button id="loginButton" type="submit" class="mt-3 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-black tracking-wide text-slate-950 shadow-2xl shadow-white/10 transition hover:bg-slate-200 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70">
+                  <span id="loginButtonText">Login</span>
+                  <span id="loginButtonIcon" class="material-symbols-outlined text-[21px]">arrow_forward</span>
+                  <span id="loginSpinner" class="hidden h-5 w-5 animate-spin rounded-full border-2 border-slate-950/20 border-t-slate-950"></span>
+                </button>
+              </form>
+
+              <p class="mt-7 text-center text-xs leading-5 text-white/35">
+                GitHub static frontend connected to Google Apps Script backend API.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
   <script>
-    var h = React.createElement;
+    "use strict";
 
-    var GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtUEZTa_Wgonc8Hx3u3omxG9zY-0m5z7i0PhNt4hnIeS_qHivMmFp5Yq4LWFaj8GwWCQ/exec';
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyn-nmRA_GFjwK36-gz3Va7JezQaG-Pe22WnBcL52_3g9QSwNeIk6ys1s5roovrOB0A4A/exec";
+    const SESSION_KEY = "gas_auth_token";
 
-    var SESSION_KEY = 'gas_auth_token';
+    const sessionLoader = document.getElementById("sessionLoader");
+    const loginScreen = document.getElementById("loginScreen");
+    const loginForm = document.getElementById("loginForm");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const loginButton = document.getElementById("loginButton");
+    const loginButtonText = document.getElementById("loginButtonText");
+    const loginButtonIcon = document.getElementById("loginButtonIcon");
+    const loginSpinner = document.getElementById("loginSpinner");
+    const errorBox = document.getElementById("errorBox");
+    const errorText = document.getElementById("errorText");
+    const togglePassword = document.getElementById("togglePassword");
+    const togglePasswordIcon = document.getElementById("togglePasswordIcon");
 
-    var DASHBOARD_FILES = {
-      AdminDashboard: 'AdminDashboard.html',
-      TeamLeaderDashboard: 'TeamLeaderDashboard.html',
-      ManagementDashboard: 'ManagementDashboard.html'
-    };
-
-    function safeGetStorage(key) {
+    async function fetchAPI(action, payload = {}) {
       try {
-        return window.localStorage.getItem(key);
-      } catch (error) {
-        console.warn('Storage get blocked:', error);
-        return null;
-      }
-    }
-
-    function safeSetStorage(key, value) {
-      try {
-        window.localStorage.setItem(key, value);
-        return true;
-      } catch (error) {
-        console.warn('Storage set blocked:', error);
-        return false;
-      }
-    }
-
-    function safeRemoveStorage(key) {
-      try {
-        window.localStorage.removeItem(key);
-        return true;
-      } catch (error) {
-        console.warn('Storage remove blocked:', error);
-        return false;
-      }
-    }
-
-    function getErrorMessage(error) {
-      if (!error) return 'Unknown error';
-      if (typeof error === 'string') return error;
-      return error.message || String(error);
-    }
-
-    function trimText(text, limit) {
-      var value = String(text || '');
-      if (value.length <= limit) return value;
-      return value.slice(0, limit) + '...';
-    }
-
-    function getDashboardUrl(pageName) {
-      var clean = String(pageName || '').trim();
-      if (!DASHBOARD_FILES[clean]) return '';
-      return './' + DASHBOARD_FILES[clean];
-    }
-
-    function App() {
-      var usernameState = React.useState('');
-      var username = usernameState[0];
-      var setUsername = usernameState[1];
-
-      var passwordState = React.useState('');
-      var password = passwordState[0];
-      var setPassword = passwordState[1];
-
-      var loadingState = React.useState(false);
-      var loading = loadingState[0];
-      var setLoading = loadingState[1];
-
-      var initialLoadingState = React.useState(true);
-      var initialLoading = initialLoadingState[0];
-      var setInitialLoading = initialLoadingState[1];
-
-      var errorState = React.useState('');
-      var error = errorState[0];
-      var setError = errorState[1];
-
-      var successState = React.useState('');
-      var success = successState[0];
-      var setSuccess = successState[1];
-
-      var debugOpenState = React.useState(true);
-      var debugOpen = debugOpenState[0];
-      var setDebugOpen = debugOpenState[1];
-
-      var debugRowsState = React.useState([]);
-      var debugRows = debugRowsState[0];
-      var setDebugRows = debugRowsState[1];
-
-      var rawResponseState = React.useState('');
-      var rawResponse = rawResponseState[0];
-      var setRawResponse = rawResponseState[1];
-
-      var parsedResponseState = React.useState(null);
-      var parsedResponse = parsedResponseState[0];
-      var setParsedResponse = parsedResponseState[1];
-
-      var statusState = React.useState('');
-      var status = statusState[0];
-      var setStatus = statusState[1];
-
-      function addDebug(label, data) {
-        var item = {
-          time: new Date().toLocaleTimeString(),
-          label: label,
-          data: data || {}
-        };
-
-        console.log('[DEBUG]', label, data || {});
-
-        setDebugRows(function (prev) {
-          return [item].concat(prev).slice(0, 40);
-        });
-      }
-
-      async function fetchAPI(action, payload) {
-        var rawText = '';
-
-        addDebug('POST started', {
-          action: action,
-          gasUrl: GAS_WEB_APP_URL
+        const response = await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({ action, payload })
         });
 
-        try {
-          var response = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'text/plain;charset=utf-8'
-            },
-            body: JSON.stringify({
-              action: action,
-              payload: payload || {}
-            })
-          });
-
-          rawText = await response.text();
-
-          setStatus(String(response.status) + ' ' + String(response.statusText || ''));
-          setRawResponse(rawText);
-
-          addDebug('POST raw response', {
-            action: action,
-            status: response.status,
-            ok: response.ok,
-            preview: trimText(rawText, 300)
-          });
-
-          if (!response.ok) {
-            throw new Error('HTTP error: ' + response.status);
-          }
-
-          var parsed;
-
-          try {
-            parsed = JSON.parse(rawText);
-          } catch (jsonError) {
-            throw new Error('GAS returned non-JSON response: ' + trimText(rawText, 150));
-          }
-
-          setParsedResponse(parsed);
-
-          addDebug('POST parsed JSON', {
-            action: action,
-            success: parsed.success,
-            message: parsed.message,
-            redirectPage: parsed.redirectPage
-          });
-
-          return parsed;
-
-        } catch (error) {
-          addDebug('POST failed', {
-            action: action,
-            error: getErrorMessage(error),
-            rawPreview: trimText(rawText, 300)
-          });
-
-          throw error;
+        if (!response.ok) {
+          throw new Error("Network response was not ok: " + response.status);
         }
+
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error("API Error (" + action + "):", error);
+        throw error;
+      }
+    }
+
+    function showLoginScreen() {
+      sessionLoader.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+      loginScreen.classList.add("flex");
+      setTimeout(function () {
+        usernameInput.focus();
+      }, 80);
+    }
+
+    function showError(message) {
+      errorText.textContent = message || "Terjadi kesalahan.";
+      errorBox.classList.remove("hidden");
+    }
+
+    function clearError() {
+      errorText.textContent = "";
+      errorBox.classList.add("hidden");
+    }
+
+    function setLoading(isLoading) {
+      usernameInput.disabled = isLoading;
+      passwordInput.disabled = isLoading;
+      loginButton.disabled = isLoading;
+      togglePassword.disabled = isLoading;
+
+      if (isLoading) {
+        loginButtonText.textContent = "Logging in...";
+        loginButtonIcon.classList.add("hidden");
+        loginSpinner.classList.remove("hidden");
+      } else {
+        loginButtonText.textContent = "Login";
+        loginButtonIcon.classList.remove("hidden");
+        loginSpinner.classList.add("hidden");
+      }
+    }
+
+    function redirectToDashboard(pageName) {
+      if (!pageName || typeof pageName !== "string") {
+        showError("Terjadi kesalahan routing. Hubungi admin.");
+        setLoading(false);
+        return;
       }
 
-      async function checkSession() {
-        setInitialLoading(true);
-        setError('');
-        setSuccess('');
+      window.location.href = pageName + ".html";
+    }
 
-        var token = safeGetStorage(SESSION_KEY);
-
-        addDebug('Session check started', {
-          hasToken: !!token,
-          currentUrl: window.location.href
-        });
+    async function checkActiveSession() {
+      try {
+        const token = localStorage.getItem(SESSION_KEY);
 
         if (!token) {
-          setInitialLoading(false);
+          showLoginScreen();
           return;
         }
 
-        try {
-          var response = await fetchAPI('checkSession', {
-            token: token
-          });
+        const response = await fetchAPI("checkSession", { token: token });
 
-          if (response && response.success && response.redirectPage) {
-            var dashboardUrl = getDashboardUrl(response.redirectPage);
-
-            if (!dashboardUrl) {
-              safeRemoveStorage(SESSION_KEY);
-              setError('Invalid dashboard route from server: ' + String(response.redirectPage || '-'));
-              setInitialLoading(false);
-              return;
-            }
-
-            addDebug('Session valid, redirecting', {
-              redirectPage: response.redirectPage,
-              dashboardUrl: dashboardUrl
-            });
-
-            window.location.href = dashboardUrl;
-            return;
-          }
-
-          safeRemoveStorage(SESSION_KEY);
-          setInitialLoading(false);
-
-        } catch (error) {
-          safeRemoveStorage(SESSION_KEY);
-
-          addDebug('Session check failed', {
-            error: getErrorMessage(error)
-          });
-
-          setInitialLoading(false);
+        if (response && response.success && response.redirectPage) {
+          redirectToDashboard(response.redirectPage);
+          return;
         }
+
+        localStorage.removeItem(SESSION_KEY);
+        showLoginScreen();
+      } catch (error) {
+        console.warn("Session check failed", error);
+        localStorage.removeItem(SESSION_KEY);
+        showLoginScreen();
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!username || !password) {
+        showError("Username dan password wajib diisi.");
+        return;
       }
 
-      async function handleLogin(event) {
-        event.preventDefault();
+      clearError();
+      setLoading(true);
 
-        if (!username.trim() || !password.trim()) {
-          setError('Username dan password wajib diisi.');
-          return;
-        }
+      try {
+        const response = await fetchAPI("loginUser", {
+          username: username,
+          password: password
+        });
 
-        setLoading(true);
-        setError('');
-        setSuccess('');
+        if (response && response.success) {
+          if (response.token) {
+            localStorage.setItem(SESSION_KEY, response.token);
+          }
 
-        try {
-          var response = await fetchAPI('loginUser', {
-            username: username.trim(),
-            password: password
-          });
-
-          if (!response || !response.success) {
-            setError((response && response.message) || 'Login gagal.');
-            setLoading(false);
+          if (response.redirectPage) {
+            redirectToDashboard(response.redirectPage);
             return;
           }
 
-          if (!response.token) {
-            setError('Login berhasil, tapi token tidak dikirim oleh backend.');
-            setLoading(false);
-            return;
-          }
-
-          var saved = safeSetStorage(SESSION_KEY, response.token);
-
-          if (!saved) {
-            setError('Browser blocked localStorage. Login token could not be saved.');
-            setLoading(false);
-            return;
-          }
-
-          var dashboardUrl = getDashboardUrl(response.redirectPage);
-
-          if (!dashboardUrl) {
-            setError('Login berhasil, tapi redirectPage tidak valid: ' + String(response.redirectPage || '-'));
-            setLoading(false);
-            return;
-          }
-
-          setSuccess('Login berhasil. Redirecting...');
-
-          addDebug('Login success', {
-            role: response.role,
-            redirectPage: response.redirectPage,
-            dashboardUrl: dashboardUrl
-          });
-
-          window.location.href = dashboardUrl;
-
-        } catch (error) {
-          setError('Server/API error: ' + getErrorMessage(error));
+          showError("Login berhasil, tapi halaman dashboard tidak ditemukan. Hubungi admin.");
           setLoading(false);
+          return;
         }
+
+        showError((response && response.message) ? response.message : "Login gagal.");
+        setLoading(false);
+      } catch (error) {
+        showError("Terjadi error saat menghubungi server.");
+        setLoading(false);
       }
-
-      async function testGasGet() {
-        setError('');
-        setSuccess('');
-
-        addDebug('GET test started', {
-          gasUrl: GAS_WEB_APP_URL
-        });
-
-        try {
-          var response = await fetch(GAS_WEB_APP_URL, {
-            method: 'GET'
-          });
-
-          var rawText = await response.text();
-
-          setStatus(String(response.status) + ' ' + String(response.statusText || ''));
-          setRawResponse(rawText);
-
-          var parsed = null;
-
-          try {
-            parsed = JSON.parse(rawText);
-          } catch (error) {
-            parsed = null;
-          }
-
-          setParsedResponse(parsed);
-
-          addDebug('GET test finished', {
-            status: response.status,
-            ok: response.ok,
-            preview: trimText(rawText, 300),
-            parsed: parsed
-          });
-
-          if (response.ok) {
-            setSuccess('GET test completed. Check debug panel.');
-          } else {
-            setError('GET test failed with HTTP ' + response.status);
-          }
-
-        } catch (error) {
-          setError('GET test error: ' + getErrorMessage(error));
-
-          addDebug('GET test failed', {
-            error: getErrorMessage(error)
-          });
-        }
-      }
-
-      function clearToken() {
-        safeRemoveStorage(SESSION_KEY);
-        setSuccess('Token cleared.');
-        setError('');
-
-        addDebug('Token cleared manually', {});
-      }
-
-      function clearDebug() {
-        setDebugRows([]);
-        setRawResponse('');
-        setParsedResponse(null);
-        setStatus('');
-      }
-
-      React.useEffect(function () {
-        addDebug('Index booted', {
-          href: window.location.href,
-          pathname: window.location.pathname,
-          hasToken: !!safeGetStorage(SESSION_KEY)
-        });
-
-        checkSession();
-      }, []);
-
-      if (initialLoading) {
-        return h(
-          'div',
-          { className: 'min-h-screen flex items-center justify-center px-4' },
-          h(
-            'div',
-            { className: 'text-center fade-in' },
-            h('div', { className: 'w-12 h-12 border-4 rounded-full animate-spin border-white/20 border-t-white mx-auto mb-4' }),
-            h('p', { className: 'text-white/60 text-sm mb-5' }, 'Checking session...'),
-            h(
-              'button',
-              {
-                onClick: function () {
-                  clearToken();
-                  setInitialLoading(false);
-                },
-                className: 'h-10 px-5 rounded-2xl bg-white/10 border border-white/10 text-white text-sm font-bold hover:bg-white/15'
-              },
-              'Stop & Clear Session'
-            )
-          ),
-          h(DebugPanel, {
-            open: debugOpen,
-            setOpen: setDebugOpen,
-            debugRows: debugRows,
-            rawResponse: rawResponse,
-            parsedResponse: parsedResponse,
-            status: status,
-            onTestGas: testGasGet,
-            onClearToken: clearToken,
-            onClearDebug: clearDebug
-          })
-        );
-      }
-
-      return h(
-        'div',
-        { className: 'relative min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden' },
-
-        h('div', { className: 'absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-600/20 blur-3xl' }),
-        h('div', { className: 'absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-emerald-600/10 blur-3xl' }),
-        h('div', { className: 'absolute top-1/4 left-1/3 w-96 h-96 rounded-full bg-purple-600/10 blur-3xl' }),
-
-        h(
-          'main',
-          { className: 'relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center' },
-
-          h(
-            'section',
-            { className: 'hidden lg:block slide-up' },
-            h(
-              'div',
-              { className: 'w-14 h-14 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-white/10' },
-              h(
-                'svg',
-                {
-                  width: '28',
-                  height: '28',
-                  viewBox: '0 0 24 24',
-                  fill: 'none',
-                  stroke: '#020617',
-                  strokeWidth: '2.5',
-                  strokeLinecap: 'round',
-                  strokeLinejoin: 'round'
-                },
-                h('path', { d: 'M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z' })
-              )
-            ),
-            h(
-              'h1',
-              { className: 'text-5xl font-black tracking-tight leading-tight mb-4' },
-              'Management ',
-              h('br'),
-              h(
-                'span',
-                { className: 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400' },
-                'System Hub.'
-              )
-            ),
-            h(
-              'p',
-              { className: 'text-lg text-white/60 leading-relaxed max-w-md' },
-              'Centralized platform untuk mengelola absensi kelas, supply inventory, dan aktivitas Team Leader.'
-            ),
-            h(
-              'div',
-              { className: 'mt-6 flex gap-3' },
-              ['Admin', 'Team Leader', 'Management'].map(function (label) {
-                return h(
-                  'div',
-                  {
-                    key: label,
-                    className: 'rounded-2xl bg-white/10 border border-white/10 px-4 py-3'
-                  },
-                  h('p', { className: 'text-sm font-semibold' }, label)
-                );
-              })
-            ),
-            h(
-              'div',
-              { className: 'mt-6 rounded-3xl border border-white/10 bg-white/5 p-4' },
-              h('p', { className: 'text-sm font-black mb-2' }, 'Debug-safe build'),
-              h(
-                'p',
-                { className: 'text-sm text-white/50 leading-relaxed' },
-                'No Babel, no JSX, no import, no module. This page is pure browser-safe React.'
-              )
-            )
-          ),
-
-          h(
-            'section',
-            { className: 'w-full max-w-md mx-auto lg:mx-0 slide-up' },
-            h(
-              'div',
-              { className: 'relative' },
-              h('div', { className: 'absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-[2.5rem] blur-xl opacity-50' }),
-
-              h(
-                'div',
-                { className: 'relative bg-[#0b1120]/85 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl' },
-
-                h(
-                  'div',
-                  { className: 'mb-8' },
-                  h('h2', { className: 'text-2xl font-black mb-2' }, 'Welcome back'),
-                  h('p', { className: 'text-white/50 text-sm' }, 'Silakan login untuk mengakses dashboard kamu.')
-                ),
-
-                error
-                  ? h(AlertBox, { type: 'error', text: error })
-                  : null,
-
-                success
-                  ? h(AlertBox, { type: 'success', text: success })
-                  : null,
-
-                h(
-                  'form',
-                  {
-                    onSubmit: handleLogin,
-                    className: 'space-y-5'
-                  },
-
-                  h(
-                    'div',
-                    null,
-                    h('label', { className: 'block text-sm font-semibold text-white/70 mb-2 pl-1' }, 'Username'),
-                    h('input', {
-                      type: 'text',
-                      value: username,
-                      disabled: loading,
-                      autoComplete: 'username',
-                      placeholder: 'Enter your username',
-                      onChange: function (event) {
-                        setUsername(event.target.value);
-                      },
-                      className: 'w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50'
-                    })
-                  ),
-
-                  h(
-                    'div',
-                    null,
-                    h('label', { className: 'block text-sm font-semibold text-white/70 mb-2 pl-1' }, 'Password'),
-                    h('input', {
-                      type: 'password',
-                      value: password,
-                      disabled: loading,
-                      autoComplete: 'current-password',
-                      placeholder: '••••••••',
-                      onChange: function (event) {
-                        setPassword(event.target.value);
-                      },
-                      className: 'w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50'
-                    })
-                  ),
-
-                  h(
-                    'button',
-                    {
-                      type: 'submit',
-                      disabled: loading,
-                      className: 'w-full h-12 rounded-2xl bg-white text-slate-950 font-black tracking-wide hover:bg-slate-200 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed'
-                    },
-                    loading ? 'Logging in...' : 'Login'
-                  )
-                ),
-
-                h(
-                  'div',
-                  { className: 'mt-6 grid grid-cols-2 gap-3' },
-                  h(
-                    'button',
-                    {
-                      type: 'button',
-                      onClick: testGasGet,
-                      className: 'h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-black hover:bg-blue-500/15'
-                    },
-                    'Test GAS'
-                  ),
-                  h(
-                    'button',
-                    {
-                      type: 'button',
-                      onClick: clearToken,
-                      className: 'h-10 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-black hover:bg-red-500/15'
-                    },
-                    'Clear Token'
-                  )
-                ),
-
-                h(
-                  'button',
-                  {
-                    type: 'button',
-                    onClick: function () {
-                      setDebugOpen(true);
-                    },
-                    className: 'mt-3 w-full h-10 rounded-2xl bg-white/10 border border-white/10 text-white/70 text-xs font-black hover:bg-white/15'
-                  },
-                  'Open Debug Panel'
-                )
-              )
-            )
-          )
-        ),
-
-        h(DebugPanel, {
-          open: debugOpen,
-          setOpen: setDebugOpen,
-          debugRows: debugRows,
-          rawResponse: rawResponse,
-          parsedResponse: parsedResponse,
-          status: status,
-          onTestGas: testGasGet,
-          onClearToken: clearToken,
-          onClearDebug: clearDebug
-        })
-      );
     }
 
-    function AlertBox(props) {
-      var isSuccess = props.type === 'success';
-
-      return h(
-        'div',
-        {
-          className: isSuccess
-            ? 'mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 fade-in'
-            : 'mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 fade-in'
-        },
-        h(
-          'p',
-          {
-            className: isSuccess
-              ? 'text-sm text-emerald-300 font-medium leading-relaxed'
-              : 'text-sm text-red-300 font-medium leading-relaxed'
-          },
-          props.text
-        )
-      );
+    function handleTogglePassword() {
+      const isPassword = passwordInput.type === "password";
+      passwordInput.type = isPassword ? "text" : "password";
+      togglePasswordIcon.textContent = isPassword ? "visibility_off" : "visibility";
+      togglePassword.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
     }
 
-    function DebugPanel(props) {
-      if (!props.open) {
-        return h(
-          'button',
-          {
-            type: 'button',
-            onClick: function () {
-              props.setOpen(true);
-            },
-            className: 'fixed bottom-4 right-4 z-50 h-11 px-4 rounded-2xl bg-blue-500 text-white text-sm font-black shadow-2xl'
-          },
-          'Debug'
-        );
-      }
+    loginForm.addEventListener("submit", handleLogin);
+    togglePassword.addEventListener("click", handleTogglePassword);
 
-      return h(
-        'aside',
-        {
-          className: 'fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-xl max-h-[78vh] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl fade-in'
-        },
-
-        h(
-          'div',
-          { className: 'flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10' },
-          h(
-            'div',
-            null,
-            h('h3', { className: 'text-sm font-black' }, 'Debug Panel'),
-            h('p', { className: 'text-xs text-white/40' }, 'Frontend, GAS, token, raw response')
-          ),
-          h(
-            'button',
-            {
-              type: 'button',
-              onClick: function () {
-                props.setOpen(false);
-              },
-              className: 'w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center font-black'
-            },
-            '×'
-          )
-        ),
-
-        h(
-          'div',
-          { className: 'p-4 overflow-y-auto max-h-[calc(78vh-56px)] space-y-4' },
-
-          h(
-            'div',
-            { className: 'grid grid-cols-3 gap-2' },
-            h(
-              'button',
-              {
-                type: 'button',
-                onClick: props.onTestGas,
-                className: 'h-10 rounded-xl bg-blue-500/20 border border-blue-500/20 text-blue-200 text-xs font-black'
-              },
-              'Test GAS'
-            ),
-            h(
-              'button',
-              {
-                type: 'button',
-                onClick: props.onClearToken,
-                className: 'h-10 rounded-xl bg-red-500/20 border border-red-500/20 text-red-200 text-xs font-black'
-              },
-              'Clear Token'
-            ),
-            h(
-              'button',
-              {
-                type: 'button',
-                onClick: props.onClearDebug,
-                className: 'h-10 rounded-xl bg-white/10 border border-white/10 text-white/70 text-xs font-black'
-              },
-              'Clear Log'
-            )
-          ),
-
-          h(DebugBlock, {
-            title: 'Environment',
-            data: {
-              currentUrl: window.location.href,
-              gasUrl: GAS_WEB_APP_URL,
-              hasToken: !!safeGetStorage(SESSION_KEY),
-              dashboardFiles: DASHBOARD_FILES
-            }
-          }),
-
-          h(DebugBlock, {
-            title: 'Last API Status',
-            data: {
-              status: props.status || '-'
-            }
-          }),
-
-          h(
-            'div',
-            { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
-            h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, 'Raw Response'),
-            h(
-              'pre',
-              { className: 'text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-36 overflow-auto' },
-              props.rawResponse || 'No raw response yet.'
-            )
-          ),
-
-          h(DebugBlock, {
-            title: 'Parsed JSON',
-            data: props.parsedResponse || {
-              message: 'No parsed JSON yet.'
-            }
-          }),
-
-          h(
-            'div',
-            { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
-            h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, 'Event Log'),
-            props.debugRows.length === 0
-              ? h('p', { className: 'text-xs text-white/40' }, 'No debug events yet.')
-              : h(
-                  'div',
-                  { className: 'space-y-2' },
-                  props.debugRows.map(function (row, index) {
-                    return h(
-                      'div',
-                      {
-                        key: index,
-                        className: 'rounded-xl bg-black/30 border border-white/5 p-2'
-                      },
-                      h(
-                        'div',
-                        { className: 'flex items-center justify-between gap-3 mb-1' },
-                        h('p', { className: 'text-xs font-black text-white/80' }, row.label),
-                        h('p', { className: 'text-[10px] text-white/35' }, row.time)
-                      ),
-                      h(
-                        'pre',
-                        { className: 'text-[10px] text-white/45 whitespace-pre-wrap break-words' },
-                        JSON.stringify(row.data, null, 2)
-                      )
-                    );
-                  })
-                )
-          )
-        )
-      );
-    }
-
-    function DebugBlock(props) {
-      return h(
-        'div',
-        { className: 'rounded-2xl bg-white/5 border border-white/10 p-3' },
-        h('h4', { className: 'text-xs font-black text-white/70 mb-2' }, props.title),
-        h(
-          'pre',
-          { className: 'text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-44 overflow-auto' },
-          JSON.stringify(props.data, null, 2)
-        )
-      );
-    }
-
-    var rootElement = document.getElementById('root');
-
-    if (ReactDOM.createRoot) {
-      ReactDOM.createRoot(rootElement).render(h(App));
-    } else {
-      ReactDOM.render(h(App), rootElement);
-    }
+    document.addEventListener("DOMContentLoaded", checkActiveSession);
   </script>
 </body>
 </html>
