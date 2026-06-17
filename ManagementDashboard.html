@@ -433,8 +433,8 @@
       }
     }
 
-    function emptyUserForm() {
-      return { username: "", password: "", role: "Team Leader", branch: state.branches[0] || "Pontianak", status: "Active" };
+    function emptyUserForm(branches = []) {
+      return { username: "", password: "", role: "Team Leader", branch: branches[0] || "Pontianak", status: "Active" };
     }
 
     function openUserModal(item) {
@@ -445,7 +445,7 @@
         role: item.Role || "Team Leader",
         branch: item.Branch || "",
         status: item.Status || "Active"
-      } : emptyUserForm();
+      } : emptyUserForm(state.branches);
       state.userModalOpen = true;
       render();
     }
@@ -453,7 +453,7 @@
     function closeUserModal() {
       state.userModalOpen = false;
       state.userEditItem = null;
-      state.userForm = emptyUserForm();
+      state.userForm = emptyUserForm(state.branches);
       render();
     }
 
