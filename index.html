@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - GAS Management System</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,8 +15,8 @@
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    .fade-in { animation: fadeIn 0.7s ease both; }
-    .slide-up { animation: slideUp 0.65s ease both; }
+    .fade-in { animation: fadeIn 0.5s ease both; }
+    .slide-up { animation: slideUp 0.5s ease both; }
     .float-soft { animation: floatSoft 5s ease-in-out infinite; }
 
     @keyframes fadeIn {
@@ -25,7 +25,7 @@
     }
 
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -36,39 +36,46 @@
   </style>
 </head>
 
-<body class="bg-slate-950 text-slate-100 overflow-hidden selection:bg-blue-500/30">
+<body class="bg-slate-950 text-slate-100 selection:bg-blue-500/30">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useEffect, useMemo, useState } = React;
 
-    // TODO: Paste your deployed GAS Web App URL here
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwoeuTI2M9CayhMN67KJuLMRLxH_oTvil7FVzH0yk2GGNM5OKse8KjNRgu-_xRmhZbGbQ/exec'; 
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwoeuTI2M9CayhMN67KJuLMRLxH_oTvil7FVzH0yk2GGNM5OKse8KjNRgu-_xRmhZbGbQ/exec';
+
     const SESSION_KEY = 'gas_auth_token';
 
-    /**
-     * Standardized fetch wrapper to communicate with the GAS backend.
-     * Uses POST with text/plain to avoid CORS preflight issues on GitHub Pages.
-     */
-    async function fetchAPI(action, payload = {}) {
-      try {
-        const response = await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8', 
-          },
-          body: JSON.stringify({ action, payload })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error(`API Error (${action}):`, error);
-        throw error;
+    const DASHBOARD_FILES = {
+      AdminDashboard: 'AdminDashboard.html',
+      TeamLeaderDashboard: 'TeamLeaderDashboard.html',
+      ManagementDashboard: 'ManagementDashboard.html'
+    };
+
+    const ROLE_LABELS = ['Admin', 'Team Leader', 'Management'];
+
+    function getSafeDashboardUrl(pageName) {
+      if (!pageName) return '';
+      const cleanPage = String(pageName).trim();
+      const fileName = DASHBOARD_FILES[cleanPage];
+
+      if (!fileName) {
+        return '';
       }
+
+      return './' + fileName;
+    }
+
+    function getErrorMessage(error) {
+      if (!error) return 'Unknown error';
+      if (typeof error === 'string') return error;
+      return error.message || String(error);
+    }
+
+    function trimText(text, limit) {
+      const clean = String(text || '');
+      if (clean.length <= limit) return clean;
+      return clean.slice(0, limit) + '...';
     }
 
     function App() {
@@ -77,88 +84,354 @@
       const [loading, setLoading] = useState(false);
       const [initialLoading, setInitialLoading] = useState(true);
       const [error, setError] = useState('');
+      const [success, setSuccess] = useState('');
+
+      const [debugOpen, setDebugOpen] = useState(true);
+      const [debugRows, setDebugRows] = useState([]);
+      const [lastRawResponse, setLastRawResponse] = useState('');
+      const [lastParsedResponse, setLastParsedResponse] = useState(null);
+      const [lastApiStatus, setLastApiStatus] = useState('');
+      const [testing, setTesting] = useState(false);
+
+      const hasToken = !!localStorage.getItem(SESSION_KEY);
 
       useEffect(() => {
+        addDebug('Page loaded', {
+          href: window.location.href,
+          pathname: window.location.pathname,
+          origin: window.location.origin,
+          gasUrl: GAS_WEB_APP_URL,
+          hasStoredToken: !!localStorage.getItem(SESSION_KEY)
+        });
+
         checkActiveSession();
       }, []);
 
+      function addDebug(label, data) {
+        const row = {
+          time: new Date().toLocaleTimeString(),
+          label,
+          data: data || {}
+        };
+
+        setDebugRows(prev => [row, ...prev].slice(0, 30));
+        console.log('[INDEX DEBUG]', label, data || {});
+      }
+
+      async function fetchAPI(action, payload) {
+        const cleanPayload = payload || {};
+
+        addDebug('POST request started', {
+          action,
+          payloadKeys: Object.keys(cleanPayload)
+        });
+
+        let response;
+        let rawText = '';
+
+        try {
+          response = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify({
+              action,
+              payload: cleanPayload
+            })
+          });
+
+          rawText = await response.text();
+
+          setLastApiStatus(String(response.status) + ' ' + String(response.statusText || ''));
+          setLastRawResponse(rawText);
+
+          addDebug('POST raw response received', {
+            action,
+            status: response.status,
+            ok: response.ok,
+            rawPreview: trimText(rawText, 500)
+          });
+
+          if (!response.ok) {
+            throw new Error('Server returned HTTP ' + response.status);
+          }
+
+          let parsed;
+
+          try {
+            parsed = JSON.parse(rawText);
+          } catch (jsonError) {
+            throw new Error('Server response is not JSON. Raw response starts with: ' + trimText(rawText, 120));
+          }
+
+          setLastParsedResponse(parsed);
+
+          addDebug('POST JSON parsed', {
+            action,
+            success: parsed && parsed.success,
+            redirectPage: parsed && parsed.redirectPage,
+            message: parsed && parsed.message
+          });
+
+          return parsed;
+
+        } catch (fetchError) {
+          addDebug('POST request failed', {
+            action,
+            error: getErrorMessage(fetchError),
+            rawPreview: trimText(rawText, 500)
+          });
+
+          throw fetchError;
+        }
+      }
+
       async function checkActiveSession() {
+        setInitialLoading(true);
+        setError('');
+        setSuccess('');
+
         try {
           const token = localStorage.getItem(SESSION_KEY);
 
           if (!token) {
+            addDebug('No stored token found', {});
             setInitialLoading(false);
             return;
           }
 
-          // Updated API Call
           const response = await fetchAPI('checkSession', { token });
 
           if (response && response.success && response.redirectPage) {
-            // Redirect to static local HTML file in GitHub
-            window.location.href = `${response.redirectPage}.html`;
+            const dashboardUrl = getSafeDashboardUrl(response.redirectPage);
+
+            if (!dashboardUrl) {
+              localStorage.removeItem(SESSION_KEY);
+              addDebug('Invalid redirect page from session', {
+                redirectPage: response.redirectPage
+              });
+              setError('Session valid, but dashboard route is invalid.');
+              setInitialLoading(false);
+              return;
+            }
+
+            addDebug('Active session found. Redirecting.', {
+              redirectPage: response.redirectPage,
+              dashboardUrl
+            });
+
+            window.location.href = dashboardUrl;
             return;
           }
 
           localStorage.removeItem(SESSION_KEY);
+
+          addDebug('Stored token rejected', {
+            response
+          });
+
           setInitialLoading(false);
 
-        } catch (err) {
-          console.warn('Session check failed', err);
+        } catch (sessionError) {
           localStorage.removeItem(SESSION_KEY);
+
+          addDebug('Session check failed', {
+            error: getErrorMessage(sessionError)
+          });
+
           setInitialLoading(false);
         }
       }
 
-      async function handleLogin(e) {
-        e.preventDefault();
+      async function handleLogin(event) {
+        event.preventDefault();
 
-        if (!username || !password) {
+        if (!username.trim() || !password.trim()) {
           setError('Username dan password wajib diisi.');
           return;
         }
 
-        setError('');
         setLoading(true);
+        setError('');
+        setSuccess('');
 
         try {
-          // Updated API Call
-          const response = await fetchAPI('loginUser', { username, password });
+          const response = await fetchAPI('loginUser', {
+            username: username.trim(),
+            password: password
+          });
 
-          if (response && response.success) {
-            localStorage.setItem(SESSION_KEY, response.token);
-
-            if (response.redirectPage) {
-              // Redirect to static local HTML file in GitHub
-              window.location.href = `${response.redirectPage}.html`;
-            } else {
-              setError('Terjadi kesalahan routing. Hubungi admin.');
-              setLoading(false);
-            }
-          } else {
-            setError(response.message || 'Login gagal.');
+          if (!response || !response.success) {
+            setError((response && response.message) || 'Login gagal.');
             setLoading(false);
+            return;
           }
-        } catch (err) {
-          setError('Terjadi error saat menghubungi server.');
+
+          if (!response.token) {
+            setError('Login berhasil, tetapi token tidak diterima dari server.');
+            setLoading(false);
+            return;
+          }
+
+          localStorage.setItem(SESSION_KEY, response.token);
+
+          const dashboardUrl = getSafeDashboardUrl(response.redirectPage);
+
+          if (!dashboardUrl) {
+            setError('Login berhasil, tetapi halaman dashboard tidak valid: ' + String(response.redirectPage || '-'));
+            setLoading(false);
+            return;
+          }
+
+          setSuccess('Login berhasil. Mengalihkan ke dashboard...');
+          addDebug('Login success. Redirecting.', {
+            role: response.role,
+            redirectPage: response.redirectPage,
+            dashboardUrl
+          });
+
+          window.location.href = dashboardUrl;
+
+        } catch (loginError) {
+          setError('Gagal menghubungi server: ' + getErrorMessage(loginError));
           setLoading(false);
         }
       }
 
+      async function testGetHealth() {
+        setTesting(true);
+        setError('');
+        setSuccess('');
+
+        try {
+          addDebug('GET health test started', {
+            gasUrl: GAS_WEB_APP_URL
+          });
+
+          const response = await fetch(GAS_WEB_APP_URL, {
+            method: 'GET'
+          });
+
+          const rawText = await response.text();
+
+          setLastApiStatus(String(response.status) + ' ' + String(response.statusText || ''));
+          setLastRawResponse(rawText);
+
+          let parsed = null;
+
+          try {
+            parsed = JSON.parse(rawText);
+            setLastParsedResponse(parsed);
+          } catch (jsonError) {
+            setLastParsedResponse(null);
+          }
+
+          addDebug('GET health test finished', {
+            status: response.status,
+            ok: response.ok,
+            rawPreview: trimText(rawText, 500),
+            parsed
+          });
+
+          if (response.ok) {
+            setSuccess('GET test completed. Check Debug Panel raw response.');
+          } else {
+            setError('GET test returned HTTP ' + response.status);
+          }
+
+        } catch (testError) {
+          addDebug('GET health test failed', {
+            error: getErrorMessage(testError)
+          });
+
+          setError('GET test failed: ' + getErrorMessage(testError));
+        } finally {
+          setTesting(false);
+        }
+      }
+
+      async function testSessionPost() {
+        setTesting(true);
+        setError('');
+        setSuccess('');
+
+        try {
+          const token = localStorage.getItem(SESSION_KEY) || '';
+
+          const response = await fetchAPI('checkSession', {
+            token
+          });
+
+          setSuccess('Session POST test completed. Success: ' + String(response && response.success));
+
+        } catch (testError) {
+          setError('Session POST test failed: ' + getErrorMessage(testError));
+        } finally {
+          setTesting(false);
+        }
+      }
+
+      function clearToken() {
+        localStorage.removeItem(SESSION_KEY);
+        addDebug('Stored token cleared manually', {});
+        setSuccess('Stored token cleared.');
+        setError('');
+      }
+
+      function clearDebug() {
+        setDebugRows([]);
+        setLastRawResponse('');
+        setLastParsedResponse(null);
+        setLastApiStatus('');
+      }
+
+      const debugSummary = useMemo(() => {
+        return {
+          currentPage: window.location.href,
+          gasUrl: GAS_WEB_APP_URL,
+          hasStoredToken: !!localStorage.getItem(SESSION_KEY),
+          dashboardFiles: DASHBOARD_FILES
+        };
+      }, [debugRows.length, hasToken]);
+
       if (initialLoading) {
         return (
-          <div className="min-h-screen flex items-center justify-center">
+          <div className="min-h-screen flex items-center justify-center px-4">
             <div className="text-center fade-in">
               <div className="w-12 h-12 border-4 rounded-full animate-spin border-white/20 border-t-white mx-auto mb-4"></div>
               <p className="text-white/60 text-sm">Checking session...</p>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(SESSION_KEY);
+                  setInitialLoading(false);
+                }}
+                className="mt-5 h-10 px-5 rounded-2xl bg-white/10 border border-white/10 text-white text-sm font-bold hover:bg-white/15"
+              >
+                Stop & Clear Session
+              </button>
             </div>
+
+            <DebugPanel
+              open={debugOpen}
+              setOpen={setDebugOpen}
+              rows={debugRows}
+              summary={debugSummary}
+              lastRawResponse={lastRawResponse}
+              lastParsedResponse={lastParsedResponse}
+              lastApiStatus={lastApiStatus}
+              onTestGet={testGetHealth}
+              onTestSession={testSessionPost}
+              onClearToken={clearToken}
+              onClearDebug={clearDebug}
+              testing={testing}
+            />
           </div>
         );
       }
 
       return (
-        <div className="relative min-h-screen flex items-center justify-center p-4">
-          
+        <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen float-soft"></div>
             <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-emerald-600/10 blur-[120px] mix-blend-screen float-soft" style={{ animationDelay: '-2s' }}></div>
@@ -166,39 +439,45 @@
           </div>
 
           <main className="relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
-            
-            <div className="hidden lg:block slide-up" style={{ animationDelay: '0.1s' }}>
+            <section className="hidden lg:block slide-up">
               <div className="mb-8">
                 <div className="w-14 h-14 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-white/10">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#020617" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z" />
                   </svg>
                 </div>
+
                 <h1 className="text-5xl font-black tracking-tight leading-tight mb-4">
                   Management <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
                     System Hub.
                   </span>
                 </h1>
+
                 <p className="text-lg text-white/60 leading-relaxed max-w-md">
-                  Centralized platform untuk mengelola absensi kelas, tracking supply inventory, dan memonitor aktivitas Team Leader secara real-time.
+                  Centralized platform untuk mengelola absensi kelas, supply inventory, dan aktivitas Team Leader.
                 </p>
               </div>
 
               <div className="flex gap-3">
-                <RoleBadge label="Admin" />
-                <RoleBadge label="Team Leader" />
-                <RoleBadge label="Management" />
+                {ROLE_LABELS.map(label => (
+                  <RoleBadge key={label} label={label} />
+                ))}
               </div>
-            </div>
 
-            <div className="w-full max-w-md mx-auto lg:mx-0 slide-up" style={{ animationDelay: '0.2s' }}>
-              
-              <section className="relative group">
+              <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm font-black text-white mb-2">Debug-safe build</p>
+                <p className="text-sm text-white/50 leading-relaxed">
+                  This login page uses CDN React, Tailwind, Babel, text/plain POST, safe local dashboard redirects, and visible API diagnostics.
+                </p>
+              </div>
+            </section>
+
+            <section className="w-full max-w-md mx-auto lg:mx-0 slide-up">
+              <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-70 transition duration-500"></div>
-                
+
                 <div className="relative bg-[#0b1120]/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl">
-                  
                   <div className="lg:hidden flex flex-col items-center mb-8 text-center">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-white/10">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#020617" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -214,12 +493,11 @@
                   </div>
 
                   {error && (
-                    <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 fade-in">
-                      <svg className="w-5 h-5 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
-                      </svg>
-                      <p className="text-sm text-red-400 font-medium leading-relaxed">{error}</p>
-                    </div>
+                    <AlertBox type="error" text={error} />
+                  )}
+
+                  {success && (
+                    <AlertBox type="success" text={success} />
                   )}
 
                   <form onSubmit={handleLogin} className="space-y-5">
@@ -230,10 +508,11 @@
                       <input
                         type="text"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(event) => setUsername(event.target.value)}
                         disabled={loading}
                         className="w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50"
                         placeholder="Enter your username"
+                        autoComplete="username"
                       />
                     </div>
 
@@ -244,10 +523,11 @@
                       <input
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(event) => setPassword(event.target.value)}
                         disabled={loading}
                         className="w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50"
                         placeholder="••••••••"
+                        autoComplete="current-password"
                       />
                     </div>
 
@@ -263,11 +543,79 @@
                       )}
                     </button>
                   </form>
-                </div>
-              </section>
 
-            </div>
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={testGetHealth}
+                      disabled={testing}
+                      className="h-10 rounded-2xl bg-white/10 border border-white/10 text-white/80 text-xs font-black hover:bg-white/15 disabled:opacity-50"
+                    >
+                      Test GAS
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={clearToken}
+                      className="h-10 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-black hover:bg-red-500/15"
+                    >
+                      Clear Token
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setDebugOpen(true)}
+                    className="mt-3 w-full h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-black hover:bg-blue-500/15"
+                  >
+                    Open Debug Panel
+                  </button>
+                </div>
+              </div>
+            </section>
           </main>
+
+          <DebugPanel
+            open={debugOpen}
+            setOpen={setDebugOpen}
+            rows={debugRows}
+            summary={debugSummary}
+            lastRawResponse={lastRawResponse}
+            lastParsedResponse={lastParsedResponse}
+            lastApiStatus={lastApiStatus}
+            onTestGet={testGetHealth}
+            onTestSession={testSessionPost}
+            onClearToken={clearToken}
+            onClearDebug={clearDebug}
+            testing={testing}
+          />
+        </div>
+      );
+    }
+
+    function AlertBox({ type, text }) {
+      const isSuccess = type === 'success';
+
+      return (
+        <div className={
+          isSuccess
+            ? 'mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3 fade-in'
+            : 'mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 fade-in'
+        }>
+          <svg className={isSuccess ? 'w-5 h-5 text-emerald-400 mt-0.5 shrink-0' : 'w-5 h-5 text-red-400 mt-0.5 shrink-0'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {isSuccess ? (
+              <path d="m20 6-11 11-5-5"></path>
+            ) : (
+              <React.Fragment>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </React.Fragment>
+            )}
+          </svg>
+          <p className={isSuccess ? 'text-sm text-emerald-300 font-medium leading-relaxed' : 'text-sm text-red-300 font-medium leading-relaxed'}>
+            {text}
+          </p>
         </div>
       );
     }
@@ -276,6 +624,132 @@
       return (
         <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
           <p className="text-white text-sm font-semibold">{label}</p>
+        </div>
+      );
+    }
+
+    function DebugPanel({
+      open,
+      setOpen,
+      rows,
+      summary,
+      lastRawResponse,
+      lastParsedResponse,
+      lastApiStatus,
+      onTestGet,
+      onTestSession,
+      onClearToken,
+      onClearDebug,
+      testing
+    }) {
+      if (!open) {
+        return (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="fixed bottom-4 right-4 z-50 h-11 px-4 rounded-2xl bg-blue-500 text-white text-sm font-black shadow-2xl"
+          >
+            Debug
+          </button>
+        );
+      }
+
+      return (
+        <aside className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-xl max-h-[78vh] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl fade-in">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
+            <div>
+              <h3 className="text-sm font-black">Debug Panel</h3>
+              <p className="text-xs text-white/40">Frontend, session, GAS response, and redirect diagnostics</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center font-black"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="p-4 overflow-y-auto max-h-[calc(78vh-56px)] space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onTestGet}
+                disabled={testing}
+                className="h-10 rounded-xl bg-blue-500/20 border border-blue-500/20 text-blue-200 text-xs font-black disabled:opacity-50"
+              >
+                Test GET
+              </button>
+              <button
+                type="button"
+                onClick={onTestSession}
+                disabled={testing}
+                className="h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/20 text-emerald-200 text-xs font-black disabled:opacity-50"
+              >
+                Test Session POST
+              </button>
+              <button
+                type="button"
+                onClick={onClearToken}
+                className="h-10 rounded-xl bg-red-500/20 border border-red-500/20 text-red-200 text-xs font-black"
+              >
+                Clear Token
+              </button>
+              <button
+                type="button"
+                onClick={onClearDebug}
+                className="h-10 rounded-xl bg-white/10 border border-white/10 text-white/70 text-xs font-black"
+              >
+                Clear Debug
+              </button>
+            </div>
+
+            <DebugBlock title="Environment" data={summary} />
+
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-black text-white/70">Last API Status</h4>
+                <span className="text-xs text-white/40">{lastApiStatus || '-'}</span>
+              </div>
+              <pre className="text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-32 overflow-auto">
+                {lastRawResponse || 'No raw response yet.'}
+              </pre>
+            </div>
+
+            <DebugBlock title="Last Parsed JSON" data={lastParsedResponse || { message: 'No parsed JSON yet.' }} />
+
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-3">
+              <h4 className="text-xs font-black text-white/70 mb-2">Event Log</h4>
+              {rows.length === 0 ? (
+                <p className="text-xs text-white/40">No debug events yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {rows.map((row, index) => (
+                    <div key={index} className="rounded-xl bg-black/30 border border-white/5 p-2">
+                      <div className="flex items-center justify-between gap-3 mb-1">
+                        <p className="text-xs font-black text-white/80">{row.label}</p>
+                        <p className="text-[10px] text-white/35">{row.time}</p>
+                      </div>
+                      <pre className="text-[10px] text-white/45 whitespace-pre-wrap break-words">
+                        {JSON.stringify(row.data, null, 2)}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
+      );
+    }
+
+    function DebugBlock({ title, data }) {
+      return (
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-3">
+          <h4 className="text-xs font-black text-white/70 mb-2">{title}</h4>
+          <pre className="text-[11px] leading-relaxed text-white/60 whitespace-pre-wrap break-words max-h-44 overflow-auto">
+            {JSON.stringify(data, null, 2)}
+          </pre>
         </div>
       );
     }
