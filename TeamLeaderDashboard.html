@@ -1,479 +1,354 @@
+```html
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-  <title>Team Leader Dashboard - Kampung Inggris Pontianak</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { display: ['Lexend', 'system-ui', 'sans-serif'] },
-          borderRadius: {
-            DEFAULT: '1rem',
-            lg: '1.25rem',
-            xl: '1.5rem',
-            '2xl': '1.75rem',
-            '3xl': '2rem'
-          }
-        }
-      }
-    };
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login - GAS Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
-    :root { --dock-bottom: max(18px, env(safe-area-inset-bottom)); }
-    * { -webkit-tap-highlight-color: transparent; transition: background-color 420ms ease, color 420ms ease, border-color 420ms ease, box-shadow 420ms ease, opacity 260ms ease; }
-    body { font-family: Lexend, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .fade-in { animation: fadeIn .45s ease both; }
-    .slide-up { animation: slideUp .5s ease both; }
-    .dock-pop { animation: dockPop .45s cubic-bezier(.2,.9,.2,1.2) both; }
-    .modal-pop { animation: modalPop .28s cubic-bezier(.2,.9,.2,1.1) both; }
-    .toast-in { animation: toastIn .32s ease both; }
-    .theme-switching { pointer-events: none; }
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-    @keyframes slideUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes dockPop { from { opacity:0; transform:translateY(20px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
-    @keyframes modalPop { from { opacity:0; transform:translateY(18px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
-    @keyframes toastIn { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
-    input, select, textarea { color-scheme: light; }
-    .dark input, .dark select, .dark textarea { color-scheme: dark; }
-    .glass-light { background: rgba(255,255,255,.74); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
-    .glass-dark { background: rgba(15,23,42,.74); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
-    .dock-glass-light { background: rgba(255,255,255,.78); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4); }
-    .dock-glass-dark { background: rgba(15,23,42,.80); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4); }
-    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .45); border-radius: 999px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, .7); }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24; }
-    @media (prefers-reduced-motion: reduce) { *, .fade-in, .slide-up, .dock-pop, .modal-pop, .toast-in { transition: none !important; animation: none !important; } }
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.7s ease both;
+    }
+
+    .slide-up {
+      animation: slideUp 0.65s ease both;
+    }
+
+    .float-soft {
+      animation: floatSoft 5s ease-in-out infinite;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes floatSoft {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
   </style>
 </head>
-<body class="bg-[#020617] text-white">
-  <div id="app"></div>
+
+<body class="bg-slate-950 text-slate-100 overflow-hidden selection:bg-blue-500/30">
+
+  <div id="loadingScreen" class="min-h-screen flex items-center justify-center">
+    <div class="text-center fade-in">
+      <div class="w-12 h-12 border-4 rounded-full animate-spin border-white/20 border-t-white mx-auto mb-4"></div>
+      <p class="text-white/60 text-sm">Checking session...</p>
+    </div>
+  </div>
+
+  <div id="loginScreen" class="hidden relative min-h-screen flex items-center justify-center p-4">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen float-soft"></div>
+      <div class="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-emerald-600/10 blur-[120px] mix-blend-screen float-soft" style="animation-delay: -2s;"></div>
+      <div class="absolute top-[20%] left-[40%] w-[30%] h-[30%] rounded-full bg-purple-600/10 blur-[100px] mix-blend-screen float-soft" style="animation-delay: -4s;"></div>
+    </div>
+
+    <main class="relative w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+
+      <div class="hidden lg:block slide-up" style="animation-delay: 0.1s;">
+        <div class="mb-8">
+          <div class="w-14 h-14 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-white/10">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#020617" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z"></path>
+            </svg>
+          </div>
+
+          <h1 class="text-5xl font-black tracking-tight leading-tight mb-4">
+            Management <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+              System Hub.
+            </span>
+          </h1>
+
+          <p class="text-lg text-white/60 leading-relaxed max-w-md">
+            Centralized platform untuk mengelola absensi kelas, tracking supply inventory, dan memonitor aktivitas Team Leader secara real-time.
+          </p>
+        </div>
+
+        <div class="flex gap-3">
+          <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
+            <p class="text-white text-sm font-semibold">Admin</p>
+          </div>
+
+          <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
+            <p class="text-white text-sm font-semibold">Team Leader</p>
+          </div>
+
+          <div class="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-center">
+            <p class="text-white text-sm font-semibold">Management</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="w-full max-w-md mx-auto lg:mx-0 slide-up" style="animation-delay: 0.2s;">
+        <section class="relative group">
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-70 transition duration-500"></div>
+
+          <div class="relative bg-[#0b1120]/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl">
+
+            <div class="lg:hidden flex flex-col items-center mb-8 text-center">
+              <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-white/10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#020617" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2Z"></path>
+                </svg>
+              </div>
+
+              <h2 class="text-2xl font-black tracking-tight">System Hub</h2>
+            </div>
+
+            <div class="mb-8">
+              <h2 class="text-2xl font-black mb-2">Welcome back</h2>
+              <p class="text-white/50 text-sm">Silakan login untuk mengakses dashboard kamu.</p>
+            </div>
+
+            <div id="errorBox" class="hidden mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 items-start gap-3 fade-in">
+              <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <p id="errorText" class="text-sm text-red-400 font-medium leading-relaxed"></p>
+            </div>
+
+            <form id="loginForm" class="space-y-5">
+              <div>
+                <label class="block text-sm font-semibold text-white/70 mb-2 pl-1">
+                  Username
+                </label>
+
+                <input
+                  id="usernameInput"
+                  type="text"
+                  class="w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50"
+                  placeholder="Enter your username"
+                  autocomplete="username"
+                >
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-white/70 mb-2 pl-1">
+                  Password
+                </label>
+
+                <input
+                  id="passwordInput"
+                  type="password"
+                  class="w-full h-12 rounded-2xl bg-black/40 border border-white/10 text-white px-4 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition disabled:opacity-50"
+                  placeholder="••••••••"
+                  autocomplete="current-password"
+                >
+              </div>
+
+              <button
+                id="loginButton"
+                type="submit"
+                class="w-full h-12 mt-4 rounded-2xl bg-white text-slate-950 font-black tracking-wide hover:bg-slate-200 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                Login
+              </button>
+            </form>
+
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
   <script>
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxDYWpPcpH-viZMhGHPAxmpWP19GDb1JTuylNG_WH92atxCquoJ06vbPkN3GXifdQZqSQ/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyNngZ57fzkW_GcM6nAxwKoEGL-oIwkK7_URfXVmAF8XIdunWx792jGQWYNXnfkxyYiMQ/exec';
     const SESSION_KEY = 'gas_auth_token';
-    const THEME_KEY = 'team_leader_dashboard_theme';
-    const SUPPLY_SETTINGS_KEY = 'team_leader_supply_color_settings';
 
-    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const SHIFT_OPTIONS = [
-      { value: 'General', label: 'General / All Shifts' },
-      { value: 'Shift 1', label: 'Shift 1' },
-      { value: 'Shift 2', label: 'Shift 2' },
-      { value: 'Shift 3', label: 'Shift 3' }
-    ];
-    const DEFAULT_SUPPLY_SETTINGS = { lowMax: 50, mediumMin: 51, mediumMax: 100, highMin: 101 };
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loginScreen = document.getElementById('loginScreen');
+    const loginForm = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginButton = document.getElementById('loginButton');
+    const errorBox = document.getElementById('errorBox');
+    const errorText = document.getElementById('errorText');
 
-    const today = new Date();
-    const todayString = new Date().toISOString().slice(0, 10);
-
-    const state = {
-      theme: localStorage.getItem(THEME_KEY) || 'dark',
-      activeMenu: 'dashboard',
-      user: null,
-      loading: true,
-      saving: false,
-      accessError: '',
-      toast: null,
-      confirmDialog: null,
-      inputDate: todayString,
-      supplyRows: [],
-      records: [],
-      editingRecord: null,
-      editRecordForm: { paperUsed: '', printingUsed: '' },
-      recapMonth: today.getMonth() + 1,
-      recapYear: today.getFullYear(),
-      monthlyRecap: null,
-      supplySettings: loadJson(SUPPLY_SETTINGS_KEY, DEFAULT_SUPPLY_SETTINGS),
-      filters: { date: '', month: '', year: '' },
-      activitySettings: null,
-      activitySheetId: '',
-      activitySubMenu: 'daily',
-      activityBooted: false,
-      activityLoading: false,
-      activitySyncing: false,
-      activityDate: todayString,
-      activityShift: 'Shift 1',
-      activityRows: [],
-      activityNotes: '',
-      notesFilters: { date: '', dateFrom: '', dateTo: '', shift: '', limit: 50 },
-      loadedNotes: [],
-      notesLoaded: false,
-      notesLoading: false
-    };
-
-    function loadJson(key, fallback) {
-      try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (_) { return fallback; }
+    function showLogin() {
+      loadingScreen.classList.add('hidden');
+      loginScreen.classList.remove('hidden');
     }
 
-    async function fetchAPI(action, payload = {}) {
+    function showLoadingScreen() {
+      loadingScreen.classList.remove('hidden');
+      loginScreen.classList.add('hidden');
+    }
+
+    function showError(message) {
+      errorText.textContent = message || 'Terjadi kesalahan.';
+      errorBox.classList.remove('hidden');
+      errorBox.classList.add('flex');
+    }
+
+    function hideError() {
+      errorText.textContent = '';
+      errorBox.classList.add('hidden');
+      errorBox.classList.remove('flex');
+    }
+
+    function setLoading(isLoading) {
+      usernameInput.disabled = isLoading;
+      passwordInput.disabled = isLoading;
+      loginButton.disabled = isLoading;
+
+      if (isLoading) {
+        loginButton.innerHTML = '<div class="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"></div>';
+      } else {
+        loginButton.textContent = 'Login';
+      }
+    }
+
+    function safeGetToken() {
       try {
-        const response = await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action, payload })
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
-        return await response.json();
+        return localStorage.getItem(SESSION_KEY);
       } catch (error) {
-        console.error(`API Error (${action}):`, error);
-        throw error;
+        console.warn('LocalStorage get failed:', error);
+        return '';
       }
     }
 
-    const $ = (id) => document.getElementById(id);
-    const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
-    const num = (value) => Number(value || 0);
-    const isDark = () => state.theme === 'dark';
-    const token = () => localStorage.getItem(SESSION_KEY);
-
-    function applyTheme() {
-      document.documentElement.classList.toggle('dark', isDark());
-      document.body.className = isDark() ? 'bg-[#020617] text-white' : 'bg-slate-100 text-slate-950';
-      localStorage.setItem(THEME_KEY, state.theme);
-    }
-
-    function icon(name, extra = '') {
-      const map = {
-        dashboard: 'monitoring', chart: 'bar_chart_4_bars', paper: 'description', printer: 'print', check: 'check_circle',
-        activity: 'checklist', edit: 'edit_square', database: 'database', settings: 'tune', user: 'person', logout: 'logout',
-        sun: 'light_mode', moon: 'dark_mode', layers: 'layers', trash: 'delete', alert: 'warning', spark: 'auto_awesome',
-        note: 'notes', sheet: 'table_chart', checklist: 'checklist_rtl', calendar: 'calendar_month', empty: 'inbox', refresh: 'refresh', close: 'close'
-      };
-      return `<span class="material-symbols-outlined ${extra}">${map[name] || name}</span>`;
-    }
-
-    function cardClass() { return isDark() ? 'glass-dark border border-white/10 shadow-2xl shadow-black/20' : 'glass-light border border-white shadow-xl shadow-slate-300/40'; }
-    function softBoxClass() { return isDark() ? 'bg-white/5 border border-white/10' : 'bg-slate-950/5 border border-slate-200'; }
-    function mutedClass() { return isDark() ? 'text-white/55 text-sm' : 'text-slate-500 text-sm'; }
-    function badgeClass() { return isDark() ? 'inline-flex items-center rounded-full bg-white/10 border border-white/10 px-3 py-2 text-xs font-black text-white/80' : 'inline-flex items-center rounded-full bg-slate-950/5 border border-slate-200 px-3 py-2 text-xs font-black text-slate-600'; }
-    function inputClass(disabled = false) { return `${isDark() ? 'bg-black/30 border-white/10 text-white placeholder:text-white/25 focus:border-white/40 focus:ring-white/20' : 'bg-white border-slate-200 text-slate-950 placeholder:text-slate-400 focus:border-slate-950/30 focus:ring-slate-950/10'} w-full h-11 rounded-2xl px-4 text-sm outline-none disabled:opacity-60 ${disabled ? 'cursor-not-allowed' : ''}`; }
-    function textareaClass() { return `${isDark() ? 'bg-black/30 border-white/10 text-white placeholder:text-white/25 focus:border-white/40 focus:ring-white/20' : 'bg-white border-slate-200 text-slate-950 placeholder:text-slate-400 focus:border-slate-950/30 focus:ring-slate-950/10'} w-full rounded-2xl px-4 py-3 text-sm outline-none`; }
-    function primaryButtonClass() { return `${isDark() ? 'bg-white text-slate-950 hover:bg-slate-200' : 'bg-slate-950 text-white hover:bg-slate-800'} h-11 px-5 rounded-2xl font-black text-sm transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`; }
-    function secondaryButtonClass() { return `${isDark() ? 'bg-white/10 text-white border-white/10 hover:bg-white/15' : 'bg-white text-slate-950 border-slate-200 hover:bg-slate-50'} h-11 px-5 rounded-2xl border font-black text-sm transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`; }
-    function smallButtonClass(active = false) { return active ? primaryButtonClass() : secondaryButtonClass(); }
-    function iconButtonClass() { return `${isDark() ? 'bg-white/10 text-white border-white/10 hover:bg-white/15' : 'bg-white text-slate-950 border-slate-200 hover:bg-slate-50'} w-11 h-11 rounded-2xl border inline-flex items-center justify-center`; }
-
-    function field(label, id, value, type='text', placeholder='', disabled=false, oninput='') {
-      const handler = oninput ? `oninput="${oninput}"` : '';
-      return `<div><label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">${esc(label)}</label><input id="${esc(id)}" type="${esc(type)}" value="${esc(value)}" placeholder="${esc(placeholder)}" ${disabled ? 'disabled' : ''} ${handler} class="${inputClass(disabled)}"/></div>`;
-    }
-    function selectField(label, id, value, options, onchange='') {
-      const handler = onchange ? `onchange="${onchange}"` : '';
-      return `<div><label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">${esc(label)}</label><select id="${esc(id)}" ${handler} class="${inputClass()}">${options.map(o => `<option value="${esc(o.value)}" ${String(o.value)===String(value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select></div>`;
-    }
-
-    function showToast(type, text) {
-      state.toast = { type, text };
-      render();
-      setTimeout(() => { state.toast = null; render(); }, 3400);
-    }
-    const showSuccess = (text) => showToast('success', text);
-    const showError = (text) => showToast('error', text);
-
-    function openConfirm(config) {
-      state.confirmDialog = {
-        title: config.title || 'Are you sure?',
-        message: config.message || 'This action needs confirmation.',
-        confirmText: config.confirmText || 'Confirm',
-        cancelText: config.cancelText || 'Cancel',
-        tone: config.tone || 'danger',
-        action: config.action
-      };
-      render();
-    }
-    function closeConfirm() { state.confirmDialog = null; render(); }
-    function confirmAction() { const action = state.confirmDialog?.action; closeConfirm(); if (action && Actions[action]) Actions[action](); }
-
-    async function boot() {
-      state.loading = true; state.accessError = ''; render();
+    function safeSetToken(token) {
       try {
-        if (!token()) return redirectToLogin();
-        const sessionResponse = await fetchAPI('getUserSession', { token: token() });
-        if (!sessionResponse.success) { localStorage.removeItem(SESSION_KEY); return redirectToLogin(); }
-        if (sessionResponse.user.role !== 'Team Leader') { state.accessError = 'Akses ditolak. Halaman ini hanya untuk Team Leader.'; state.loading = false; return render(); }
-        state.user = sessionResponse.user;
-        await Promise.all([loadSupplyMatrix(token(), state.inputDate, true), loadRecords(token(), null, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true), loadMasterActivityTasks(token())]);
-      } catch (err) { state.accessError = 'Gagal memuat Team Leader Dashboard.'; }
-      finally { state.loading = false; render(); }
-    }
-    function redirectToLogin() { window.location.href = 'index.html'; }
-
-    async function loadMasterActivityTasks(t) {
-      try {
-        const response = await fetchAPI('getTeamLeaderActivityTasks', { token: t, filters: { includeInactive: false } });
-        if (response.success) localStorage.setItem('gas_master_activity_tasks', JSON.stringify(response.data || []));
-      } catch (err) { console.warn('Failed to cache master tasks', err); }
-    }
-    async function loadSupplyMatrix(t = token(), dateParam = state.inputDate, silent=false) {
-      const response = await fetchAPI('getDailySupplyInputMatrix', { token: t, date: dateParam });
-      if (response.success) state.supplyRows = response.data || []; else showError(response.message || 'Gagal memuat matrix supplies.');
-      if (!silent) render();
-    }
-    async function loadRecords(t = token(), customFilters = null, silent=false) {
-      const response = await fetchAPI('getDailySupplies', { token: t, filters: customFilters || state.filters });
-      if (response.success) state.records = response.data || []; else showError(response.message || 'Gagal memuat records supplies.');
-      if (!silent) render();
-    }
-    async function loadMonthlyRecap(t = token(), month = state.recapMonth, year = state.recapYear, silent=false) {
-      const response = await fetchAPI('getMonthlySuppliesRecap', { token: t, month: Number(month), year: Number(year) });
-      if (response.success) state.monthlyRecap = response.data; else showError(response.message || 'Gagal memuat monthly supplies recap.');
-      if (!silent) render();
-    }
-
-    function setMenu(menu) {
-      state.activeMenu = menu;
-      render();
-      if (menu === 'activity' && state.user && !state.activityBooted) bootActivity();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    function toggleTheme() { document.body.classList.add('theme-switching'); state.theme = isDark() ? 'light' : 'dark'; applyTheme(); render(); setTimeout(() => document.body.classList.remove('theme-switching'), 450); }
-
-    async function changeInputDate(value) { state.inputDate = value; render(); await loadSupplyMatrix(token(), value); }
-    function updateSupplyValue(index, field, value) {
-      const row = state.supplyRows[index]; if (!row) return;
-      row[field] = value;
-      row.isEdited = String(row.paperUsed || '') !== String(row.originalPaperUsed || '') || String(row.printingUsed || '') !== String(row.originalPrintingUsed || '');
-      const preview = $(`supply-preview-${index}`); if (preview) { preview.outerHTML = supplyPreviewSpan(row, index); }
-      const status = $(`supply-status-${index}`); if (status) status.outerHTML = statusPill(row.isSaved, row.isEdited, `supply-status-${index}`);
-    }
-    function confirmSaveSupply() {
-      const rowsToSave = state.supplyRows.filter(r => r.paperUsed !== '' && r.paperUsed != null || r.printingUsed !== '' && r.printingUsed != null);
-      if (!rowsToSave.length) return showError('Belum ada data paper/printing yang diisi.');
-      openConfirm({ title:'Save all supplies?', message:'Data supplies per inventory item akan disimpan. Jika item di tanggal yang sama sudah ada, sistem akan update tanpa duplicate.', confirmText:'Save All', tone:'success', action:'saveSupplyBulk' });
-    }
-    async function saveSupplyBulk() {
-      state.saving = true; render();
-      try {
-        const rowsToSave = state.supplyRows.filter(r => r.paperUsed !== '' && r.paperUsed != null || r.printingUsed !== '' && r.printingUsed != null);
-        const response = await fetchAPI('saveDailySuppliesBulk', { token: token(), date: state.inputDate, rows: rowsToSave });
-        if (!response.success) return showError(response.message || 'Gagal menyimpan supplies.');
-        await Promise.all([loadSupplyMatrix(token(), state.inputDate, true), loadRecords(token(), null, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true)]);
-        showSuccess(response.message || 'Supplies berhasil disimpan.');
-      } catch (err) { showError('Terjadi error saat menyimpan supplies.'); }
-      finally { state.saving = false; render(); }
-    }
-    function requestDeleteSupply(id) { state.pendingDeleteSupplyId = id; openConfirm({ title:'Delete supply record?', message:'Data paper dan printing inventory item ini akan dihapus. Aksi ini tidak bisa dibatalkan.', confirmText:'Delete', tone:'danger', action:'deleteSupply' }); }
-    async function deleteSupply() {
-      state.saving = true; render();
-      try {
-        const response = await fetchAPI('deleteDailySupply', { token: token(), id: state.pendingDeleteSupplyId });
-        if (!response.success) return showError(response.message || 'Gagal menghapus supplies.');
-        await Promise.all([loadSupplyMatrix(token(), state.inputDate, true), loadRecords(token(), null, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true)]);
-        showSuccess(response.message || 'Supplies berhasil dihapus.');
-      } catch (err) { showError('Terjadi error saat menghapus supplies.'); }
-      finally { state.saving = false; state.pendingDeleteSupplyId = null; render(); }
-    }
-    function openEditRecord(index) { const item = state.records[index]; state.editingRecord = item; state.editRecordForm = { paperUsed: item?.['Paper Used'] || 0, printingUsed: item?.['Printing Used'] || 0 }; render(); }
-    function closeEditRecord() { state.editingRecord = null; render(); }
-    async function submitEditRecord() {
-      state.editRecordForm.paperUsed = $('editPaperUsed')?.value || '';
-      state.editRecordForm.printingUsed = $('editPrintingUsed')?.value || '';
-      state.saving = true; render();
-      try {
-        const response = await fetchAPI('updateDailySupply', { token: token(), id: state.editingRecord.ID, payload: state.editRecordForm });
-        if (!response.success) return showError(response.message || 'Gagal update record.');
-        state.editingRecord = null;
-        await Promise.all([loadRecords(token(), null, true), loadSupplyMatrix(token(), state.inputDate, true), loadMonthlyRecap(token(), state.recapMonth, state.recapYear, true)]);
-        showSuccess(response.message || 'Record berhasil diupdate.');
-      } catch (err) { showError('Terjadi error saat update record.'); }
-      finally { state.saving = false; render(); }
-    }
-    async function applyFilters() { state.filters = { date: $('filterDate')?.value || '', month: $('filterMonth')?.value || '', year: $('filterYear')?.value || '' }; await loadRecords(token(), state.filters); }
-    async function clearFilters() { state.filters = { date:'', month:'', year:'' }; await loadRecords(token(), state.filters); }
-    async function changeRecapMonth(value) { state.recapMonth = Number(value); render(); await loadMonthlyRecap(token(), state.recapMonth, state.recapYear); }
-    async function changeRecapYear(value) { state.recapYear = Number(value); render(); await loadMonthlyRecap(token(), state.recapMonth, state.recapYear); }
-    function saveSettingsFromForm() {
-      const clean = { lowMax: Number($('lowMax')?.value), mediumMin: Number($('mediumMin')?.value), mediumMax: Number($('mediumMax')?.value), highMin: Number($('highMin')?.value) };
-      if (Object.values(clean).some(Number.isNaN)) return showError('Settings harus berupa angka.');
-      state.supplySettings = clean; localStorage.setItem(SUPPLY_SETTINGS_KEY, JSON.stringify(clean)); showSuccess('Settings warna supplies berhasil disimpan.'); render();
-    }
-    function resetSettings() { state.supplySettings = { ...DEFAULT_SUPPLY_SETTINGS }; localStorage.setItem(SUPPLY_SETTINGS_KEY, JSON.stringify(state.supplySettings)); showSuccess('Settings dikembalikan ke default.'); render(); }
-
-    async function bootActivity() {
-      state.activityLoading = true; render();
-      try {
-        const response = await fetchAPI('getTeamLeaderActivitySettings', { token: token() });
-        if (!response.success) return showError(response.message || 'Gagal memuat activity settings.');
-        state.activitySettings = response.data || null;
-        state.activitySheetId = response.data ? response.data['Activity Sheet ID'] || '' : '';
-        state.activityBooted = true;
-        if (state.activitySettings && state.activitySheetId) await loadActivityMatrix(token(), state.activityDate, state.activityShift, true);
-      } catch (err) { showError('Terjadi error saat memuat Activity Tracker.'); }
-      finally { state.activityLoading = false; render(); }
-    }
-    async function saveActivitySheet() {
-      state.activitySheetId = $('activitySheetId')?.value || state.activitySheetId;
-      if (!state.activitySheetId.trim()) return showError('Activity Sheet ID wajib diisi.');
-      state.saving = true; render();
-      try {
-        const response = await fetchAPI('saveTeamLeaderActivitySheetId', { token: token(), sheetId: state.activitySheetId });
-        if (!response.success) return showError(response.message || 'Gagal menyimpan Activity Sheet ID.');
-        state.activitySettings = response.data || null;
-        state.activitySheetId = response.data ? response.data['Activity Sheet ID'] || state.activitySheetId : state.activitySheetId;
-        state.activityBooted = true;
-        await loadActivityMatrix(token(), state.activityDate, state.activityShift, true);
-        showSuccess(response.message || 'Activity Sheet berhasil disiapkan.');
-      } catch (err) { showError('Terjadi error saat setup Activity Sheet.'); }
-      finally { state.saving = false; render(); }
-    }
-    async function loadActivityMatrix(t = token(), date = state.activityDate, shift = state.activityShift, silent=false) {
-      if (!shift) return showError('Shift wajib dipilih.');
-      const cacheKey = `activity_matrix_${date}_${shift}`;
-      const cachedData = localStorage.getItem(cacheKey);
-      const masterTasksStr = localStorage.getItem('gas_master_activity_tasks');
-      let background = false;
-      if (cachedData) {
-        const parsed = loadRawJson(cachedData, {}); state.activityRows = parsed.rows || []; state.activityNotes = parsed.notes || ''; background = true;
-      } else if (masterTasksStr) {
-        const masterTasks = loadRawJson(masterTasksStr, []);
-        state.activityRows = masterTasks.filter(task => {
-          const taskShift = String(task.Shift || '').trim().toLowerCase(); const target = shift.trim().toLowerCase();
-          return !target || !taskShift || taskShift === target || taskShift.includes('all') || taskShift.includes('general');
-        }).map(task => ({ taskId: task.ID, existingCheckId:'', isSaved:false, isDone:false, originalIsDone:false, shift, taskName:task['Task Name'], description:task.Description, sortOrder:task['Sort Order'] }));
-        state.activityNotes = ''; background = true;
+        localStorage.setItem(SESSION_KEY, token);
+      } catch (error) {
+        console.warn('LocalStorage set failed:', error);
       }
-      state.activitySyncing = background; state.activityLoading = !background; if (!silent) render();
+    }
+
+    function safeRemoveToken() {
       try {
-        const response = await fetchAPI('getTeamLeaderActivityMatrix', { token: t, date, shift });
-        if (response.success) {
-          state.activityRows = response.data || []; state.activityNotes = response.notes || '';
-          localStorage.setItem(cacheKey, JSON.stringify({ rows: response.data || [], notes: response.notes || '' }));
-        } else if (!background) { state.activityRows = []; state.activityNotes = ''; showError(response.message || 'Gagal memuat activity checklist.'); }
-      } catch (err) { if (!background) showError('Terjadi error saat memuat checklist activity.'); }
-      finally { state.activityLoading = false; state.activitySyncing = false; render(); }
+        localStorage.removeItem(SESSION_KEY);
+      } catch (error) {
+        console.warn('LocalStorage remove failed:', error);
+      }
     }
-    function loadRawJson(str, fallback) { try { return JSON.parse(str) || fallback; } catch (_) { return fallback; } }
-    async function changeActivityDate(value) { state.activityDate = value; render(); if (state.activitySettings) await loadActivityMatrix(token(), value, state.activityShift); }
-    async function changeActivityShift(value) { state.activityShift = value; render(); if (state.activitySettings) await loadActivityMatrix(token(), state.activityDate, value); }
-    function updateActivityCheck(index, checked) { const row = state.activityRows[index]; if (!row) return; row.isDone = checked; row.isEdited = checked !== row.originalIsDone; const status = $(`activity-status-${index}`); if (status) status.outerHTML = statusPill(row.isSaved, row.isEdited, `activity-status-${index}`); updateActivityProgress(); }
-    function updateActivityProgress() { const total = state.activityRows.length; const done = state.activityRows.filter(r => r.isDone).length; const text = $('activityProgressText'); const bar = $('activityProgressBar'); if (text) text.textContent = `${done} dari ${total} task selesai.`; if (bar) bar.style.width = total ? `${(done / total) * 100}%` : '0%'; }
-    function confirmSaveActivity() {
-      state.activityNotes = $('activityNotes')?.value || state.activityNotes;
-      if (!state.activitySettings) return showError('Setup Activity Sheet terlebih dahulu.');
-      if (!state.activityRows.length) return showError('Belum ada task activity untuk shift ini.');
-      if (!state.activityNotes.trim()) return showError('Daily notes wajib diisi.');
-      openConfirm({ title:'Save daily activity?', message:'Checklist dan notes untuk tanggal serta shift ini akan disimpan atau diupdate tanpa duplicate.', confirmText:'Save Activity', tone:'success', action:'saveDailyActivity' });
+
+    async function apiCall(action, data = {}) {
+      if (!GAS_API_URL || GAS_API_URL === 'YOUR_GAS_WEB_APP_URL_HERE') {
+        throw new Error('GAS API URL belum diisi.');
+      }
+
+      const response = await fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action,
+          ...data,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('HTTP error ' + response.status);
+      }
+
+      return response.json();
     }
-    async function saveDailyActivity() {
-      state.saving = true; render();
+
+    async function checkActiveSession() {
+      const token = safeGetToken();
+
+      if (!token) {
+        showLogin();
+        return;
+      }
+
       try {
-        const response = await fetchAPI('saveTeamLeaderDailyActivity', { token: token(), date: state.activityDate, shift: state.activityShift, rows: state.activityRows, notes: state.activityNotes });
-        if (!response.success) return showError(response.message || 'Gagal menyimpan daily activity.');
-        localStorage.setItem(`activity_matrix_${state.activityDate}_${state.activityShift}`, JSON.stringify({ rows: state.activityRows.map(r => ({ ...r, isSaved:true, originalIsDone:r.isDone, isEdited:false })), notes: state.activityNotes }));
-        await loadActivityMatrix(token(), state.activityDate, state.activityShift, true);
-        showSuccess(response.message || 'Daily activity berhasil disimpan.');
-      } catch (err) { showError('Terjadi error saat menyimpan daily activity.'); }
-      finally { state.saving = false; render(); }
+        const response = await apiCall('checkSession', { token });
+
+        if (response && response.success && response.redirectUrl) {
+          window.location.href = response.redirectUrl;
+          return;
+        }
+
+        safeRemoveToken();
+        showLogin();
+
+      } catch (error) {
+        console.warn('Session check failed:', error);
+        safeRemoveToken();
+        showLogin();
+      }
     }
-    async function loadActivityNotes() {
-      if (!state.activitySettings) return showError('Setup Activity Sheet terlebih dahulu.');
-      state.notesFilters = { date: $('notesExactDate')?.value || '', dateFrom: $('notesDateFrom')?.value || '', dateTo: $('notesDateTo')?.value || '', shift: $('notesShift')?.value || '', limit: Number($('notesLimit')?.value || 50) };
-      state.notesLoading = true; state.notesLoaded = true; render();
+
+    async function handleLogin(event) {
+      event.preventDefault();
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!username || !password) {
+        showError('Username dan password wajib diisi.');
+        return;
+      }
+
+      hideError();
+      setLoading(true);
+
       try {
-        const response = await fetchAPI('getTeamLeaderActivityNotes', { token: token(), filters: state.notesFilters });
-        if (response.success) state.loadedNotes = response.data || []; else { state.loadedNotes = []; showError(response.message || 'Gagal memuat notes.'); }
-      } catch (err) { showError('Terjadi error saat memuat notes.'); }
-      finally { state.notesLoading = false; render(); }
-    }
-    function clearLoadedNotes() { state.loadedNotes = []; state.notesLoaded = false; render(); }
-    function requestLogout() { openConfirm({ title:'Logout from dashboard?', message:'Session kamu akan diakhiri dan kamu akan kembali ke halaman login.', confirmText:'Logout', tone:'neutral', action:'logout' }); }
-    async function logout() { try { await fetchAPI('logoutUser', { token: token() }); } catch (err) { console.error(err); } localStorage.removeItem(SESSION_KEY); redirectToLogin(); }
+        const response = await apiCall('loginUser', {
+          username,
+          password,
+        });
 
-    const Actions = { saveSupplyBulk, deleteSupply, saveDailyActivity, logout };
+        if (response && response.success) {
+          safeSetToken(response.token);
 
-    function getStats() {
-      const totalPaper = state.records.reduce((sum, item) => sum + num(item['Paper Used']), 0);
-      const totalPrinting = state.records.reduce((sum, item) => sum + num(item['Printing Used']), 0);
-      const savedToday = state.supplyRows.filter(row => row.isSaved).length;
-      const activityDone = state.activityRows.filter(row => row.isDone).length;
-      return { totalPaper, totalPrinting, totalRecords: state.records.length, savedToday, activityDone, activityTotal: state.activityRows.length };
-    }
+          if (response.redirectUrl) {
+            window.location.href = response.redirectUrl;
+            return;
+          }
 
-    function render() {
-      applyTheme();
-      const app = $('app');
-      if (!app) return;
-      if (state.loading) { app.innerHTML = renderLoading(); return; }
-      if (state.accessError && !state.user) { app.innerHTML = renderAccessError(); return; }
-      const stats = getStats();
-      app.innerHTML = `
-        <div class="${isDark() ? 'dark min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950'}">
-          ${backgroundGlow()}
-          <div class="relative min-h-screen pb-32">
-            ${header()}
-            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-              <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 slide-up">
-                ${statCard('Paper Used', stats.totalPaper, 'paper')}
-                ${statCard('Printing Used', stats.totalPrinting, 'printer')}
-                ${statCard('Saved Today', stats.savedToday, 'check')}
-                ${statCard('Activity Done', `${stats.activityDone}/${stats.activityTotal}`, 'activity')}
-              </section>
-              ${mainView()}
-            </main>
-            ${dock()}
-            ${toastView()}
-            ${confirmDialogView()}
-            ${recordEditModal()}
-          </div>
-        </div>`;
+          showError('Login berhasil, tapi URL dashboard tidak ditemukan.');
+          setLoading(false);
+          return;
+        }
+
+        showError(response && response.message ? response.message : 'Login gagal.');
+        setLoading(false);
+
+      } catch (error) {
+        console.error('Login server error:', error);
+        showError(error && error.message ? error.message : 'Terjadi error saat menghubungi server.');
+        setLoading(false);
+      }
     }
 
-    function renderLoading() { return `<div class="${isDark() ? 'dark min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950'}"><div class="min-h-screen flex items-center justify-center px-4"><div class="text-center fade-in"><div class="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4 ${isDark() ? 'border-white/20 border-t-white' : 'border-slate-300 border-t-slate-950'}"></div><p class="${isDark() ? 'text-white/70' : 'text-slate-500'} text-sm">Loading Team Leader Dashboard...</p></div></div></div>`; }
-    function renderAccessError() { return `<div class="${isDark() ? 'dark min-h-screen bg-[#020617] text-white' : 'min-h-screen bg-slate-100 text-slate-950'}"><div class="min-h-screen flex items-center justify-center px-4"><div class="${cardClass()} max-w-md w-full rounded-3xl p-6 text-center"><h1 class="text-xl font-black mb-2">Access Error</h1><p class="text-red-500 text-sm mb-5">${esc(state.accessError)}</p><button onclick="logout()" class="${primaryButtonClass()}">Back to Login</button></div></div></div>`; }
-    function backgroundGlow() { return `<div class="fixed inset-0 pointer-events-none overflow-hidden"><div class="absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl ${isDark() ? 'bg-blue-500/20' : 'bg-blue-300/40'}"></div><div class="absolute top-1/3 -right-24 w-80 h-80 rounded-full blur-3xl ${isDark() ? 'bg-emerald-500/10' : 'bg-emerald-300/35'}"></div><div class="absolute -bottom-32 left-1/3 w-80 h-80 rounded-full blur-3xl ${isDark() ? 'bg-purple-500/10' : 'bg-purple-300/30'}"></div></div>`; }
-    function header() { return `<header class="${isDark() ? 'sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10' : 'sticky top-0 z-30 bg-slate-100/80 backdrop-blur-xl border-b border-slate-200'}"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"><div class="flex items-center justify-between gap-4"><div><div class="flex items-center gap-2 mb-1"><div class="${isDark() ? 'w-9 h-9 rounded-2xl bg-white text-slate-950' : 'w-9 h-9 rounded-2xl bg-slate-950 text-white'} flex items-center justify-center">${icon('spark','text-[22px]')}</div><h1 class="text-xl sm:text-2xl font-black">Team Leader Dashboard</h1></div><p class="${mutedClass()}">${esc(state.user?.username)} • ${esc(state.user?.role)} • ${esc(state.user?.branch)}</p></div><div class="flex items-center gap-2"><button onclick="toggleTheme()" class="${iconButtonClass()}" title="Toggle theme">${icon(isDark() ? 'sun' : 'moon')}</button><button onclick="requestLogout()" class="${iconButtonClass()}" title="Logout">${icon('logout')}</button></div></div></div></header>`; }
-    function dock() { const menus = [{key:'dashboard',label:'Dashboard',icon:'chart'},{key:'input',label:'Input',icon:'edit'},{key:'records',label:'Records',icon:'database'},{key:'activity',label:'Activity',icon:'activity'},{key:'settings',label:'Settings',icon:'settings'},{key:'profile',label:'Profile',icon:'user'}]; return `<nav class="fixed left-0 right-0 z-40 flex justify-center px-4 dock-pop" style="bottom:var(--dock-bottom)"><div class="${isDark() ? 'dock-glass-dark border-white/15 shadow-black/40' : 'dock-glass-light border-white shadow-slate-300/60'} border shadow-2xl rounded-[2rem] px-3 py-3 flex items-end gap-2 max-w-full overflow-x-auto custom-scroll">${menus.map(m => { const active = state.activeMenu === m.key; const cls = active ? (isDark() ? 'w-20 h-20 bg-white text-slate-950 -translate-y-3 shadow-xl' : 'w-20 h-20 bg-slate-950 text-white -translate-y-3 shadow-xl') : (isDark() ? 'w-16 h-16 bg-white/10 text-white/70 hover:bg-white/15 hover:-translate-y-2' : 'w-16 h-16 bg-slate-950/5 text-slate-600 hover:bg-slate-950/10 hover:-translate-y-2'); return `<button onclick="setMenu('${m.key}')" class="group relative flex flex-col items-center justify-center rounded-3xl transition-all duration-300 shrink-0 ${cls}">${icon(m.icon, active ? 'text-[30px]' : 'text-[26px]')}<span class="text-[10px] font-black mt-1 ${active ? 'opacity-100' : 'opacity-70'}">${m.label}</span></button>`; }).join('')}</div></nav>`; }
-    function statCard(label, value, iconName) { return `<div class="${cardClass()} rounded-3xl p-4 sm:p-5"><div class="flex items-center justify-between gap-3"><div><p class="${mutedClass()}">${esc(label)}</p><h3 class="text-2xl sm:text-3xl font-black mt-1">${esc(value)}</h3></div><div class="${isDark() ? 'w-11 h-11 rounded-2xl bg-white/10' : 'w-11 h-11 rounded-2xl bg-slate-950/5'} flex items-center justify-center">${icon(iconName)}</div></div></div>`; }
-    function mainView() { if (state.activeMenu === 'dashboard') return dashboardView(); if (state.activeMenu === 'input') return inputView(); if (state.activeMenu === 'records') return recordsView(); if (state.activeMenu === 'activity') return activityView(); if (state.activeMenu === 'settings') return settingsView(); if (state.activeMenu === 'profile') return profileView(); return dashboardView(); }
+    loginForm.addEventListener('submit', handleLogin);
 
-    function dashboardView() {
-      const recap = state.monthlyRecap || {}; const summary = recap.summary || {}; const classes = recap.classes || []; const dailyTotals = recap.dailyTotals || []; const daysInMonth = recap.daysInMonth || 31;
-      const maxPaper = Math.max(...dailyTotals.map(i => num(i.paperTotal)), 1); const maxPrinting = Math.max(...dailyTotals.map(i => num(i.printingTotal)), 1);
-      return `<section class="space-y-6 slide-up">
-        <div class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"><div class="flex items-center gap-3">${icon('chart','text-[34px]')}<div><h2 class="text-xl font-black">Supplies Dashboard</h2><p class="${mutedClass()}">Monthly recap supplies per inventory item.</p></div></div><div class="grid grid-cols-2 gap-3 w-full lg:w-auto">${selectField('Month','recapMonth',state.recapMonth,MONTH_NAMES.map((name,i)=>({value:i+1,label:name})),"changeRecapMonth(this.value)")}${field('Year','recapYear',state.recapYear,'number','','false',"changeRecapYear(this.value)")}</div></div></div>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">${statCard('Total Paper', summary.totalPaper || 0, 'paper')}${statCard('Total Printing', summary.totalPrinting || 0, 'printer')}${statCard('Active Items', summary.activeClassCount || 0, 'layers')}${statCard('Filled Records', summary.filledRecords || 0, 'database')}</div>
-        <div class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="flex items-center justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Daily Usage Chart</h2><p class="${mutedClass()}">Total paper dan printing per tanggal.</p></div><span class="${badgeClass()}">${esc(MONTH_NAMES[state.recapMonth-1])} ${esc(state.recapYear)}</span></div><div class="overflow-x-auto custom-scroll pb-2"><div class="min-w-[900px] h-72 flex items-end gap-2">${dailyTotals.map(item => { const ph = Math.max(8, (num(item.paperTotal)/maxPaper)*210); const prh = Math.max(8, (num(item.printingTotal)/maxPrinting)*210); return `<div class="flex-1 flex flex-col items-center gap-2"><div class="text-[10px] font-black opacity-70">${esc(item.paperTotal||0)}/${esc(item.printingTotal||0)}</div><div class="flex items-end gap-1 h-[220px]"><div class="${getSupplyColorClass(num(item.paperTotal), 'bar')}" style="height:${ph}px;width:10px"></div><div class="rounded-t-xl bg-blue-500/70" style="height:${prh}px;width:10px"></div></div><div class="text-[10px] opacity-60">${esc(item.day)}</div></div>`; }).join('')}</div></div><div class="mt-4 flex flex-wrap gap-2 text-xs font-black"><span class="px-3 py-2 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">Paper</span><span class="px-3 py-2 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/20">Printing</span></div></div>
-        <div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Horizontal Recap Per Inventory Item</h2><p class="${mutedClass()}">Kolom tanggal 1 sampai ${daysInMonth}. Format: Paper / Printing.</p></div>${supplyLegend()}</div>${classes.length ? recapTable(classes, daysInMonth) : emptyState('Belum ada inventory detail active atau data supplies bulan ini.')}</div>
-      </section>`;
-    }
-    function recapTable(classes, daysInMonth) { return `<div class="max-h-[62vh] overflow-auto custom-scroll"><table class="w-full min-w-[1180px] text-xs"><thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}"><tr class="${isDark() ? 'border-b border-white/10 text-white/50' : 'border-b border-slate-200 text-slate-500'}"><th class="sticky left-0 z-20 py-3 pr-4 text-left min-w-[230px] bg-inherit">Inventory Item</th>${Array.from({length:daysInMonth},(_,i)=>`<th class="py-3 px-2 text-center min-w-[58px]">${i+1}</th>`).join('')}<th class="py-3 px-3 text-center min-w-[90px]">Total</th></tr></thead><tbody>${classes.map(row => `<tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}"><td class="${isDark() ? 'sticky left-0 z-10 py-3 pr-4 bg-slate-900/95' : 'sticky left-0 z-10 py-3 pr-4 bg-white/95'}"><p class="font-black">${esc(row.trainerName)}</p><p class="opacity-55">${esc(row.jamSection)} • ${esc(row.level)}</p></td>${(row.days||[]).map(day => `<td class="py-2 px-2 text-center"><span class="${getSupplyColorClass(num(day.paperUsed)+num(day.printingUsed), 'cell')}">${day.paperUsed === '' && day.printingUsed === '' ? '-' : `${esc(day.paperUsed||0)}/${esc(day.printingUsed||0)}`}</span></td>`).join('')}<td class="py-3 px-3 text-center font-black">${esc(row.totalPaper)}/${esc(row.totalPrinting)}</td></tr>`).join('')}</tbody></table></div>`; }
-
-    function inputView() { return `<section class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 slide-up"><div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit"><div class="flex items-center gap-3 mb-5">${icon('edit','text-[30px]')}<div><h2 class="text-lg font-black">Daily Supplies Input</h2><p class="${mutedClass()}">Input supplies untuk semua inventory item.</p></div></div>${field('Tanggal Input','inputDate',state.inputDate,'date','','false',"changeInputDate(this.value)")}<div class="${softBoxClass()} mt-5 rounded-2xl p-4"><p class="text-sm font-bold mb-2">Anti Duplicate Logic</p><p class="${mutedClass()}">Data unik berdasarkan Branch + Date + Jam/Section + Level + Trainer Name. Kalau sudah ada, sistem update. Kalau belum ada, sistem create.</p></div><button onclick="confirmSaveSupply()" ${state.saving?'disabled':''} class="${primaryButtonClass()} mt-5 w-full">${state.saving?'Saving...':'Save All Supplies'}</button></div><div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Inventory Supplies Matrix</h2><p class="${mutedClass()}">Isi paper dan printing per inventory item.</p></div><span class="${badgeClass()}">${state.supplyRows.length} Items</span></div>${state.supplyRows.length ? supplyMatrix() : emptyState('Belum ada inventory detail active untuk branch ini.')}</div></section>`; }
-    function supplyPreviewSpan(row, index) { return `<span id="supply-preview-${index}" class="${getSupplyColorClass(num(row.paperUsed)+num(row.printingUsed), 'cell')}">${esc(row.paperUsed||0)}/${esc(row.printingUsed||0)}</span>`; }
-    function supplyMatrix() { return `<div class="lg:hidden max-h-[62vh] overflow-y-auto custom-scroll pr-1 space-y-3">${state.supplyRows.map((row,i)=>`<div class="${softBoxClass()} rounded-2xl p-4"><div class="flex items-start justify-between gap-3 mb-3"><div><p class="font-black">${esc(row.trainerName)}</p><p class="${mutedClass()}">${esc(row.jamSection)} • ${esc(row.level)}</p></div>${statusPill(row.isSaved,row.isEdited,`supply-status-mobile-${i}`)}</div><div class="grid grid-cols-2 gap-3">${field('Paper Used',`paperMobile${i}`,row.paperUsed,'number','0',false,`updateSupplyValue(${i}, 'paperUsed', this.value)`)}${field('Printing Used',`printingMobile${i}`,row.printingUsed,'number','0',false,`updateSupplyValue(${i}, 'printingUsed', this.value)`)}</div><div class="mt-3">${supplyPreviewSpan(row,i)}</div></div>`).join('')}</div><div class="hidden lg:block max-h-[62vh] overflow-auto custom-scroll"><table class="w-full min-w-[880px] text-sm"><thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}"><tr class="${isDark() ? 'text-white/45 border-b border-white/10' : 'text-slate-500 border-b border-slate-200'}"><th class="py-3 pr-4 text-left">Jam/Section</th><th class="py-3 pr-4 text-left">Level</th><th class="py-3 pr-4 text-left">Trainer</th><th class="py-3 pr-4 text-left">Paper Used</th><th class="py-3 pr-4 text-left">Printing Used</th><th class="py-3 pr-4 text-left">Preview</th><th class="py-3 pr-4 text-left">Status</th></tr></thead><tbody>${state.supplyRows.map((row,i)=>`<tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}"><td class="py-3 pr-4 font-semibold">${esc(row.jamSection)}</td><td class="py-3 pr-4">${esc(row.level)}</td><td class="py-3 pr-4">${esc(row.trainerName)}</td><td class="py-3 pr-4 w-36"><input type="number" value="${esc(row.paperUsed)}" placeholder="0" oninput="updateSupplyValue(${i}, 'paperUsed', this.value)" class="${inputClass()}"></td><td class="py-3 pr-4 w-36"><input type="number" value="${esc(row.printingUsed)}" placeholder="0" oninput="updateSupplyValue(${i}, 'printingUsed', this.value)" class="${inputClass()}"></td><td class="py-3 pr-4">${supplyPreviewSpan(row,i)}</td><td class="py-3 pr-4">${statusPill(row.isSaved,row.isEdited,`supply-status-${i}`)}</td></tr>`).join('')}</tbody></table></div>`; }
-
-    function recordsView() { return `<section class="${cardClass()} rounded-3xl p-5 sm:p-6 slide-up overflow-hidden"><div class="flex items-center gap-3 mb-5">${icon('database','text-[30px]')}<div><h2 class="text-lg font-black">Supplies Records</h2><p class="${mutedClass()}">Data tersimpan per inventory item di DailySupplies.</p></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">${field('Filter Date','filterDate',state.filters.date,'date')}${field('Month','filterMonth',state.filters.month,'text','June')}${field('Year','filterYear',state.filters.year,'text','2026')}<div class="flex items-end gap-2"><button onclick="applyFilters()" class="${primaryButtonClass()}">Filter</button><button onclick="clearFilters()" class="${secondaryButtonClass()}">Clear</button></div></div>${responsiveTable(['Date','Jam/Section','Level','Trainer','Paper','Printing','Action'], state.records.map((item,i)=>[esc(item.Date),esc(item['Jam/Section']),esc(item.Level),esc(item['Trainer Name']),`<span class="${getSupplyColorClass(item['Paper Used'],'cell')}">${esc(item['Paper Used'])}</span>`,`<span class="${getSupplyColorClass(item['Printing Used'],'cell')}">${esc(item['Printing Used'])}</span>`,`<div class="flex gap-2"><button onclick="openEditRecord(${i})" class="h-9 px-3 rounded-xl bg-blue-500/15 text-blue-500 border border-blue-500/20 text-xs font-black">Edit</button><button onclick="requestDeleteSupply('${esc(item.ID)}')" class="h-9 px-3 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20 text-xs font-black">Delete</button></div>`]), 'Belum ada data supplies.')}</section>`; }
-
-    function activityView() {
-      const tabs = [{key:'daily',label:'Daily'},{key:'notes',label:'View Notes'},{key:'setup',label:'Sheet Setup'}];
-      return `<section class="space-y-6 slide-up"><div class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"><div class="flex items-center gap-3">${icon('activity','text-[34px]')}<div><h2 class="text-xl font-black">Team Leader Activity Tracker</h2><p class="${mutedClass()}">Checklist shift dan notes harian yang tersimpan di sheet pribadi Team Leader.</p></div></div><div class="flex flex-wrap gap-2">${tabs.map(t=>`<button onclick="state.activitySubMenu='${t.key}'; render();" class="${smallButtonClass(state.activitySubMenu===t.key)}">${t.label}</button>`).join('')}</div></div></div>${!state.activitySettings ? activitySetupCard() : ''}${state.activitySettings && state.activitySubMenu==='setup' ? activitySetupCard() : ''}${state.activitySettings && state.activitySubMenu==='daily' ? activityDailyView() : ''}${state.activitySettings && state.activitySubMenu==='notes' ? activityNotesView() : ''}</section>`;
-    }
-    function activitySetupCard() { return `<section class="${cardClass()} rounded-3xl p-5 sm:p-6"><div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start"><div><div class="flex items-center gap-3 mb-5">${icon('sheet','text-[34px]')}<div><h2 class="text-xl font-black">Activity Sheet Setup</h2><p class="${mutedClass()}">Simpan Activity Tracker di spreadsheet pribadi Team Leader agar data harian tetap ringan dan cepat.</p></div></div><div class="${softBoxClass()} rounded-2xl p-4"><p class="text-sm font-bold mb-2">Required access</p><p class="${mutedClass()}">Pastikan spreadsheet yang dimasukkan bisa diakses oleh script/web app. Sistem akan membuat sheet ActivityChecks dan ActivityNotes otomatis.</p></div>${state.activitySettings ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">${infoBox('Username',state.activitySettings.Username)}${infoBox('Branch',state.activitySettings.Branch)}${infoBox('Status',state.activitySettings.Status)}${infoBox('Updated At',state.activitySettings['Updated At'])}</div>` : ''}</div><div class="${softBoxClass()} rounded-3xl p-5">${field('Activity Sheet ID / URL','activitySheetId',state.activitySheetId,'text','Paste Sheet ID or Google Sheet URL')}<button onclick="saveActivitySheet()" ${state.saving?'disabled':''} class="${primaryButtonClass()} mt-5 w-full">${state.saving?'Setting Up...':state.activitySettings?'Update Activity Sheet':'Save & Setup Activity Sheet'}</button></div></div></section>`; }
-    function activityDailyView() { const done = state.activityRows.filter(r=>r.isDone).length; return `<section class="grid grid-cols-1 xl:grid-cols-[370px_1fr] gap-6"><div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit"><div class="flex items-center gap-3 mb-5">${icon('checklist','text-[30px]')}<div><h2 class="text-lg font-black">Daily Shift Checklist</h2><p class="${mutedClass()}">Notes wajib diisi setiap hari.</p></div></div><div class="grid grid-cols-1 gap-4">${field('Activity Date','activityDate',state.activityDate,'date','','false',"changeActivityDate(this.value)")}${selectField('Shift','activityShift',state.activityShift,SHIFT_OPTIONS,"changeActivityShift(this.value)")}</div><div class="${softBoxClass()} rounded-2xl p-4 mt-5"><p class="text-sm font-bold mb-2">Progress</p><p id="activityProgressText" class="${mutedClass()}">${done} dari ${state.activityRows.length} task selesai.</p><div class="${isDark() ? 'mt-3 h-3 rounded-full bg-white/10' : 'mt-3 h-3 rounded-full bg-slate-200'} overflow-hidden"><div id="activityProgressBar" class="h-full bg-emerald-500 rounded-full" style="width:${state.activityRows.length ? (done/state.activityRows.length)*100 : 0}%"></div></div></div><button onclick="loadActivityMatrix()" ${state.activityLoading||state.activitySyncing?'disabled':''} class="${secondaryButtonClass()} w-full mt-5">${state.activityLoading?'Loading...':state.activitySyncing?'Syncing...':'Refresh Checklist'}</button><button onclick="confirmSaveActivity()" ${state.saving||state.activityLoading||state.activitySyncing?'disabled':''} class="${primaryButtonClass()} mt-3 w-full">${state.saving?'Saving...':'Save Daily Activity'}</button></div><div class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"><div><h2 class="text-lg font-black">Checklist Items</h2><p class="${mutedClass()}">Task aktif untuk shift yang dipilih.</p></div><span class="${badgeClass()}">${state.activityRows.length} Tasks</span></div>${state.activityRows.length ? `<div class="max-h-[44vh] overflow-y-auto custom-scroll pr-1 space-y-3 mb-5">${state.activityRows.map((row,i)=>`<label class="${softBoxClass()} rounded-2xl p-4 flex items-start gap-4 cursor-pointer"><input type="checkbox" ${row.isDone?'checked':''} onchange="updateActivityCheck(${i}, this.checked)" class="mt-1 w-5 h-5 rounded accent-emerald-500"><div class="flex-1"><div class="flex flex-wrap items-center gap-2 mb-1"><p class="font-black">${esc(row.taskName)}</p>${statusPill(row.isSaved,row.isEdited,`activity-status-${i}`)}</div><p class="${mutedClass()}">${esc(row.description || 'No description.')}</p></div></label>`).join('')}</div>` : emptyState('Belum ada task aktif untuk shift ini yang disiapkan oleh Management.')}<div><label class="${isDark() ? 'block text-sm text-white/60 mb-2' : 'block text-sm text-slate-500 mb-2'}">Daily Notes *</label><textarea id="activityNotes" rows="6" oninput="state.activityNotes=this.value" placeholder="Tulis catatan shift hari ini. Wajib diisi agar TL berikutnya bisa memahami kondisi terakhir." class="${textareaClass()}">${esc(state.activityNotes)}</textarea></div></div></section>`; }
-    function activityNotesView() { return `<section class="${cardClass()} rounded-3xl p-5 sm:p-6 overflow-hidden"><div class="flex items-center gap-3 mb-5">${icon('note','text-[30px]')}<div><h2 class="text-lg font-black">Notes Viewer</h2><p class="${mutedClass()}">Notes tidak diload otomatis. Klik Load Notes agar data besar tidak membebani dashboard.</p></div></div><div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-5">${field('Exact Date','notesExactDate',state.notesFilters.date,'date')}${field('Date From','notesDateFrom',state.notesFilters.dateFrom,'date')}${field('Date To','notesDateTo',state.notesFilters.dateTo,'date')}${selectField('Shift','notesShift',state.notesFilters.shift,[{value:'',label:'All Shift'},...SHIFT_OPTIONS])}${field('Limit','notesLimit',state.notesFilters.limit,'number')}</div><div class="flex flex-col sm:flex-row gap-3 mb-5"><button onclick="loadActivityNotes()" ${state.notesLoading?'disabled':''} class="${primaryButtonClass()}">${state.notesLoading?'Loading Notes...':'Load Notes'}</button><button onclick="clearLoadedNotes()" class="${secondaryButtonClass()}">Clear Loaded Notes</button></div>${!state.notesLoaded ? emptyState('Notes belum dimuat. Gunakan tombol Load Notes untuk mengambil data.') : responsiveTable(['Date','Shift','Notes','Updated At'], state.loadedNotes.map(item=>[esc(item.Date),esc(item.Shift),`<div class="max-w-xl whitespace-normal leading-relaxed">${esc(item.Notes)}</div>`,esc(item['Updated At'])]), 'Tidak ada notes sesuai filter.')}</section>`; }
-
-    function settingsView() { const s = state.supplySettings; return `<section class="grid grid-cols-1 lg:grid-cols-[430px_1fr] gap-6 slide-up"><div class="${cardClass()} rounded-3xl p-5 sm:p-6 h-fit"><div class="flex items-center gap-3 mb-5">${icon('settings','text-[30px]')}<div><h2 class="text-lg font-black">Supply Color Settings</h2><p class="${mutedClass()}">Atur batas warna paper + printing.</p></div></div><div class="space-y-4">${field('Merah jika ≤','lowMax',s.lowMax,'number')}${field('Kuning mulai dari','mediumMin',s.mediumMin,'number')}${field('Kuning sampai','mediumMax',s.mediumMax,'number')}${field('Hijau jika ≥','highMin',s.highMin,'number')}<div class="flex gap-3"><button onclick="saveSettingsFromForm()" class="${primaryButtonClass()}">Save Settings</button><button onclick="resetSettings()" class="${secondaryButtonClass()}">Reset</button></div></div></div><div class="${cardClass()} rounded-3xl p-5 sm:p-6"><h2 class="text-lg font-black mb-5">Preview</h2><div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div class="rounded-3xl border p-5 bg-red-500/15 text-red-500 border-red-500/20"><p class="text-sm font-black">≤ ${esc(s.lowMax)}</p><h3 class="text-4xl font-black mt-2">30</h3></div><div class="rounded-3xl border p-5 bg-amber-500/15 text-amber-500 border-amber-500/20"><p class="text-sm font-black">${esc(s.mediumMin)} - ${esc(s.mediumMax)}</p><h3 class="text-4xl font-black mt-2">75</h3></div><div class="rounded-3xl border p-5 bg-emerald-500/15 text-emerald-500 border-emerald-500/20"><p class="text-sm font-black">≥ ${esc(s.highMin)}</p><h3 class="text-4xl font-black mt-2">120</h3></div></div><div class="${softBoxClass()} rounded-2xl p-4 mt-5"><p class="text-sm font-bold mb-2">Default rules</p><p class="${mutedClass()}">Default: ≤50 merah, 51–100 kuning, ≥101 hijau. Warna dihitung dari total Paper + Printing per inventory item.</p></div></div></section>`; }
-    function profileView() { const u = state.user || {}; return `<section class="${cardClass()} rounded-3xl p-6 slide-up max-w-2xl"><div class="flex items-center gap-4 mb-6"><div class="${isDark() ? 'w-16 h-16 rounded-3xl bg-white text-slate-950' : 'w-16 h-16 rounded-3xl bg-slate-950 text-white'} flex items-center justify-center">${icon('user','text-[34px]')}</div><div><h2 class="text-xl font-black">${esc(u.username)}</h2><p class="${mutedClass()}">${esc(u.role)} • ${esc(u.branch)}</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${infoBox('Username',u.username)}${infoBox('Role',u.role)}${infoBox('Branch',u.branch)}${infoBox('Login Time',u.loginTime)}</div></section>`; }
-
-    function responsiveTable(headers, rows, emptyText) { if (!rows.length) return emptyState(emptyText); return `<div class="overflow-hidden rounded-2xl"><div class="overflow-auto custom-scroll" style="max-height:62vh"><table class="w-full min-w-[780px] text-sm"><thead class="${isDark() ? 'sticky top-0 z-10 bg-slate-900/95 backdrop-blur-xl' : 'sticky top-0 z-10 bg-white/95 backdrop-blur-xl'}"><tr class="${isDark() ? 'text-left text-white/45 border-b border-white/10' : 'text-left text-slate-500 border-b border-slate-200'}">${headers.map(h=>`<th class="py-3 pr-4 font-bold first:pl-1">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr class="${isDark() ? 'border-b border-white/5' : 'border-b border-slate-100'}">${row.map(cell=>`<td class="py-3 pr-4 first:pl-1">${cell || '-'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`; }
-    function statusPill(isSaved, isEdited, id='') { let text='New', cls='bg-blue-500/15 text-blue-500 border-blue-500/20'; if (isSaved && isEdited) { text='Edited'; cls='bg-amber-500/15 text-amber-500 border-amber-500/20'; } else if (isSaved) { text='Saved'; cls='bg-emerald-500/15 text-emerald-500 border-emerald-500/20'; } return `<span ${id?`id="${esc(id)}"`:''} class="inline-flex h-8 items-center px-3 rounded-full border text-xs font-black ${cls}">${text}</span>`; }
-    function supplyLegend() { const s=state.supplySettings; return `<div class="flex flex-wrap gap-2 text-xs font-black"><span class="px-3 py-2 rounded-full bg-red-500/15 text-red-500 border border-red-500/20">≤ ${esc(s.lowMax)}</span><span class="px-3 py-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20">${esc(s.mediumMin)}-${esc(s.mediumMax)}</span><span class="px-3 py-2 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">≥ ${esc(s.highMin)}</span></div>`; }
-    function emptyState(text) { return `<div class="${softBoxClass()} rounded-3xl p-8 text-center"><div class="mx-auto w-14 h-14 rounded-3xl flex items-center justify-center mb-4 bg-slate-500/10">${icon('empty','opacity-60 text-[30px]')}</div><p class="${mutedClass()}">${esc(text)}</p></div>`; }
-    function infoBox(label,value) { return `<div class="${softBoxClass()} rounded-2xl p-4"><p class="${mutedClass()}">${esc(label)}</p><p class="font-black mt-1">${esc(value || '-')}</p></div>`; }
-    function getSupplyColorClass(value, type) { if (value === '' || value == null || Number.isNaN(Number(value))) return type === 'bar' ? 'w-full rounded-t-xl bg-slate-400/20' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black'; const n = Number(value); const s = state.supplySettings; if (n <= Number(s.lowMax)) return type === 'bar' ? 'w-full rounded-t-xl bg-red-500/70' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-red-500/15 text-red-500 border border-red-500/20 font-black'; if (n >= Number(s.mediumMin) && n <= Number(s.mediumMax)) return type === 'bar' ? 'w-full rounded-t-xl bg-amber-500/70' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-amber-500/15 text-amber-500 border border-amber-500/20 font-black'; if (n >= Number(s.highMin)) return type === 'bar' ? 'w-full rounded-t-xl bg-emerald-500/70' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 font-black'; return type === 'bar' ? 'w-full rounded-t-xl bg-slate-400/40' : 'inline-flex min-w-8 h-8 items-center justify-center rounded-xl px-2 bg-slate-500/10 text-slate-400 border border-slate-500/10 font-black'; }
-    function toastView() { if (!state.toast) return ''; const success = state.toast.type === 'success'; const cls = success ? (isDark() ? 'bg-emerald-500/15 text-emerald-100 border-emerald-400/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200') : (isDark() ? 'bg-red-500/15 text-red-100 border-red-400/20' : 'bg-red-50 text-red-700 border-red-200'); return `<div class="fixed left-4 right-4 bottom-32 z-50 flex justify-center pointer-events-none"><div class="toast-in pointer-events-auto max-w-md w-full rounded-3xl border px-4 py-4 shadow-2xl backdrop-blur-xl ${cls}"><div class="flex items-start gap-3"><div class="mt-0.5">${icon(success?'check':'alert')}</div><p class="text-sm font-bold leading-relaxed">${esc(state.toast.text)}</p></div></div></div>`; }
-    function confirmDialogView() { const d = state.confirmDialog; if (!d) return ''; const danger = d.tone === 'danger', success = d.tone === 'success'; const iconCls = danger ? 'bg-red-500/15 text-red-500 border-red-500/20' : success ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20' : isDark() ? 'bg-white/10 text-white border-white/10' : 'bg-slate-950/5 text-slate-950 border-slate-200'; const confirmCls = danger ? 'bg-red-500 text-white hover:bg-red-600' : success ? 'bg-emerald-500 text-white hover:bg-emerald-600' : isDark() ? 'bg-white text-slate-950 hover:bg-slate-200' : 'bg-slate-950 text-white hover:bg-slate-800'; return `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-6"><div onclick="closeConfirm()" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div><div class="${cardClass()} relative w-full max-w-md rounded-[2rem] p-6 modal-pop"><div class="w-14 h-14 rounded-3xl border flex items-center justify-center mb-5 ${iconCls}">${icon(danger?'trash':success?'check':'spark','text-[30px]')}</div><h3 class="text-xl font-black mb-2">${esc(d.title)}</h3><p class="${mutedClass()} leading-relaxed mb-6">${esc(d.message)}</p><div class="flex gap-3"><button onclick="closeConfirm()" class="${secondaryButtonClass()} flex-1">${esc(d.cancelText)}</button><button onclick="confirmAction()" class="h-11 px-5 rounded-2xl font-black transition active:scale-[0.98] flex-1 ${confirmCls}">${esc(d.confirmText)}</button></div></div></div>`; }
-    function recordEditModal() { const r = state.editingRecord; if (!r) return ''; return `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-6"><div onclick="closeEditRecord()" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div><div class="${cardClass()} relative w-full max-w-md rounded-[2rem] p-6 modal-pop"><div class="flex items-center justify-between mb-5"><h3 class="text-xl font-black">Edit Record</h3><button onclick="closeEditRecord()" class="${iconButtonClass()} !w-8 !h-8 !rounded-xl">${icon('close','text-[18px]')}</button></div><div class="mb-5"><p class="font-black text-lg">${esc(r['Trainer Name'])}</p><p class="${mutedClass()}">${esc(r['Jam/Section'])} • ${esc(r.Level)}</p><p class="${mutedClass()} mt-1 font-semibold">${esc(r.Date)}</p></div><div class="space-y-4"><div class="grid grid-cols-2 gap-3">${field('Paper Used','editPaperUsed',state.editRecordForm.paperUsed,'number')}${field('Printing Used','editPrintingUsed',state.editRecordForm.printingUsed,'number')}</div><div class="flex gap-3 mt-4"><button onclick="closeEditRecord()" class="${secondaryButtonClass()} flex-1">Cancel</button><button onclick="submitEditRecord()" ${state.saving?'disabled':''} class="${primaryButtonClass()} flex-1">${state.saving?'Saving...':'Save'}</button></div></div></div></div>`; }
-
-    window.addEventListener('DOMContentLoaded', () => { applyTheme(); render(); boot(); });
+    showLoadingScreen();
+    checkActiveSession();
   </script>
 </body>
 </html>
+```
